@@ -1,3 +1,4 @@
+# NGD Data Linkages Explorer - published to GitHub Pages.
 # Rebuilds the NGD Data Linkages Explorer web page from the plugin's link registry and publishes it on
 # GitHub Pages: https://<owner>.github.io/<repo>/ngd-links/
 # One-off set-up: Settings > Pages > Build and deployment > Source: GitHub Actions.
