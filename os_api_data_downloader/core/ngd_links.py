@@ -174,8 +174,8 @@ LINKS = []
 
 
 def _link(lid, holder, target, label, fields=(), sub=(), key="osid", card="N:1", cls="A", rev=(), rev_sub=(),
-          all_fields=False, kind="id", op=None, tol=None, note="", inverse=""):
-    LINKS.append({
+          all_fields=False, kind="id", op=None, tol=None, note="", inverse="", match=None, when=None):
+    LINKS.append({"match": match or {}, "when": when or {},
         "id": lid, "holder": holder, "target": target, "label": label, "inverse": inverse,
         "fields": list(fields), "sub": list(sub), "key": key, "card": card, "cls": cls,
         "rev": list(rev), "rev_sub": list(rev_sub), "all_fields": all_fields, "kind": kind,
@@ -216,13 +216,21 @@ _link("sal_site", "lus-fts-siteaccesslocation", "lus-fts-site", "is an access to
       inverse="has access location")
 _link("sal_roadnode", "lus-fts-siteaccesslocation", "trn-ntwk-roadnode", "connects to Road Node",
       ["accessednetworknodeid", "networknodeid", "roadnodeid"], card="N:1", cls="B",
+      when={"accessednetworknodefeaturetype": ["Road Network", "Road Node", "roadnode"]},
       note="accessednetworknodeid references the Road Node OSID - the way into the Site from the road "
            "network. distancetonetworknode_m is context, not connectivity.",
+      inverse="is the network point for Site Access Location")
+_link("sal_pathnode", "lus-fts-siteaccesslocation", "trn-ntwk-pathnode", "connects to Path Node",
+      ["accessednetworknodeid", "networknodeid"], card="N:1", cls="B",
+      when={"accessednetworknodefeaturetype": ["Path Network", "Path Node", "pathnode"]},
+      note="Entrances reached from the path network rather than the road network.",
       inverse="is the network point for Site Access Location")
 _link("site_uprn", "lus-fts-site", PLACES_ADDRESS, "has representative address (UPRN)",
       ["matcheduprn", "primaryuprn", "uprn"], key="uprn", card="N:1",
       note="The Site's matched / representative UPRN. Many more addresses can fall inside a Site - add the "
            "spatial 'Address inside Site' link for those.", inverse="is the representative address of Site")
+_link("site_mainbuilding", "lus-fts-site", "bld-fts-building", "has main Building", ["mainbuildingid"],
+      card="N:1 (0..1)", note="The principal Building at the Site.", inverse="is the main Building of Site")
 _link("srp_site", "lus-fts-siteroutingpoint", "lus-fts-site", "is the routing point of Site",
       ["siteid", "routedsiteid"], card="N:1", note="Legacy feature type - routing moved to Road Node.")
 for _bid in ("bld-fts-buildingpart", "lnd-fts-land", "str-fts-structure", "wtr-fts-water", "trn-fts-rail",
@@ -297,18 +305,26 @@ _link("roadlink_rtp", "trn-ntwk-roadlink", "trn-fts-roadtrackorpath", "runs over
 _link("roadlink_pavement", "trn-ntwk-pavementlink", "trn-ntwk-roadlink", "runs beside Road Link",
       ["roadlinkreference", "roadlinkid"], sub=["roadlinkid"], card="N:1",
       rev=["pavementlinkreference", "pavementlinkid"], rev_sub=["pavementlinkid"], inverse="has Pavement Link")
+# RAMI records list the network features they apply to in a shared Network Reference table
+# (networkreferenceid + networkfeaturetype, e.g. Restriction Network Reference) - read just the Road Link rows
+# for the Road Link link and the Road Node rows for the Road Node link
+_NETREF = ["networkreference", "restrictionnetworkreference", "routinghazardnetworkreference",
+           "routingstructurenetworkreference", "averageandindicativespeednetworkreference"]
 for _bid in ("trn-ntwk-cyclelane", "trn-ntwk-buslane", "trn-ntwk-tramonroad", "trn-fts-streetlight",
              "trn-rami-restriction", "trn-rami-routinghazard", "trn-rami-routingstructure",
              "trn-rami-averageandindicativespeed", "trn-rami-highwaydedication"):
     _link(f"{short(_bid)}_roadlink", _bid, "trn-ntwk-roadlink", "applies to Road Link",
-          ["roadlinkreference", "roadlinkid", "roadlink_reference"], sub=["roadlinkid"], card="N:M",
-          cls="A" if "rami" not in _bid else "A",
-          rev=[f"{short(_bid)}reference"], rev_sub=[f"{short(_bid)}id"],
-          inverse=f"has {title(_bid)}")
+          ["roadlinkreference", "roadlinkid", "roadlink_reference"] + _NETREF, sub=["roadlinkid", "networkreferenceid"],
+          card="N:M", rev=[f"{short(_bid)}reference"], rev_sub=[f"{short(_bid)}id"],
+          match={"networkfeaturetype": ["Road Link", "roadlink"]}, inverse=f"has {title(_bid)}")
 for _bid in ("trn-rami-restriction", "trn-rami-routinghazard", "trn-rami-routingstructure"):
     _link(f"{short(_bid)}_roadnode", _bid, "trn-ntwk-roadnode", "applies at Road Node",
-          ["roadnodereference", "roadnodeid"], sub=["roadnodeid"], card="N:M", cls="B",
-          inverse=f"has {title(_bid)}")
+          ["roadnodereference", "roadnodeid"] + _NETREF, sub=["roadnodeid", "networkreferenceid"], card="N:M", cls="B",
+          match={"networkfeaturetype": ["Road Node", "roadnode"]}, inverse=f"has {title(_bid)}")
+# Road Node -> Road, Track or Path (Road Track Or Path Reference table on the Road Node)
+_link("roadnode_rtp", "trn-ntwk-roadnode", "trn-fts-roadtrackorpath", "sits on Road, Track or Path surface",
+      ["roadtrackorpathreference", "roadtrackorpathid"], sub=["roadtrackorpathid"], card="N:M",
+      inverse="has Road Node")
 _link("pathlink_path", "trn-ntwk-pathlink", "trn-ntwk-path", "is part of named Path",
       ["pathreference", "pathid"], sub=["pathid"], card="N:M", rev=["pathlinkreference"], rev_sub=["pathlinkid"],
       inverse="is made of Path Link")
@@ -456,6 +472,9 @@ _SAY = {
     "sp_structurepoint_site": ("the Site it sits inside", "Structure Points inside this Site"),
     "sp_landpoint_site": ("the Site it sits inside", "Land Points inside this Site"),
     "sp_building_site": ("the Site(s) it sits inside", "Buildings sitting inside this Site"),
+    "site_mainbuilding": ("its main Building", "the Site this is the main Building of"),
+    "sal_pathnode": ("the Path Node where it joins the path network", "Site entrances that join the path here"),
+    "roadnode_rtp": ("the road surface areas it sits on", "Road Nodes on this surface"),
 }
 for _lk in LINKS:
     _id = _lk["id"]
@@ -508,8 +527,8 @@ def links_for(base, kind=None):
 
 # ---------------------------------------------------------------------------------------------- quick picks
 # Organised around the questions people ask, not around OS themes. Each ticks the feature types and links
-# that answer it; 'filters' narrows a feature type by description (e.g. only School sites); 'spatial' also
-# ticks links worked out from location (e.g. every address inside a Site, not just its main one).
+# that answer it; 'filters' narrows a feature type by description (e.g. only School sites). Spatial links
+# (worked out from location) are listed too but only ticked when 'Show spatial links' is on - off by default.
 A = PLACES_ADDRESS
 EDUCATION_SITES = ["School", "College", "University", "University College", "University School",
                    "Children's Nursery", "Children's Centre", "Pupil Referral Site", "Education Support Site"]
@@ -539,9 +558,9 @@ RECIPES = [
      "links": ["building_primary_site", "building_sites", "buildingpart_site", "roadtrackorpath_site",
                "structure_site", "land_site", "water_site", "rail_site", "sal_site", "site_uprn", "building_uprn",
                "sp_address_site"],
-     "spatial": True,
      "note": "Complete land-use coverage comes from Land Use + Buildings + Land + Structures + Transport + Water "
-             "together. 'Every address in the site' is worked out from location."},
+             "together. A site's addresses come through its buildings (OS's cross-references); tick 'Show spatial "
+             "links' to also count every address point inside the site boundary."},
     {"name": "3. Emergency services access",
      "question": "How do I get into this site?",
      "path": "Site → Site Access Location → Road Node → Road Link",
@@ -563,7 +582,6 @@ RECIPES = [
      "links": ["building_primary_site", "building_uprn", "building_parts", "address_pcpoint", "address_pcarea",
                "address_street",
                "roadlink_street", "sp_building_pcarea"],
-     "spatial": True,
      "note": "Local authority and ward boundaries aren't served by the OS NGD API - the postcode is the "
              "nearest stand-in here (add Boundary-Line from OS Data Packages for the rest)."},
     {"name": "5. Education analysis",
@@ -576,7 +594,6 @@ RECIPES = [
      "links": ["building_primary_site", "building_sites", "building_uprn", "site_uprn", "bal_building", "sal_site",
                "sal_roadnode", "roadlink_nodes", "sp_address_site", "land_site", "buildingpart_site"],
      "filters": {"lus-fts-site": EDUCATION_SITES},
-     "spatial": True,
      "note": "Sites are narrowed to education sites (schools, colleges, universities, nurseries…) - double-click "
              "Site to change that. Other buildings in the area still come down; their joined copy says which "
              "site they belong to."},
@@ -599,7 +616,6 @@ RECIPES = [
      "links": ["structure_site", "sp_structurepoint_site", "building_primary_site", "building_uprn", "site_uprn",
                "land_site"],
      "filters": {"lus-fts-site": UTILITY_SITES},
-     "spatial": True,
      "note": "Sites are narrowed to utility sites (electricity, gas, water, telecoms…) - double-click Site to "
              "change that."},
     {"name": "8. Asset management",
@@ -609,7 +625,6 @@ RECIPES = [
      "types": [A, "bld-fts-building", "lus-fts-site"],
      "links": ["building_uprn", "building_primary_site", "building_sites", "building_main", "site_uprn",
                "sp_address_site"],
-     "spatial": True,
      "note": "The Site's joined copy counts its buildings (n_building_…) and addresses (n_address_sp). To find "
              "council-owned sites, filter the addresses on their classification."},
     {"name": "9. Land use exploration",
@@ -733,6 +748,18 @@ def _site_composition(area_col="site_area_m2", land="land_site", parts="building
     return cols
 
 
+# a Site's addresses come through its buildings (OS's own cross-references: Site <- Building -> UPRN), so they
+# need no spatial links; 'inside by location' is an extra, filled only when spatial links are ticked
+_SITE_ADDR_PATH = ["building_primary_site", "building_uprn"]
+
+
+def _site_addresses():
+    return [("addresses", "Addresses (in its buildings)", _SITE_ADDR_PATH, "count", []),
+            *_mix(_SITE_ADDR_PATH),
+            ("addresses_by_location", "Addresses inside, by location (spatial links)", ["sp_address_site"],
+             "count", [])]
+
+
 _SITE_CORE = [
     ("site_use", "Site", [], "attr", _DESC),
     ("site_name", "Site name", [], "attr", _SITE_NAME),
@@ -803,8 +830,7 @@ _ANSWERS = {
                *_SITE_CORE,
                *_SITE_BUILDINGS,
                ("building_parts", "Building parts", ["buildingpart_site"], "count", []),
-               ("addresses", "Addresses inside", ["sp_address_site"], "count", []),
-               *_mix(["sp_address_site"]),
+               *_site_addresses(),
                *_SITE_ADDRESSES,
                ("main_address", "Main address", ["site_uprn"], "attr", ["address"]),
                ("entrances", "Entrances", ["sal_site"], "count", []),
@@ -878,8 +904,7 @@ _ANSWERS = {
            "columns": [
                *_SITE_CORE,
                *_SITE_BUILDINGS,
-               ("addresses", "Addresses on the site", ["sp_address_site"], "count", []),
-               *_mix(["sp_address_site"]),
+               *_site_addresses(),
                *_SITE_ADDRESSES,
                ("main_address", "Main address", ["site_uprn"], "attr", ["address"]),
                ("entrances", "Site entrances", ["sal_site"], "count", []),
@@ -950,12 +975,11 @@ _ANSWERS = {
                 _agg("SUM", "{a}", a=_AREA)),
                _derive("pct_built_over", "% of the site built over",
                        "ROUND(100.0 * building_footprint_m2 / NULLIF(site_area_m2, 0), 1)"),
-               ("addresses", "Addresses inside", ["sp_address_site"], "count", []),
-               *_mix(["sp_address_site"]),
+               *_site_addresses(),
                *_SITE_ADDRESSES,
                _derive("floor_area_per_address_m2", "Floor area per address, est. (m²)",
                        "ROUND(building_floor_area_m2 / NULLIF(COALESCE(os_addresses, addresses), 0))"),
-               ("address_types", "Address types (detail)", ["sp_address_site"], "list", ["classification_desc"]),
+               ("address_types", "Address types (detail)", _SITE_ADDR_PATH, "list", ["classification_desc"]),
                ("main_address", "Main address", ["site_uprn"], "attr", ["address"]),
                ("site_osid", "Site ID", [], "attr", ["osid"]),
            ]},
@@ -1105,7 +1129,7 @@ def _maybe_json(v):
     return v
 
 
-def values_of(raw, sub=(), key="osid"):
+def values_of(raw, sub=(), key="osid", match=None):
     """Every identifier in one attribute value: a scalar, a list, a JSON-encoded list, or a list of objects
     (an inline cross-reference table - read ``sub`` keys, else any key that looks like the identifier)."""
     raw = _maybe_json(raw)
@@ -1116,6 +1140,10 @@ def values_of(raw, sub=(), key="osid"):
     for it in items:
         it = _maybe_json(it)
         if isinstance(it, dict):
+            # a shared reference table (e.g. Restriction Network Reference lists Road Links AND Road Nodes):
+            # keep only the rows for this link's target
+            if match and any(k in it and str(it[k]).lower() not in [m.lower() for m in v] for k, v in match.items()):
+                continue
             val = None
             for s in sub:
                 if it.get(s) not in (None, ""):
@@ -1135,7 +1163,7 @@ def values_of(raw, sub=(), key="osid"):
                 if n:
                     out.append(n)
         elif isinstance(it, list):
-            out.extend(values_of(it, sub, key))
+            out.extend(values_of(it, sub, key, match))
         else:
             n = norm(it, key)
             if n:
@@ -1186,7 +1214,7 @@ def detect_field(link, sample, reverse=False):
     present = set()
     for p in sample:
         for name in names:
-            if name in p and values_of(p[name], sub, key):
+            if name in p and values_of(p[name], sub, key, None if reverse else link.get("match")):
                 present.add(name)
     if present:
         found = [n for n in names if n in present]
@@ -1211,10 +1239,17 @@ def pairs_for(link, holders, targets=None, fields=None, reverse_fields=None):
     ``fields`` on each holder; reversed ones (stored on the target) read ``reverse_fields`` on each
     target. Duplicate pairs (same holder, target and field) are dropped."""
     out, seen = [], set()
+    when = link.get("when") or {}
+
+    def applies(props):     # e.g. only Site Access Locations whose node is on the Road Network
+        return all(k not in props or props[k] in (None, "") or str(props[k]).lower() in [v.lower() for v in vals]
+                   for k, vals in when.items())
     if fields:
         for hk, props in holders.items():
+            if when and not applies(props):
+                continue
             for f in fields:
-                for tk in values_of(props.get(f), link["sub"], link["key"]):
+                for tk in values_of(props.get(f), link["sub"], link["key"], link.get("match")):
                     if (hk, tk, f) not in seen and not (link["holder"] == link["target"] and hk == tk):
                         seen.add((hk, tk, f))
                         out.append((hk, tk, f))

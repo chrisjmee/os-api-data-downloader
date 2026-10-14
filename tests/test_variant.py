@@ -1,3 +1,4 @@
+import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_links.py")).read().split("# --- tree behaviour")[0])
 FakeArea.clip = lambda self: "clip"
 DATA["lus-fts-siteaccesslocation-2"][0][0]["accessedsiteid"] = S1

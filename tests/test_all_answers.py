@@ -1,3 +1,4 @@
+import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_links.py")).read().split("# --- tree behaviour")[0])
 from os_api_data_downloader.core import ngd_links as NL2
 ok = []

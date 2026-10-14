@@ -1,4 +1,5 @@
 """Chris's 13:13 run: repeated UPRN lookups, 429s and 500s. Check the fixes against a fake that behaves badly."""
+import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_links.py")).read().split("# --- tree behaviour")[0])
 # 30 buildings in the area; each references a postal UPRN inside, an LPI-only UPRN (parent shell) and,
 # for 10 of them, a UPRN just beyond the edge (in the 100 m margin). 5 UPRNs Places doesn't hold at all.

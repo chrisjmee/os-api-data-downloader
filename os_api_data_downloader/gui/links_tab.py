@@ -46,7 +46,39 @@ KIND_ROLE = Qt.ItemDataRole.UserRole + 1     # 'theme' | 'type' | 'link'
 ID_ROLE = Qt.ItemDataRole.UserRole + 2       # theme name | base id | link id
 SIDE_ROLE = Qt.ItemDataRole.UserRole + 3     # for links: 'out' (held by this type) | 'in'
 GREY = QBrush(QColor("#8a8a8a"))
-CLASS_COLOUR = {"A": "#1f6fd1", "B": "#1f8a4c", "C": "#8a5a1f", "D": "#b35806"}
+# link colours by type, in two sets so they stay readable on QGIS's light and dark themes
+_LIGHT = {"A": "#1559b8", "B": "#17773f", "C": "#8a4f12", "D": "#b34700"}
+_DARK = {"A": "#8ab8ff", "B": "#7ad69b", "C": "#e5ae6e", "D": "#ffa45c"}
+LEGEND = [("A", "🔗 Stored ID"), ("B", "🔗 Network connection"), ("C", "🔗 Sits within"),
+          ("D", "⇢ Worked out from location")]
+
+
+def dark_theme():
+    from qgis.PyQt.QtWidgets import QApplication
+    app = QApplication.instance()
+    return bool(app) and app.palette().window().color().lightness() < 128
+
+
+def class_colours():
+    return _DARK if dark_theme() else _LIGHT
+
+
+def muted():
+    """Colour for secondary text that is readable on either theme."""
+    return "#a8a8a8" if dark_theme() else "#5f5f5f"
+
+
+def warn():
+    return "#ffb070" if dark_theme() else "#a84800"
+
+
+def legend_html():
+    """The link-colour key as small coloured chips with high-contrast text."""
+    cols = class_colours()
+    fg = "#111111" if dark_theme() else "#ffffff"
+    chips = [f"<span style='background-color:{cols[k]};color:{fg};font-weight:600'>&nbsp;"
+             f"{t.replace(' ', '&nbsp;')}&nbsp;</span>" for k, t in LEGEND]      # a chip never splits over lines
+    return " ".join(chips)
 
 
 def pages(n):
@@ -191,6 +223,15 @@ class LinksTab(QWidget):
         self.details_box.setWidget(self.details)
         self.details_box.setMinimumHeight(90)
         self.details_box.setMaximumHeight(170)
+        # the colour key is always on show (not only before anything is selected)
+        self.legend = QLabel(legend_html())
+        self.legend.setTextFormat(Qt.TextFormat.RichText)
+        self.legend.setWordWrap(True)
+        self.legend.setToolTip("Stored ID: OS records the other feature's ID in the data.\n"
+                               "Network connection: part of how the road / path / rail / water network joins up.\n"
+                               "Sits within: OS records what the feature lies inside (e.g. its Site).\n"
+                               "Worked out from location: calculated by the plugin from where features are.")
+        v.addWidget(self.legend)
         v.addWidget(self.details_box)
 
         row = QHBoxLayout()
@@ -350,7 +391,7 @@ class LinksTab(QWidget):
                         li.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable |
                                     Qt.ItemFlag.ItemIsUserCheckable)
                         li.setCheckState(0, Qt.CheckState.Unchecked)
-                        li.setForeground(0, QBrush(QColor(CLASS_COLOUR[lk["cls"]])))
+                        li.setForeground(0, QBrush(QColor(class_colours()[lk["cls"]])))
                         li.setToolTip(0, self._link_tip(lk))
                         it.addChild(li)
                         self.link_items.setdefault(lk["id"], []).append(li)
@@ -526,11 +567,12 @@ class LinksTab(QWidget):
             return
         kind, i = data
         r = (NL.RECIPES if kind == "q" else NL.ENGINEER_RECIPES)[i]
-        if r.get("spatial") and not self.show_spatial.isChecked():
-            self.show_spatial.setChecked(True)
         self.filters = {t: list(v) for t, v in (r.get("filters") or {}).items()}
         self._mark_filters()
-        self.set_selection(r["types"], r["links"])
+        # spatial links (worked out from location) only when 'Show spatial links' is on - off by default
+        spatial = self.show_spatial.isChecked()
+        self.set_selection(r["types"], [lid for lid in r["links"]
+                                        if spatial or NL.LINK_BY_ID[lid]["kind"] == "id"])
         self._recipe = r
         self.tree.setCurrentItem(None)
         self._show_recipe(r)
@@ -552,7 +594,7 @@ class LinksTab(QWidget):
             html += (f"<br>You'll get: <b>{r['answer']['title']}</b> - {len(names)} columns, including "
                      + ", ".join(names[:14]) + (f" and {len(names) - 14} more" if len(names) > 14 else "") + ".")
         if r.get("note"):
-            html += f"<br><span style='color:#555'>{r['note']}</span>"
+            html += f"<br><span style='color:{muted()}'>{r['note']}</span>"
         self.details.setText(html)
 
     def find_path(self):
@@ -635,10 +677,7 @@ class LinksTab(QWidget):
         it = self.tree.currentItem()
         if it is None:
             self.details.setText("Click a feature type or a link to see, in plain English, how it connects. "
-                                 "<span style='color:#1f6fd1'>🔗 blue</span> = stored ID, "
-                                 "<span style='color:#1f8a4c'>green</span> = network connection, "
-                                 "<span style='color:#8a5a1f'>brown</span> = sits within, "
-                                 "<span style='color:#b35806'>⇢ orange</span> = worked out from location.")
+                                 "The colours are explained in the key above.")
             self.filter_btn.setEnabled(False)
             return
         kind = it.data(0, KIND_ROLE)
@@ -657,7 +696,7 @@ class LinksTab(QWidget):
             if base in self.type_items:
                 html += f" · <code>{base}</code>"
             if info["note"]:
-                html += f"<br><span style='color:#b35806'>{info['note']}</span>"
+                html += f"<br><span style='color:{warn()}'>{info['note']}</span>"
             html += (f"<br>Links to {len(out)} kind(s) of feature and is linked to from {len(inc)} - open it in "
                      "the tree to tick them.")
             if base in self.filters:
@@ -845,10 +884,10 @@ class LinksTab(QWidget):
                 lines.append(f"Addresses (OS Places): at least {len(cells)} transaction(s) - one per 1 km square, "
                              "more where a square has over 100 addresses")
             if self.outside.isChecked() and self.checked_links():
-                lines.append("<span style='color:#b35806'>Plus linked features outside the area: about 1 "
+                lines.append(f"<span style='color:{warn()}'>Plus linked features outside the area: about 1 "
                              "transaction per 40 (1 per address) - only known once the links are read, and "
                              "capped by 'Stop after'.</span>")
-            lines += [f"<span style='color:#b35806'>{NL.title(t)} isn't offered by your key - it'll be skipped."
+            lines += [f"<span style='color:{warn()}'>{NL.title(t)} isn't offered by your key - it'll be skipped."
                       "</span>" for t in missing]
             self.status.setText("<br>".join(lines))
             if then:
@@ -1022,11 +1061,11 @@ class LinksTab(QWidget):
             self._est_secs = None
         shown = [(k, v) for k, v in secs.items() if v >= 0.5]
         if shown:
-            lines.append("<span style='color:#666'>Time: " + " · ".join(f"{v:.0f} s {k}" for k, v in shown)
+            lines.append(f"<span style='color:{muted()}'>Time: " + " · ".join(f"{v:.0f} s {k}" for k, v in shown)
                          + "</span>")
         tx = {k: v for k, v in (result.get("tx") or {}).items() if v}
         if tx:
-            lines.append("<span style='color:#666'>Transactions: " + " · ".join(f"{v:,} {k}" for k, v in tx.items())
+            lines.append(f"<span style='color:{muted()}'>Transactions: " + " · ".join(f"{v:,} {k}" for k, v in tx.items())
                          + "</span>")
         mix = self._address_mix(layers.get("Address"))
         if mix:
@@ -1041,8 +1080,8 @@ class LinksTab(QWidget):
             lines += result["report"]
         else:
             lines += [r for r in result["report"] if r.startswith("⚠")]
-        lines += [f"<span style='color:#b35806'>{n}</span>" for n in result["notes"]]
-        lines.append(f"<span style='color:#666'>File: {out} · {result['used']:,} transaction(s)</span>")
+        lines += [f"<span style='color:{warn()}'>{n}</span>" for n in result["notes"]]
+        lines.append(f"<span style='color:{muted()}'>File: {out} · {result['used']:,} transaction(s)</span>")
         if result.get("cancelled"):
             lines.append("Cancelled - partial download.")
         self.status.setText("<br>".join(lines))

@@ -189,9 +189,14 @@ tab._apply_recipe(emerg)
 assert "sal_roadnode" in tab.checked_links()
 assert "get into this site" in tab.details.text()
 edu = [i for i in range(tab.recipe.count()) if tab.recipe.itemText(i).startswith("5.")][0]
+tab.show_spatial.setChecked(False)
 tab._apply_recipe(edu)
 assert "School" in tab.filters["lus-fts-site"] and "School" in (tab.where("lus-fts-site") or "")
-assert tab.show_spatial.isChecked() and "sp_address_site" in tab.checked_links()
+assert "sp_address_site" not in tab.checked_links()      # spatial links stay off unless asked for
+tab.show_spatial.setChecked(True)
+tab._apply_recipe(edu)
+assert "sp_address_site" in tab.checked_links()
+tab.show_spatial.setChecked(False)
 steps = tab.show_path(NL.PLACES_ADDRESS, "trn-ntwk-roadlink")
 assert steps and "trn-ntwk-street" in tab.checked_types() and "How Address connects" in tab.details.text()
 assert tab.show_path("wtr-ntwk-waterlinkset", "lus-fts-site") is None

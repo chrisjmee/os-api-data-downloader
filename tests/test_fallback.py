@@ -1,4 +1,5 @@
 """OS's API leaves out the Building cross-references: the answer must still have its addresses."""
+import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_links.py")).read().split("# --- tree behaviour")[0])
 b = DATA["bld-fts-building-4"][0][0]
 for k in ("uprnreference", "buildingpartreference", "sitereference", "primarysiteid", "mainbuildingid"):
