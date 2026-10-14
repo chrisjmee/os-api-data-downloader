@@ -1,0 +1,439 @@
+<title>NGD Data Linkages Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="How the OS National Geographic Database feature types link to each other - browse feature types, links, quick-pick questions and the paths between any two.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a map-sheet header strip, then a two-pane workbench - an index on the left, the selected
+   feature type / quick pick / route on the right. Stacks to one column on phones. */
+:root {
+  --paper: #f3f5f2;
+  --panel: #ffffff;
+  --sunk: #e9ece7;
+  --ink: #16212a;
+  --muted: #56636c;
+  --line: #d5dad3;
+  --accent: #0a6b6b;
+  --accent-soft: #d9ecea;
+  --on-accent: #ffffff;
+  --cA: #1559b8;
+  --cB: #17773f;
+  --cC: #8a4f12;
+  --cD: #b34700;
+  --cA-soft: #e3ecf9;
+  --cB-soft: #e0f1e7;
+  --cC-soft: #f4eadf;
+  --cD-soft: #fbe8dc;
+  --node: #ffffff;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1519; --panel: #161f25; --sunk: #1c262d; --ink: #e4ebe8; --muted: #9caab2; --line: #2b3840;
+    --accent: #5cc8c2; --accent-soft: #163a3b; --on-accent: #08201f;
+    --cA: #8ab8ff; --cB: #7ad69b; --cC: #e5ae6e; --cD: #ffa45c;
+    --cA-soft: #1b2b44; --cB-soft: #17321f; --cC-soft: #3a2a17; --cD-soft: #40260f; --node: #1c262d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1519; --panel: #161f25; --sunk: #1c262d; --ink: #e4ebe8; --muted: #9caab2; --line: #2b3840;
+  --accent: #5cc8c2; --accent-soft: #163a3b; --on-accent: #08201f;
+  --cA: #8ab8ff; --cB: #7ad69b; --cC: #e5ae6e; --cD: #ffa45c;
+  --cA-soft: #1b2b44; --cB-soft: #17321f; --cC-soft: #3a2a17; --cD-soft: #40260f; --node: #1c262d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+
+/* header */
+.sheet { border-bottom: 1px solid var(--line); background: var(--panel); }
+.sheet-in, .main { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sheet-in { padding-block: 18px 0; display: grid; gap: 10px; }
+.titlerow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 3.2vw, 2.2rem); line-height: 1.1;
+  margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.grid-ref { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; }
+.lede { margin: 0; max-width: 72ch; color: var(--muted); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: 4px; }
+.tab { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer;
+  font-family: var(--display); font-weight: 600; font-size: 1.02rem; color: var(--muted); white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--ink); }
+
+/* workbench */
+.main { padding-block: 20px 40px; }
+.bench { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.index { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column;
+  max-height: calc(100vh - 40px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); min-width: 0; }
+@media (max-width: 820px) { .index { position: static; max-height: 46vh; } }
+.search { padding: 12px; border-bottom: 1px solid var(--line); }
+.search input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+.list { overflow-y: auto; padding: 6px 0 10px; }
+.group { font-family: var(--display); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); padding: 12px 14px 4px; display: flex; justify-content: space-between; gap: 8px; }
+.item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; text-align: left;
+  background: none; border: 0; border-left: 3px solid transparent; padding: 5px 12px 5px 11px; cursor: pointer; }
+.item:hover { background: var(--sunk); }
+.item[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+.item .n { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.item.off { color: var(--muted); }
+.item .sub { display: block; font-size: 0.8rem; color: var(--muted); }
+
+.detail { min-width: 0; display: grid; gap: 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; min-width: 0; }
+.eyebrow { font-family: var(--display); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 4px; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; line-height: 1.15; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 0 0 10px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 0.88rem; color: var(--muted); }
+.facts b { color: var(--ink); font-weight: 500; }
+.note { margin: 12px 0 0; padding: 10px 12px; background: var(--sunk); border-radius: 4px; font-size: 0.92rem; max-width: 80ch; }
+p { max-width: 75ch; }
+
+/* key */
+.key { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.8rem;
+  font-weight: 500; white-space: nowrap; border: 1px solid transparent; }
+.chip.A { background: var(--cA-soft); color: var(--cA); } .chip.B { background: var(--cB-soft); color: var(--cB); }
+.chip.C { background: var(--cC-soft); color: var(--cC); } .chip.D { background: var(--cD-soft); color: var(--cD); border-style: dashed; border-color: var(--cD); }
+.chip.type { background: var(--sunk); color: var(--ink); cursor: pointer; border-color: var(--line); }
+.chip.type:hover { border-color: var(--accent); }
+.keyrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 0.85rem; color: var(--muted); }
+
+/* diagram */
+.diagram { overflow-x: auto; margin: 0 -6px; }
+.diagram svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.diagram text { fill: var(--ink); font-family: var(--display); font-size: 13px; }
+.diagram .node rect { fill: var(--node); stroke: var(--line); }
+.diagram .node { cursor: pointer; }
+.diagram .node:hover rect, .diagram .node:focus rect { stroke: var(--accent); stroke-width: 2; }
+.diagram .centre rect { fill: var(--accent); stroke: var(--accent); }
+.diagram .centre text { fill: var(--on-accent); font-weight: 700; }
+.diagram .edge { fill: none; stroke-width: 2; }
+.diagram .edge.A { stroke: var(--cA); } .diagram .edge.B { stroke: var(--cB); } .diagram .edge.C { stroke: var(--cC); }
+.diagram .edge.D { stroke: var(--cD); stroke-dasharray: 5 4; }
+.diagram .count { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+
+/* link rows */
+.links { display: grid; gap: 0; }
+.link { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.link:first-child { border-top: 0; }
+@media (max-width: 560px) { .link { grid-template-columns: minmax(0, 1fr); } }
+.link .say { font-weight: 500; }
+.link .meta { font-size: 0.86rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.link .meta code { font-family: var(--mono); font-size: 0.82rem; color: var(--ink); background: var(--sunk); padding: 0 4px; border-radius: 3px; }
+.link .lnote { font-size: 0.86rem; color: var(--muted); margin-top: 4px; }
+.linkto { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline;
+  text-underline-offset: 2px; font: inherit; font-weight: 500; }
+.empty { color: var(--muted); font-style: italic; }
+
+details { border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; font-family: var(--display); font-weight: 600; }
+.values { columns: 3 220px; column-gap: 24px; font-size: 0.88rem; margin: 10px 0 0; padding: 0; list-style: none; }
+.values li { break-inside: avoid; padding: 1px 0; }
+
+/* answer table */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--display); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.how { white-space: nowrap; color: var(--muted); }
+.route { font-size: 0.86rem; color: var(--muted); }
+.route b { color: var(--ink); font-weight: 500; }
+
+/* path finder */
+.pathform { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: end; }
+@media (max-width: 640px) { .pathform { grid-template-columns: minmax(0, 1fr); } .pathform .arrow { display: none; } }
+label.f { display: grid; gap: 4px; font-size: 0.85rem; color: var(--muted); min-width: 0; }
+select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+.arrow { font-family: var(--display); font-size: 1.4rem; color: var(--muted); padding-bottom: 6px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; margin-top: 12px; }
+.steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 0; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.steps li:first-child { border-top: 0; }
+.steps .no { font-family: var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.btn { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 4px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.btn.ghost { background: none; color: var(--accent); border: 1px solid var(--accent); }
+
+footer { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .item, .tab, .chip.type { transition: background-color .12s, color .12s, border-color .12s; } }
+</style>
+
+<header class="sheet">
+  <div class="sheet-in">
+    <div class="titlerow">
+      <h1>NGD Data Linkages Explorer</h1>
+      <span class="grid-ref" id="stamp"></span>
+    </div>
+    <p class="lede">How the OS National Geographic Database feature types connect: which feature stores which identifier,
+      how the networks join up, what lies inside what, and the questions those links can answer. Nothing to install
+      and no data to download.</p>
+    <div class="keyrow" id="key"></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="tab-types" aria-selected="true" data-view="types">Feature types</button>
+      <button class="tab" role="tab" id="tab-picks" aria-selected="false" data-view="picks">Quick picks</button>
+      <button class="tab" role="tab" id="tab-path" aria-selected="false" data-view="path">How are two connected?</button>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+  <div class="bench">
+    <aside class="index" aria-label="Index">
+      <div class="search"><input id="q" type="search" placeholder="Search feature types, links, attributes…" autocomplete="off" aria-label="Search"></div>
+      <div class="list" id="list"></div>
+    </aside>
+    <section class="detail" id="detail" aria-live="polite"></section>
+  </div>
+</main>
+<footer id="foot"></footer>
+
+<script>
+const D = /*__DATA__*/null;
+const T = D.types, L = D.links, R = D.recipes;
+const byId = Object.fromEntries(L.map(l => [l.id, l]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const title = b => (T[b] && T[b].title) || b;
+const short = b => title(b).replace(/ \(.*\)$/, "");
+const GEOM = {point: "Points", line: "Lines", polygon: "Areas", "": "No geometry"};
+const GROUPS = {showcase: "Show off OS NGD", question: "Answer a question", engineer: "For data engineers"};
+const state = {view: "types", type: "bld-fts-building", pick: 0, q: ""};
+
+function linksOf(b) { return L.filter(l => l.holder === b || l.target === b); }
+function chip(cls) { return `<span class="chip ${cls}">${esc(D.classes[cls][0])}</span>`; }
+function typeChip(b) { return `<button class="chip type" data-type="${esc(b)}">${esc(short(b))}</button>`; }
+
+// ------------------------------------------------------------------ header
+document.getElementById("stamp").textContent =
+  `${Object.values(T).filter(t => t.available).length} FEATURE TYPES · ${L.length} LINKS · ${R.length} QUICK PICKS · REGISTRY v${D.version}`;
+document.getElementById("key").innerHTML = "<span>Link types:</span>" +
+  Object.keys(D.classes).map(c => `<span title="${esc(D.classes[c][1])}">${chip(c)}</span>`).join("");
+document.getElementById("foot").innerHTML =
+  `Built ${esc(D.built)} from the link registry of the OS API Data Downloader QGIS plugin (v${esc(D.version)}). ` +
+  `Links are checked against OS's NGD schemas and relationship guidance; ‘Worked out from location’ links are ` +
+  `calculated, not supplied by OS.`;
+
+// ------------------------------------------------------------------ index
+function renderList() {
+  const q = state.q.trim().toLowerCase();
+  const el = document.getElementById("list");
+  let html = "";
+  if (state.view === "picks") {
+    let g = null;
+    R.forEach((r, i) => {
+      if (q && !(r.name + " " + r.question + " " + r.answers).toLowerCase().includes(q)) return;
+      if (r.group !== g) { g = r.group; html += `<div class="group">${esc(GROUPS[g])}</div>`; }
+      html += `<button class="item" data-pick="${i}" aria-current="${state.pick === i}"><span>${esc(r.name)}` +
+        (r.question ? `<span class="sub">${esc(r.question)}</span>` : "") + `</span></button>`;
+    });
+  } else {
+    for (const th of D.themes) {
+      const items = th.types.filter(b => !q || matches(b, q));
+      if (!items.length) continue;
+      html += `<div class="group"><span>${esc(th.name)}</span><span>${items.length}</span></div>`;
+      for (const b of items) {
+        const t = T[b], n = linksOf(b).length;
+        html += `<button class="item${t.available ? "" : " off"}" data-type="${esc(b)}" aria-current="${state.type === b}">` +
+          `<span>${esc(t.title)}</span><span class="n">${t.available ? n + (n === 1 ? " link" : " links") : "n/a"}</span></button>`;
+      }
+    }
+  }
+  el.innerHTML = html || `<p class="empty" style="padding:0 14px">Nothing matches “${esc(state.q)}”.</p>`;
+}
+function matches(b, q) {
+  const t = T[b];
+  if ((t.title + " " + b + " " + t.note + " " + t.attr).toLowerCase().includes(q)) return true;
+  if (t.values.some(v => v.toLowerCase().includes(q))) return true;
+  return linksOf(b).some(l => (l.fwd + " " + l.back + " " + l.fields.join(" ") + " " + l.key).toLowerCase().includes(q));
+}
+
+// ------------------------------------------------------------------ feature type view
+function renderType() {
+  const b = state.type, t = T[b];
+  const ls = linksOf(b);
+  const out = ls.filter(l => l.holder === b), inn = ls.filter(l => l.target === b && l.holder !== b);
+  let html = `<article class="card"><p class="eyebrow">${esc(t.theme)}</p><h2>${esc(t.title)}</h2>
+    <div class="facts"><span>ID <b class="mono">${esc(b)}</b></span>` +
+    (t.collection ? `<span>Collection <b class="mono">${esc(t.collection)}</b></span>` : "") +
+    (t.geom ? `<span>Geometry <b>${esc(GEOM[t.geom] || t.geom)}</b></span>` : "") +
+    `<span>Links <b>${ls.length}</b></span></div>` +
+    (t.note ? `<p class="note">${esc(t.note)}</p>` : "") +
+    (!t.available ? `<p class="note">Not served by the OS NGD API – Features, so it can't be linked here.</p>` : "") +
+    `</article>`;
+  if (ls.length) html += `<article class="card"><h3>Connected feature types</h3><div class="diagram">${ego(b, ls)}</div>
+    <p class="muted" style="margin:8px 0 0;font-size:.86rem">Select a feature type in the diagram to move to it. Line colours follow the link types above; numbers show more than one link.</p></article>`;
+  html += section(`What a ${esc(short(b))} links to`, out, b, "out") + section(`What links to a ${esc(short(b))}`, inn, b, "in");
+  if (t.values.length) html += `<article class="card"><details><summary>${t.values.length} kinds of ${esc(short(b))} (<span class="mono">${esc(t.attr)}</span>)</summary>
+    <ul class="values">${t.values.map(v => `<li>${esc(v)}</li>`).join("")}</ul></details></article>`;
+  const used = R.map((r, i) => [r, i]).filter(([r]) => r.types.includes(b));
+  if (used.length) html += `<article class="card"><h3>Quick picks that use it</h3><div class="key">` +
+    used.map(([r, i]) => `<button class="chip type" data-pick="${i}">${esc(r.name)}</button>`).join("") + `</div></article>`;
+  return html;
+}
+function section(head, ls, b, dir) {
+  if (!ls.length) return "";
+  return `<article class="card"><h3>${head}</h3><div class="links">` + ls.map(l => linkRow(l, dir === "out" ? l.target : l.holder, dir)).join("") + `</div></article>`;
+}
+function linkRow(l, other, dir) {
+  const say = dir === "in" ? l.back : l.fwd;
+  const meta = [];
+  if (l.kind === "id") meta.push(`<span>Stored in ${l.fields.map(f => `<code>${esc(f)}</code>`).join(" or ")}` + (l.key && l.key !== "osid" ? ` · matched on <code>${esc(l.key)}</code>` : "") + `</span>`);
+  else meta.push(l.op === "nearest" ? `Nearest within ${esc(l.tol)} m` : `From location: ${esc(l.op || "inside")}`);
+  meta.push(`<span>${esc(l.sentence)}</span>`);
+  if (l.fallback) meta.push(`If OS leaves it out, it can be worked out from location`);
+  return `<div class="link"><div>${chip(l.cls)}</div><div><div class="say">${esc(say)} · <button class="linkto" data-type="${esc(other)}">${esc(short(other))}</button></div>
+    <div class="meta">${meta.join("")}</div>${l.note ? `<div class="lnote">${esc(l.note)}</div>` : ""}</div></div>`;
+}
+function ego(b, ls) {
+  const groups = new Map();
+  for (const l of ls) {
+    const o = l.holder === b ? l.target : l.holder;
+    if (o === b) continue;
+    const g = groups.get(o) || {cls: {}, n: 0};
+    g.n++; g.cls[l.cls] = (g.cls[l.cls] || 0) + 1; groups.set(o, g);
+  }
+  const others = [...groups.keys()].sort((a, c) => T[a].theme.localeCompare(T[c].theme) || title(a).localeCompare(title(c)));
+  // two columns of linked feature types either side of the selected one: never overlaps, however many
+  const W = 760, n = others.length, half = Math.ceil(n / 2), rowH = 40;
+  const H = Math.max(140, half * rowH + 40), cx = W / 2, cy = H / 2;
+  let edges = "", nodes = "";
+  others.forEach((o, i) => {
+    const left = i < half, k = left ? i : i - half, count = left ? half : n - half;
+    const x = left ? 105 : W - 105, y = cy + (k - (count - 1) / 2) * rowH;
+    const g = groups.get(o);
+    const cls = Object.entries(g.cls).sort((p, q) => q[1] - p[1])[0][0];
+    const ex = left ? x + 88 : x - 88;
+    edges += `<path class="edge ${cls}" d="M${cx},${cy} C${(cx + ex) / 2},${cy} ${(cx + ex) / 2},${y.toFixed(1)} ${ex},${y.toFixed(1)}"/>`;
+    if (g.n > 1) edges += `<text class="count" x="${(left ? ex + 6 : ex - 6).toFixed(1)}" y="${(y - 6).toFixed(1)}" text-anchor="${left ? "start" : "end"}">×${g.n}</text>`;
+    const label = short(o);
+    nodes += `<g class="node" data-type="${esc(o)}" tabindex="0" role="button" aria-label="${esc(title(o))}"><rect x="${x - 88}" y="${(y - 14).toFixed(1)}" width="176" height="28" rx="14"/>` +
+      `<text x="${x}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle">${esc(label.length > 24 ? label.slice(0, 23) + "…" : label)}</text></g>`;
+  });
+  const cl = short(b), cw = Math.min(220, 26 + cl.length * 8.4);
+  nodes += `<g class="centre"><rect x="${cx - cw / 2}" y="${cy - 18}" width="${cw}" height="36" rx="18"/><text x="${cx}" y="${cy + 5}" text-anchor="middle" style="font-size:15px">${esc(cl)}</text></g>`;
+  const self = ls.filter(l => l.holder === b && l.target === b).length;
+  if (self) nodes += `<text class="count" x="${cx}" y="${cy + 36}" text-anchor="middle">+ ${self} link${self > 1 ? "s" : ""} to itself</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Feature types linked to ${esc(title(b))}">${edges}${nodes}</svg>`;
+}
+
+// ------------------------------------------------------------------ quick pick view
+function routeOf(subject, steps) {
+  let cur = subject, parts = [`<b>${esc(short(subject))}</b>`];
+  for (const id of steps) {
+    const l = byId[id]; if (!l) continue;
+    if (l.holder === cur) { cur = l.target; parts.push("→"); } else { cur = l.holder; parts.push("←"); }
+    parts.push(esc(short(cur)));
+  }
+  return parts.join(" ");
+}
+function renderPick() {
+  const r = R[state.pick];
+  let html = `<article class="card"><p class="eyebrow">${esc(GROUPS[r.group])}</p><h2>${esc(r.name)}</h2>` +
+    (r.question ? `<p style="font-size:1.1rem;margin:8px 0 0">“${esc(r.question)}”</p>` : "") +
+    (r.path ? `<div class="facts"><span>Route <b>${esc(r.path)}</b></span></div>` : "") +
+    (r.answers ? `<p>${esc(r.answers)}</p>` : "") + (r.note ? `<p class="note">${esc(r.note)}</p>` : "") + `</article>`;
+  html += `<article class="card"><h3>Feature types it uses</h3><div class="key">${r.types.map(typeChip).join("")}</div>` +
+    (Object.keys(r.filters).length ? Object.entries(r.filters).map(([b, v]) =>
+      `<p class="muted" style="font-size:.88rem">${esc(title(b))} narrowed to: ${esc(v.join(", "))}</p>`).join("") : "") + `</article>`;
+  html += `<article class="card"><h3>Links it follows</h3><div class="links">` +
+    r.links.map(id => byId[id]).filter(Boolean).map(l => linkRow(l, l.target, "out")).join("") + `</div></article>`;
+  if (r.answer) {
+    html += `<article class="card"><h3>The answer: ${esc(r.answer.title)}</h3>
+      <p class="muted" style="font-size:.9rem">One row per ${esc(short(r.answer.subject))}, with ${r.answer.columns.length} columns. “Route” shows where each value comes from.</p>
+      <div class="tablewrap"><table><thead><tr><th>Column</th><th>Kind</th><th>Route</th></tr></thead><tbody>` +
+      r.answer.columns.map(c => `<tr><td>${esc(c.label)}</td><td class="how">${esc(c.how)}</td><td class="route">` +
+        (c.how === "worked out" ? "from the other columns" : c.steps.length ? routeOf(r.answer.subject, c.steps) : `the ${esc(short(r.answer.subject))} itself`) +
+        `</td></tr>`).join("") + `</tbody></table></div></article>`;
+  }
+  return html;
+}
+
+// ------------------------------------------------------------------ path finder
+const avail = Object.keys(T).filter(b => T[b].available);
+function findPath(a, z, spatial) {
+  if (a === z) return [];
+  const prev = new Map([[a, null]]), q = [a];
+  while (q.length) {
+    const cur = q.shift();
+    for (const l of L) {
+      if (l.kind === "spatial" && !spatial) continue;
+      let nxt, dir;
+      if (l.holder === cur) { nxt = l.target; dir = "out"; } else if (l.target === cur) { nxt = l.holder; dir = "in"; } else continue;
+      if (!T[nxt] || !T[nxt].available || prev.has(nxt)) continue;
+      prev.set(nxt, [cur, l, dir]);
+      if (nxt === z) { const s = []; let k = z; while (prev.get(k)) { const [p, ll, d] = prev.get(k); s.unshift([ll, d, p, k]); k = p; } return s; }
+      q.push(nxt);
+    }
+  }
+  return null;
+}
+function options(sel) {
+  return D.themes.map(th => `<optgroup label="${esc(th.name)}">` + th.types.filter(b => T[b].available)
+    .map(b => `<option value="${esc(b)}"${b === sel ? " selected" : ""}>${esc(T[b].title)}</option>`).join("") + `</optgroup>`).join("");
+}
+function renderPath() {
+  const a = state.from || "places-address", z = state.to || "trn-ntwk-roadlink", sp = !!state.spatial;
+  const steps = findPath(a, z, sp);
+  let html = `<article class="card"><p class="eyebrow">Route finder</p><h2>How are two feature types connected?</h2>
+    <p class="muted">Finds the shortest chain of links between any two feature types, following each link in either direction.</p>
+    <div class="pathform"><label class="f" for="from">From<select id="from">${options(a)}</select></label><span class="arrow" aria-hidden="true">→</span>
+    <label class="f" for="to">To<select id="to">${options(z)}</select></label></div>
+    <label class="check" for="sp"><input type="checkbox" id="sp"${sp ? " checked" : ""}> Also use links worked out from location</label></article>`;
+  html += `<article class="card">`;
+  if (steps === null) html += `<h3>No chain of links</h3><p class="empty">${esc(title(a))} and ${esc(title(z))} aren't connected by ${sp ? "any" : "stored"} links${sp ? "" : " – try ticking ‘Also use links worked out from location’"}.</p>`;
+  else if (!steps.length) html += `<h3>Same feature type</h3><p class="empty">Pick two different feature types.</p>`;
+  else html += `<h3>${steps.length} step${steps.length > 1 ? "s" : ""}: ${routeOf(a, steps.map(s => s[0].id))}</h3><ol class="steps">` +
+    steps.map(([l, d, p, k], i) => `<li><span class="no">${i + 1}</span><div><div>${chip(l.cls)} <span class="say" style="font-weight:500">${esc(d === "out" ? l.fwd : l.back)}</span></div>
+      <div class="muted" style="font-size:.86rem;margin-top:4px">${l.kind === "id" ? `Stored in <span class="mono">${esc(l.fields.join(" / "))}</span> on the ${esc(short(l.holder))}. ` : "Worked out from location. "}${esc(l.sentence)}</div></div></li>`).join("") + `</ol>`;
+  html += `</article>`;
+  return html;
+}
+
+// ------------------------------------------------------------------ wiring
+function render() {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === state.view)));
+  document.querySelector(".index").hidden = state.view === "path";
+  document.querySelector(".bench").style.gridTemplateColumns = state.view === "path" ? "minmax(0, 1fr)" : "";
+  renderList();
+  const det = document.getElementById("detail");
+  det.innerHTML = state.view === "picks" ? renderPick() : state.view === "path" ? renderPath() : renderType();
+  const hash = state.view === "picks" ? "pick-" + state.pick : state.view === "path" ? "path" : "type-" + state.type;
+  try { history.replaceState(null, "", "#" + hash); } catch (e) { /* not allowed in some frames */ }
+}
+function go(patch) { Object.assign(state, patch); render(); document.getElementById("detail").scrollIntoView({block: "nearest"}); }
+document.addEventListener("click", e => {
+  const tab = e.target.closest(".tab"); if (tab) return go({view: tab.dataset.view});
+  const ty = e.target.closest("[data-type]"); if (ty && T[ty.dataset.type]) return go({view: "types", type: ty.dataset.type});
+  const pk = e.target.closest("[data-pick]"); if (pk) return go({view: "picks", pick: +pk.dataset.pick});
+});
+document.addEventListener("keydown", e => {
+  const n = e.target.closest && e.target.closest(".node");
+  if (n && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); go({view: "types", type: n.dataset.type}); }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "from") go({from: e.target.value});
+  if (e.target.id === "to") go({to: e.target.value});
+  if (e.target.id === "sp") go({spatial: e.target.checked});
+});
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; renderList(); });
+(function start() {
+  const h = (location.hash || "").slice(1);
+  if (h.startsWith("type-") && T[h.slice(5)]) Object.assign(state, {view: "types", type: h.slice(5)});
+  else if (h.startsWith("pick-") && R[+h.slice(5)]) Object.assign(state, {view: "picks", pick: +h.slice(5)});
+  else if (h === "path") state.view = "path";
+  render();
+})();
+</script>

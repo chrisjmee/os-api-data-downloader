@@ -204,6 +204,21 @@ for them in the real features (then for any attribute naming the target, e.g. `.
 register records which was used - `schema`, `guess` (check it) or `not found`. A link that isn't in the
 data is reported, never invented.
 
+## NGD Data Linkages Explorer (web page)
+
+An interactive, read-only version of the NGD Data Linkages tab for anyone to explore - no QGIS, no API key,
+nothing to download: **https://chrisjmee.github.io/os-api-data-downloader/ngd-links/**
+
+- **Feature types** - every OS NGD feature type, what it links to and what links to it, in plain English, with
+  a diagram, the attribute that carries each link and the kinds of each feature type.
+- **Quick picks** - each question, the feature types and links it uses, and every column of its answer with
+  the route the value comes from.
+- **How are two connected?** - the shortest chain of links between any two feature types.
+
+It is built from the plugin's own link registry (`core/ngd_links.py`) by `explorer/build_explorer.py`, so it
+always matches the plugin; GitHub rebuilds and republishes it whenever the registry changes. The built page,
+`docs/ngd-links/index.html`, is one self-contained file that can also be emailed or opened offline.
+
 ## Find an NGD Feature Type tab
 
 OS NGD has around 100 feature types with technical names (`str-fts-structure`, `trn-ntwk-pathlink`...) that

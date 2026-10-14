@@ -1,0 +1,47 @@
+# Rebuilds the NGD Data Linkages Explorer web page from the plugin's link registry and publishes it on
+# GitHub Pages: https://<owner>.github.io/<repo>/ngd-links/
+# One-off set-up: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Publish NGD Data Linkages Explorer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "os_api_data_downloader/core/ngd_links.py"
+      - "os_api_data_downloader/data/**"
+      - "os_api_data_downloader/metadata.txt"
+      - "explorer/**"
+      - ".github/workflows/explorer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the page
+        run: python explorer/build_explorer.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}ngd-links/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
