@@ -175,6 +175,9 @@ class LinksTab(QWidget):
         row = QHBoxLayout()
         self.recipe = QComboBox()
         self.recipe.addItem("Quick pick - start from a question…", None)
+        self._recipe_header("Show off OS NGD")
+        for i, r in enumerate(NL.SHOWCASE_RECIPES):
+            self.recipe.addItem(f"{r['name']} - \"{r['question']}\"", ("s", i))
         self._recipe_header("Answer a question")
         for i, r in enumerate(NL.RECIPES):
             self.recipe.addItem(f"{r['name']} - \"{r['question']}\"", ("q", i))
@@ -566,7 +569,7 @@ class LinksTab(QWidget):
                                 "press 'Estimate cost' first.")
             return
         kind, i = data
-        r = (NL.RECIPES if kind == "q" else NL.ENGINEER_RECIPES)[i]
+        r = {"q": NL.RECIPES, "s": NL.SHOWCASE_RECIPES}.get(kind, NL.ENGINEER_RECIPES)[i]
         self.filters = {t: list(v) for t, v in (r.get("filters") or {}).items()}
         self._mark_filters()
         # spatial links (worked out from location) only when 'Show spatial links' is on - off by default

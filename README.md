@@ -67,7 +67,25 @@ cardinality, class and caveats. Greyed-out entries (administrative units, retail
 cross-reference tables) aren't served by the APIs this plugin uses. Double-click a feature type (or
 **⧩ Filter…**) to download only some of it, e.g. only *School* Sites.
 
-- **Quick pick** starts from a question rather than a list of layers. Each one ticks the feature types and
+- **Quick pick → Show off OS NGD** - eight picks built to show what OS NGD holds, each with the
+  residential / commercial / mixed-use address split (numbers and %) and a *Character* column for colouring
+  (mainly residential, mainly commercial, mixed…):
+
+  | Pick | One row per… | Highlights |
+  |---|---|---|
+  | Site address mix | site | addresses through its buildings, residential / commercial / mixed counts and %, homes and addresses per hectare, floor area per address, main address and main building |
+  | Housing stock profile | building | detached / semi / terrace, age, floors, height, materials, floor area per home, address mix, postcodes and streets |
+  | Street profile (USRN) | street | addresses and mix, buildings and their ages, road length, addresses per 100 m, road class, pavement, maintenance, highway dedication, special designations, restrictions |
+  | Postcode profile | postcode | addresses and mix, densities, building ages and types, tallest building, floor area per address, sites and streets |
+  | Solar and roof potential | building | roof area facing each of 8 directions, flat roof, usable roof, panels already fitted, High / Medium / Low potential, addresses that would benefit |
+  | Green and sealed land | site | m² and % under grass, trees, gardens, paving, buildings, water and roads; % green, % sealed, green space per home, address mix |
+  | Site access and network | entrance | who it's for, distance to the network, roads and paths joined, width, dedication, restrictions, barriers, addresses on the site |
+  | Community facilities | education / health / emergency / community / utility site | facility group, buildings, floor area, address mix, entrances and the roads that serve it |
+
+  Spatial links (worked out from location) are off by default: the quick picks use OS's own identifiers
+  and cross-references, so a site's addresses come through its buildings. Tick **Show spatial links** first
+  to add them.
+- **Quick pick → Answer a question** starts from a question rather than a list of layers. Each one ticks the feature types and
   links that answer it and explains the path underneath:
   1. *Property and address intelligence* - "Tell me everything about this property" (Address → Building →
      Building Part → Site → land use)

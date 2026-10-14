@@ -1011,6 +1011,344 @@ for _r in RECIPES:
     _r["answer"] = _ANSWERS.get(_r["name"][:2])
 
 
+# ---------------------------------------------------------------------------------------------- showcase picks
+# Quick picks built to show off what OS NGD holds: each gives one answer layer with the address mix
+# (how many residential / commercial / mixed-use, and the %) wherever addresses can be reached.
+HEALTH_SITES = ["Hospital", "Hospice", "Health Centre", "Medical Care Site", "Medical Care Accommodation",
+                "Social Care Services Site"]
+EMERGENCY_SITES = ["Ambulance Station", "Fire Station", "Police Station", "Ambulance And Fire Station",
+                   "Ambulance And Police Station", "Fire Station And Police Station",
+                   "Ambulance, Fire And Police Station", "Police Headquarters"]
+COMMUNITY_SITES = ["Library", "Community Meeting Place", "Community Services", "Multi-Purpose Community Site",
+                   "Leisure Or Sports Centre", "Place Of Worship", "Church"]
+COMMUNITY_FACILITIES = EDUCATION_SITES + HEALTH_SITES + EMERGENCY_SITES + COMMUNITY_SITES + UTILITY_SITES
+
+
+def _sql_list(values):
+    return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
+
+
+def _mix_counts(path):
+    """How many of the addresses along ``path`` are residential, commercial or mixed use (numbers)."""
+    return [(f"{name}_addresses", f"{alias} addresses", path, "agg", _agg("COUNT", "*", f"{{c}} = '{value}'", c=_CLASS))
+            for name, alias, value in (("residential", "Residential", "Residential"),
+                                       ("commercial", "Commercial", "Commercial"),
+                                       ("mixed_use", "Mixed-use", "Dual use (residential and commercial)"))]
+
+
+def _character(total="addresses"):
+    """A one-phrase summary of the mix, for colouring the map."""
+    return _derive("character", "Character", (
+        f"CASE WHEN COALESCE({total}, 0) = 0 THEN 'No addresses' "
+        "WHEN pct_residential >= 80 THEN 'Mainly residential' "
+        "WHEN pct_commercial >= 80 THEN 'Mainly commercial' "
+        "WHEN COALESCE(pct_residential, 0) >= 50 THEN 'Mixed - mostly residential' "
+        "WHEN COALESCE(pct_commercial, 0) >= 50 THEN 'Mixed - mostly commercial' ELSE 'Mixed' END"))
+
+
+def _address_block(path, area_col=None, floor_col=None):
+    """Addresses along ``path``: count, mix (text, %, numbers), character, and densities."""
+    cols = [("addresses", "Addresses", path, "count", []), *_mix(path), *_mix_counts(path), _character(),
+            ("address_types", "Address types (detail)", path, "list", ["classification_desc"])]
+    if area_col:
+        cols += [_derive("homes_per_ha", "Homes per hectare",
+                         f"ROUND(residential_addresses / NULLIF({area_col} / 10000.0, 0), 1)"),
+                 _derive("addresses_per_ha", "Addresses per hectare",
+                         f"ROUND(addresses / NULLIF({area_col} / 10000.0, 0), 1)")]
+    if floor_col:
+        cols.append(_derive("floor_area_per_address_m2", "Floor area per address, est. (m²)",
+                            f"ROUND({floor_col} / NULLIF(addresses, 0))"))
+    return cols
+
+
+_ROOF_ASPECTS = [("north", "N"), ("northeast", "NE"), ("east", "E"), ("southeast", "SE"), ("south", "S"),
+                 ("southwest", "SW"), ("west", "W"), ("northwest", "NW")]
+
+_SHOWCASE_ANSWERS = {
+    "site_mix": {"subject": "lus-fts-site", "title": "Site address mix (one row per site)", "colour_by": "character",
+                 "columns": [
+                     *_SITE_CORE,
+                     ("buildings", "Buildings", ["building_primary_site"], "count", []),
+                     ("building_floor_area_m2", "Floor area of its buildings, est. (m²)", ["building_primary_site"],
+                      "agg", _agg("SUM", "{a} * COALESCE({f?}, 1)", a=_AREA, f=_FLOORS)),
+                     *_address_block(_SITE_ADDR_PATH, "site_area_m2", "building_floor_area_m2"),
+                     ("os_addresses", "Addresses (OS's own count on the site)", [], "attr", _OS_ADDR_TOTAL),
+                     ("address_class_agrees", "Do the addresses agree with the land use?", [], "attr",
+                      ["address_classificationcorrelation"]),
+                     ("main_address", "Main address", ["site_uprn"], "attr", ["address"]),
+                     ("main_building", "Main building", ["site_mainbuilding"], "attr", _BUSE),
+                     ("postcodes", "Postcode(s)", _SITE_ADDR_PATH, "list", ["postcode"]),
+                     ("site_osid", "Site ID", [], "attr", ["osid"]),
+                 ]},
+    "housing": {"subject": "bld-fts-building", "title": "Housing stock (one row per building)",
+                "colour_by": "connectivity",
+                "columns": [
+                    *_building(),
+                    ("building_parts", "Building parts", ["building_parts"], "count", []),
+                    *_address_block(["building_uprn"], floor_col="floor_area_m2"),
+                    _derive("floor_area_per_home_m2", "Floor area per home, est. (m²)",
+                            "ROUND(floor_area_m2 / NULLIF(residential_addresses, 0))"),
+                    ("os_addresses", "Addresses (OS's own count)", [], "attr", _OS_ADDR_TOTAL),
+                    ("postcodes", "Postcode(s)", ["building_uprn"], "list", ["postcode"]),
+                    ("streets", "Street(s)", ["building_uprn", "address_street"], "list", _STREET),
+                    ("site_use", "Site", ["building_primary_site"], "attr", _DESC),
+                    ("land_use", "Land use", ["building_primary_site"], "attr", _TIER_A),
+                    ("local_authority", "Local authority (ONS code)", ["building_parts"], "attr", _LA),
+                    ("building_osid", "Building ID", [], "attr", ["osid"]),
+                ]},
+    "street": {"subject": "trn-ntwk-street", "title": "Street profile (one row per street / USRN)",
+               "colour_by": "character",
+               "columns": [
+                   ("street", "Street", [], "attr", _STREET),
+                   ("usrn", "USRN", [], "attr", ["usrn"]),
+                   ("town", "Town", [], "attr", ["townname1_text", "locality1_text"]),
+                   ("street_type", "Street type", [], "attr", ["streettype", "description"]),
+                   ("operational_state", "Operational state", [], "attr", ["operationalstate"]),
+                   ("street_authority", "Street authority", [], "attr",
+                    ["responsibleauthority_name", "administrativearea1_text"]),
+                   *_address_block(["address_street"]),
+                   ("buildings", "Buildings with an address on it", ["address_street", "building_uprn"], "count", []),
+                   ("building_ages", "Building ages", ["address_street", "building_uprn"], "list", _AGE),
+                   ("house_types", "Detached / semi / terrace", ["address_street", "building_uprn"], "list",
+                    _CONNECT),
+                   ("road_links", "Road links", ["roadlink_street"], "count", []),
+                   ("road_length_m", "Length of road (m)", ["roadlink_street"], "agg", _agg("SUM", "{l}", l=_LENGTH)),
+                   _derive("addresses_per_100m", "Addresses per 100 m of road",
+                           "ROUND(100.0 * addresses / NULLIF(road_length_m, 0), 1)"),
+                   ("road_class", "Road classification", ["roadlink_street"], "list", ["roadclassification"]),
+                   ("pavement_pct", "Least pavement (% of length)", ["roadlink_street"], "agg",
+                    _agg("MIN", "{p}", p=["presenceofpavement_overallpercentage"])),
+                   ("maintained", "Maintenance", ["maintenancearea_street"], "list", ["maintenanceresponsibility"]),
+                   ("maintained_line", "Maintenance (lines)", ["maintenanceline_street"], "list",
+                    ["maintenanceresponsibility"]),
+                   ("dedication", "Highway dedication", ["highwaydedication_street"], "list", _DESC),
+                   ("designations", "Special designations", ["specialdesignationline_street"], "list",
+                    ["designation"]),
+                   ("designation_areas", "Special designation areas", ["specialdesignationarea_street"], "list",
+                    ["designation"]),
+                   ("restrictions", "Restrictions on its roads", ["roadlink_street", "restriction_roadlink"], "list",
+                    ["restriction"]),
+                   ("street_osid", "Street ID", [], "attr", ["osid"]),
+               ]},
+    "postcode": {"subject": "asu-gbpcd-postcodeunitarea", "title": "Postcode profile (one row per postcode)",
+                 "colour_by": "character",
+                 "columns": [
+                     ("postcode", "Postcode", [], "attr", ["postcode"]),
+                     ("postcode_area_m2", "Area (m²)", [], "attr", _AREA),
+                     *_address_block(["address_pcarea"], "postcode_area_m2"),
+                     ("buildings", "Buildings", ["address_pcarea", "building_uprn"], "count", []),
+                     ("building_ages", "Building ages", ["address_pcarea", "building_uprn"], "list", _AGE),
+                     ("house_types", "Detached / semi / terrace", ["address_pcarea", "building_uprn"], "list",
+                      _CONNECT),
+                     ("tallest_m", "Tallest building (m)", ["address_pcarea", "building_uprn"], "agg",
+                      _agg("MAX", "{h}", h=_HEIGHT)),
+                     ("floor_area_m2", "Floor area of its buildings, est. (m²)", ["address_pcarea", "building_uprn"],
+                      "agg", _agg("SUM", "{a} * COALESCE({f?}, 1)", a=_AREA, f=_FLOORS)),
+                     _derive("floor_area_per_address_m2", "Floor area per address, est. (m²)",
+                             "ROUND(floor_area_m2 / NULLIF(addresses, 0))"),
+                     ("sites", "Sites", ["address_pcarea", "building_uprn", "building_primary_site"], "list", _DESC),
+                     ("streets", "Street(s)", ["address_pcarea", "address_street"], "list", _STREET),
+                     ("positional_accuracy", "Positional accuracy", ["pcpoint_pcarea"], "attr",
+                      ["inputaddressaccuracy"]),
+                 ]},
+    "solar": {"subject": "bld-fts-building", "title": "Solar and roof potential (one row per building)",
+              "colour_by": "solar_potential",
+              "columns": [
+                  ("building_use", "Building use", [], "attr", _BUSE),
+                  ("building_type", "Building", [], "attr", _DESC),
+                  ("connectivity", "Detached / semi / terrace", [], "attr", _CONNECT),
+                  ("building_age", "Built (period)", [], "attr", _AGE),
+                  ("floors", "Floors", [], "attr", _FLOORS),
+                  ("height_m", "Height (m)", [], "attr", _HEIGHT),
+                  ("footprint_m2", "Footprint (m²)", [], "attr", _AREA),
+                  ("roof_shape", "Roof shape", [], "attr", _ROOF_SHAPE),
+                  ("roof_material", "Roof material", [], "attr", _ROOF),
+                  ("solar_panels", "Solar panels already", [], "attr", _SOLAR),
+                  ("green_roof", "Green roof", [], "attr", _GREEN_ROOF),
+                  *[(f"roof_{k}_m2", f"Roof facing {a} (m²)", [], "attr", [f"roofshapeaspect_areafacing{k}_m2"])
+                    for k, a in _ROOF_ASPECTS],
+                  ("flat_roof_m2", "Flat roof (m²)", [], "attr", _ROOF_FLAT),
+                  _derive("south_roof_m2", "South-facing roof, S + SE + SW (m²)",
+                          "ROUND(COALESCE(roof_south_m2, 0) + COALESCE(roof_southeast_m2, 0) + "
+                          "COALESCE(roof_southwest_m2, 0), 1)"),
+                  _derive("usable_roof_m2", "Usable for solar, south + flat (m²)",
+                          "ROUND(COALESCE(roof_south_m2, 0) + COALESCE(roof_southeast_m2, 0) + "
+                          "COALESCE(roof_southwest_m2, 0) + COALESCE(flat_roof_m2, 0), 1)"),
+                  _derive("pct_roof_usable", "Usable roof as % of footprint",
+                          "ROUND(100.0 * (COALESCE(roof_south_m2, 0) + COALESCE(roof_southeast_m2, 0) + "
+                          "COALESCE(roof_southwest_m2, 0) + COALESCE(flat_roof_m2, 0)) / NULLIF(footprint_m2, 0), 1)"),
+                  _derive("solar_potential", "Solar potential", (
+                      "CASE WHEN solar_panels IN ('Present', 'Yes', 'true', '1') THEN 'Already has panels' "
+                      "WHEN roof_shape IS NULL AND flat_roof_m2 IS NULL THEN 'No roof data' "
+                      "WHEN COALESCE(roof_south_m2, 0) + COALESCE(roof_southeast_m2, 0) + COALESCE(roof_southwest_m2, 0) "
+                      "+ COALESCE(flat_roof_m2, 0) >= 40 THEN 'High' "
+                      "WHEN COALESCE(roof_south_m2, 0) + COALESCE(roof_southeast_m2, 0) + COALESCE(roof_southwest_m2, 0) "
+                      "+ COALESCE(flat_roof_m2, 0) >= 15 THEN 'Medium' ELSE 'Low' END")),
+                  ("addresses", "Addresses that would benefit", ["building_uprn"], "count", []),
+                  *_mix(["building_uprn"]),
+                  *_mix_counts(["building_uprn"]),
+                  _derive("usable_roof_per_address_m2", "Usable roof per address (m²)",
+                          "ROUND(usable_roof_m2 / NULLIF(addresses, 0), 1)"),
+                  ("site_use", "Site", ["building_primary_site"], "attr", _DESC),
+                  ("building_osid", "Building ID", [], "attr", ["osid"]),
+              ]},
+    "green": {"subject": "lus-fts-site", "title": "Green and sealed land (one row per site)",
+              "colour_by": "pct_green_space",
+              "columns": [
+                  *_SITE_CORE,
+                  *_site_composition(),
+                  _derive("pct_green_space", "% green space (grass + trees + gardens)",
+                          "ROUND(COALESCE(pct_grass, 0) + COALESCE(pct_trees, 0) + COALESCE(pct_gardens, 0), 1)"),
+                  _derive("pct_sealed", "% sealed surface (buildings + paved + roads)",
+                          "ROUND(COALESCE(pct_buildings, 0) + COALESCE(pct_made_surface, 0) + "
+                          "COALESCE(pct_roads_paths, 0), 1)"),
+                  _derive("green_m2_per_home", "Green space per home (m²)",
+                          "ROUND((COALESCE(grass_m2, 0) + COALESCE(trees_m2, 0) + COALESCE(gardens_m2, 0)) / "
+                          "NULLIF(residential_addresses, 0))"),
+                  ("land_cover", "Land cover", ["land_site"], "list", _DESC),
+                  ("buildings", "Buildings", ["building_primary_site"], "count", []),
+                  *_address_block(_SITE_ADDR_PATH, "site_area_m2"),
+                  ("local_authority", "Local authority (ONS code)", ["land_site"], "attr", _LA),
+                  ("site_osid", "Site ID", [], "attr", ["osid"]),
+              ]},
+    "access": {"subject": "lus-fts-siteaccesslocation", "title": "Site access and network (one row per entrance)",
+               "colour_by": "access_for",
+               "columns": [
+                   ("access_for", "Access for", [], "attr", ["access_purpose", "accesspurpose"]),
+                   ("access_type", "Access type", [], "attr", ["accesstype", "description"]),
+                   ("distance_to_network_m", "Distance to the network (m)", [], "attr", ["distancetonetworknode_m"]),
+                   ("network", "Joins the", [], "attr", ["accessednetworknodefeaturetype"]),
+                   ("site_use", "Site", ["sal_site"], "attr", _DESC),
+                   ("site_name", "Site name", ["sal_site"], "attr", _SITE_NAME),
+                   ("entrances_to_site", "Entrances to this site", ["sal_site", "sal_site"], "count", []),
+                   ("buildings_on_site", "Buildings on the site", ["sal_site", "building_primary_site"], "count", []),
+                   ("addresses_served", "Addresses on the site", ["sal_site", *_SITE_ADDR_PATH], "count", []),
+                   *_mix(["sal_site", *_SITE_ADDR_PATH], "addresses on the site"),
+                   *_mix_counts(["sal_site", *_SITE_ADDR_PATH]),
+                   ("roads_at_entrance", "Roads at the entrance", ["sal_roadnode", "roadlink_nodes"], "list", _DESC),
+                   ("road_names", "Road names", ["sal_roadnode", "roadlink_nodes"], "list",
+                    ["name1_text", "roadclassificationnumber"]),
+                   ("road_class", "Road classification", ["sal_roadnode", "roadlink_nodes"], "list",
+                    ["roadclassification"]),
+                   ("narrowest_road_m", "Narrowest road width (m)", ["sal_roadnode", "roadlink_nodes"], "agg",
+                    _agg("MIN", "{w}", w=["roadwidth_minimum", "roadwidth_average"])),
+                   ("dedication", "Highway dedication", ["sal_roadnode", "roadlink_nodes",
+                                                         "highwaydedication_roadlink"], "list", _DESC),
+                   ("restrictions", "Restrictions on those roads",
+                    ["sal_roadnode", "roadlink_nodes", "restriction_roadlink"], "list", ["restriction"]),
+                   ("barriers", "Barriers and structures on those roads",
+                    ["sal_roadnode", "roadlink_nodes", "routingstructure_roadlink"], "list", _DESC),
+                   ("paths_at_entrance", "Paths at the entrance", ["sal_pathnode", "pathlink_nodes"], "list", _DESC),
+                   ("site_osid", "Site ID", ["sal_site"], "attr", ["osid"]),
+               ]},
+    "community": {"subject": "lus-fts-site", "title": "Community facilities (one row per site)",
+                  "colour_by": "facility",
+                  "columns": [
+                      _derive("facility", "Facility", (
+                          f"CASE WHEN site_use IN ({_sql_list(EDUCATION_SITES)}) THEN 'Education' "
+                          f"WHEN site_use IN ({_sql_list(HEALTH_SITES)}) THEN 'Health and care' "
+                          f"WHEN site_use IN ({_sql_list(EMERGENCY_SITES)}) THEN 'Emergency services' "
+                          f"WHEN site_use IN ({_sql_list(UTILITY_SITES)}) THEN 'Utility' "
+                          "ELSE 'Community' END")),
+                      *_SITE_CORE,
+                      *_SITE_BUILDINGS,
+                      *_address_block(_SITE_ADDR_PATH, "site_area_m2", "building_floor_area_m2"),
+                      ("main_address", "Main address", ["site_uprn"], "attr", ["address"]),
+                      ("entrances", "Site entrances", ["sal_site"], "count", []),
+                      ("entrance_types", "Entrance types", ["sal_site"], "list", ["access_purpose", "accesspurpose"]),
+                      ("roads_giving_access", "Roads giving access", ["sal_site", "sal_roadnode", "roadlink_nodes"],
+                       "list", _DESC),
+                      ("road_names", "Road names", ["sal_site", "sal_roadnode", "roadlink_nodes"], "list",
+                       ["name1_text"]),
+                      ("site_osid", "Site ID", [], "attr", ["osid"]),
+                  ]},
+}
+
+SHOWCASE_RECIPES = [
+    {"name": "Site address mix", "key": "site_mix",
+     "question": "Which sites are residential, commercial or mixed - and in what proportion?",
+     "path": "Site ← Building → Address (UPRN)",
+     "answers": "For every site: how many addresses, how many residential / commercial / mixed use and the %, "
+                "homes per hectare, floor area per address, its main address and main building.",
+     "types": ["lus-fts-site", "bld-fts-building", A],
+     "links": ["building_primary_site", "building_uprn", "site_uprn", "site_mainbuilding"],
+     "note": "Colour the map by 'Character' (mainly residential / commercial / mixed). Addresses come through "
+             "the site's buildings - OS's own cross-references."},
+    {"name": "Housing stock profile", "key": "housing",
+     "question": "What are the buildings like - age, type, size - and who lives or works in them?",
+     "path": "Building → Address, Building Part, Site, Street",
+     "answers": "Detached / semi / terrace, age, floors, height, construction, floor area per home, how many "
+                "addresses and their residential / commercial mix.",
+     "types": ["bld-fts-building", "bld-fts-buildingpart", A, "lus-fts-site", "trn-ntwk-street"],
+     "links": ["building_uprn", "building_parts", "building_primary_site", "address_street"],
+     "note": "Floor area is estimated as footprint × floors."},
+    {"name": "Street profile (USRN)", "key": "street",
+     "question": "What's on each street, and who looks after it?",
+     "path": "Street (USRN) ← Address → Building; Street ← Road Link; Street ← highway records",
+     "answers": "Addresses and their mix per street, buildings and their ages, road length and class, "
+                "addresses per 100 m, maintenance responsibility, highway dedication, designations and "
+                "restrictions.",
+     "types": ["trn-ntwk-street", A, "bld-fts-building", "trn-ntwk-roadlink", "trn-rami-maintenancearea",
+               "trn-rami-maintenanceline", "trn-rami-highwaydedication", "trn-rami-specialdesignationline",
+               "trn-rami-specialdesignationarea", "trn-rami-restriction"],
+     "links": ["address_street", "building_uprn", "roadlink_street", "maintenancearea_street",
+               "maintenanceline_street", "highwaydedication_street", "specialdesignationline_street",
+               "specialdesignationarea_street", "restriction_roadlink"],
+     "note": "Addresses reach a street through their USRN (OS Places LPI records - added automatically)."},
+    {"name": "Postcode profile", "key": "postcode",
+     "question": "What is each postcode like?",
+     "path": "Postcode ← Address → Building → Site",
+     "answers": "Addresses and their mix per postcode, homes per hectare, building ages and types, floor area "
+                "per address, the sites and streets in it.",
+     "types": ["asu-gbpcd-postcodeunitarea", "asu-gbpcd-postcodeunitpoint", A, "bld-fts-building",
+               "lus-fts-site", "trn-ntwk-street"],
+     "links": ["address_pcarea", "pcpoint_pcarea", "building_uprn", "building_primary_site", "address_street"],
+     "note": "Postcodes are postal groupings, not property keys - they can change."},
+    {"name": "Solar and roof potential", "key": "solar",
+     "question": "Which roofs could take solar panels?",
+     "path": "Building (roof shape and aspect) → Address",
+     "answers": "Roof area facing each direction, flat roof, panels already fitted, a High / Medium / Low "
+                "potential, and the addresses (residential / commercial) that would benefit.",
+     "types": ["bld-fts-building", A, "lus-fts-site"],
+     "links": ["building_uprn", "building_primary_site"],
+     "note": "Roof aspect areas come from OS's Building attributes; 'usable' = south, south-east, south-west "
+             "and flat. High ≥ 40 m², Medium ≥ 15 m²."},
+    {"name": "Green and sealed land", "key": "green",
+     "question": "How green is each site, and how much is paved over?",
+     "path": "Land, Building Part, Water, Road/Track/Path → Site",
+     "answers": "m² and % of each site under grass, trees, gardens, made surface, buildings, water and roads; "
+                "% green, % sealed, green space per home and the address mix.",
+     "types": ["lus-fts-site", "lnd-fts-land", "bld-fts-buildingpart", "wtr-fts-water", "trn-fts-roadtrackorpath",
+               "bld-fts-building", A],
+     "links": ["land_site", "buildingpart_site", "water_site", "roadtrackorpath_site", "building_primary_site",
+               "building_uprn"],
+     "note": "Every topographic area records the site it lies in, so composition needs no spatial links."},
+    {"name": "Site access and network", "key": "access",
+     "question": "How do people and vehicles get into each site?",
+     "path": "Site Access Location → Site; → Road Node → Road Link → highway records; → Path Node",
+     "answers": "Each entrance: who it's for, how far from the network, the roads and paths it joins, their "
+                "width, dedication, restrictions and barriers, and the addresses on the site it serves.",
+     "types": ["lus-fts-siteaccesslocation", "lus-fts-site", "trn-ntwk-roadnode", "trn-ntwk-roadlink",
+               "trn-ntwk-pathnode", "trn-ntwk-pathlink", "trn-rami-highwaydedication", "trn-rami-restriction",
+               "trn-rami-routingstructure", "bld-fts-building", A],
+     "links": ["sal_site", "sal_roadnode", "sal_pathnode", "roadlink_nodes", "pathlink_nodes",
+               "highwaydedication_roadlink", "restriction_roadlink", "routingstructure_roadlink",
+               "building_primary_site", "building_uprn"]},
+    {"name": "Community facilities", "key": "community",
+     "question": "Where are the schools, health, emergency, community and utility sites - and what's on them?",
+     "path": "Site (filtered) ← Building → Address; Site ← Site Access Location → roads",
+     "answers": "Each facility: its type, buildings, floor area, address mix, entrances and the roads that "
+                "serve it.",
+     "types": ["lus-fts-site", "bld-fts-building", A, "lus-fts-siteaccesslocation", "trn-ntwk-roadnode",
+               "trn-ntwk-roadlink"],
+     "links": ["building_primary_site", "building_uprn", "site_uprn", "sal_site", "sal_roadnode", "roadlink_nodes"],
+     "filters": {"lus-fts-site": COMMUNITY_FACILITIES},
+     "note": "Sites are narrowed to community facilities - double-click Site to change that."},
+]
+for _r in SHOWCASE_RECIPES:
+    _r["answer"] = _SHOWCASE_ANSWERS[_r["key"]]
+
+
 def path_types(subject, path):
     """The feature type reached at each step of an answer column's path (and which way each link is used)."""
     cur, out = subject, []

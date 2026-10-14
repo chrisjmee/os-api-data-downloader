@@ -962,12 +962,29 @@ def answer_sql(ans, tables, columns, geom):
                 if a:
                     expr = _clean(f"t.{_sql_name(a)}", a)
         else:
-            prev, ok = f"t.{_sql_name(key)}", True
+            # prev yields keys of the feature type reached so far, in the form 'have' (its own key, or the
+            # key a link stores, e.g. a Street's USRN); a step that needs another form converts through the layer
+            prev, ok, cur, have = f"t.{_sql_name(key)}", True, subj, key
             for lk, side in steps:
                 tbl = tables.get(lk["id"])
                 if not tbl:
                     ok = False
                     break
+                need = own_key(lk["holder"]) if side == "out" else (lk["key"] if lk["kind"] == "id" else "osid")
+                if need != have:
+                    cname = layer_name(cur)
+                    if need not in columns.get(cname, ()) or have not in columns.get(cname, ()):
+                        ok = False
+                        break
+                    if prev == f"t.{_sql_name(have)}":
+                        prev = f"t.{_sql_name(need)}"
+                    else:
+                        prev = (f"SELECT c.{_sql_name(need)} FROM {_sql_name(cname)} c "
+                                f"WHERE c.{_sql_name(have)} IN ({prev})")
+                if side == "out":
+                    cur, have = lk["target"], (lk["key"] if lk["kind"] == "id" else "osid")
+                else:
+                    cur, have = lk["holder"], own_key(lk["holder"])
                 if side == "out":
                     prev = f"SELECT to_key AS k FROM {_sql_name(tbl)} WHERE from_key IN ({prev})"
                 else:
