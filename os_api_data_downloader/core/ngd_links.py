@@ -698,6 +698,14 @@ def _mix(path, what="addresses"):
             ("pct_mixed_use", "% mixed use", path, "pct:Dual use (residential and commercial)", _CLASS)]
 
 
+def _mix_counts(path):
+    """How many of the addresses along ``path`` are residential, commercial or mixed use (numbers)."""
+    return [(f"{name}_addresses", f"{alias} addresses", path, "agg", _agg("COUNT", "*", f"{{c}} = '{value}'", c=_CLASS))
+            for name, alias, value in (("residential", "Residential", "Residential"),
+                                       ("commercial", "Commercial", "Commercial"),
+                                       ("mixed_use", "Mixed-use", "Dual use (residential and commercial)"))]
+
+
 def _derive(name, alias, sql):
     """A column worked out from other answer columns, e.g. floor area = footprint x floors."""
     return (name, alias, None, "=", sql)
@@ -756,6 +764,7 @@ _SITE_ADDR_PATH = ["building_primary_site", "building_uprn"]
 def _site_addresses():
     return [("addresses", "Addresses (in its buildings)", _SITE_ADDR_PATH, "count", []),
             *_mix(_SITE_ADDR_PATH),
+            *_mix_counts(_SITE_ADDR_PATH),
             ("addresses_by_location", "Addresses inside, by location (spatial links)", ["sp_address_site"],
              "count", [])]
 
@@ -790,8 +799,10 @@ _SITE_ADDRESSES = [
     ("os_addresses", "Addresses (OS count)", [], "attr", _OS_ADDR_TOTAL),
     ("os_residential", "Residential addresses (OS count)", [], "attr", _OS_ADDR_RES),
     ("os_commercial", "Commercial addresses (OS count)", [], "attr", _OS_ADDR_COM),
-    _derive("homes_per_ha", "Homes per hectare", "ROUND(os_residential / NULLIF(site_area_m2 / 10000.0, 0), 1)"),
-    _derive("addresses_per_ha", "Addresses per hectare", "ROUND(os_addresses / NULLIF(site_area_m2 / 10000.0, 0), 1)"),
+    _derive("homes_per_ha", "Homes per hectare",
+            "ROUND(COALESCE(os_residential, residential_addresses) / NULLIF(site_area_m2 / 10000.0, 0), 1)"),
+    _derive("addresses_per_ha", "Addresses per hectare",
+            "ROUND(COALESCE(os_addresses, addresses) / NULLIF(site_area_m2 / 10000.0, 0), 1)"),
     ("address_class_agrees", "Do the addresses agree with the land use?", [], "attr",
      ["address_classificationcorrelation"]),
 ]
@@ -1026,14 +1037,6 @@ COMMUNITY_FACILITIES = EDUCATION_SITES + HEALTH_SITES + EMERGENCY_SITES + COMMUN
 
 def _sql_list(values):
     return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
-
-
-def _mix_counts(path):
-    """How many of the addresses along ``path`` are residential, commercial or mixed use (numbers)."""
-    return [(f"{name}_addresses", f"{alias} addresses", path, "agg", _agg("COUNT", "*", f"{{c}} = '{value}'", c=_CLASS))
-            for name, alias, value in (("residential", "Residential", "Residential"),
-                                       ("commercial", "Commercial", "Commercial"),
-                                       ("mixed_use", "Mixed-use", "Dual use (residential and commercial)"))]
 
 
 def _character(total="addresses"):

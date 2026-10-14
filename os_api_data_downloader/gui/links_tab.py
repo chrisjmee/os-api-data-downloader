@@ -1101,6 +1101,8 @@ class LinksTab(QWidget):
             if layer.fields().indexOf("ngd_in_area") >= 0 and f["ngd_in_area"] != 1:
                 continue
             g = f["class_group"] or "Unclassified"
+            if g == LK.PARENT_SHELL:         # the building record of a block of flats - the flats are counted
+                continue
             g = "Mixed use" if g == LK.MIXED else g
             counts[g] = counts.get(g, 0) + 1
         total = sum(counts.values())

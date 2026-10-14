@@ -28,13 +28,14 @@ from __future__ import annotations
 import copy
 import datetime as _dt
 import json
+import math
 import os
 import re
 import threading
 import time
 
 from qgis.core import (
-    QgsFeature, QgsField, QgsFields, QgsGeometry, QgsPointXY, QgsProject, QgsRelation, QgsSpatialIndex,
+    QgsFeature, QgsField, QgsFields, QgsGeometry, QgsPointXY, QgsProject, QgsRectangle, QgsRelation, QgsSpatialIndex,
     QgsVectorLayer, QgsWkbTypes,
 )
 from qgis.PyQt.QtCore import QRunnable, QThreadPool, QVariant
@@ -365,10 +366,13 @@ class Store:
         return cache[key]
 
 
-def read_seq(path, base, store, inside):
+def read_seq(path, base, store, inside, engine=None):
+    """Reads a downloaded file into the store. ``engine`` (a prepared area geometry): features beyond the
+    area - read when the download was widened to complete the answer's features - are marked outside."""
     new = []
     if not path or not os.path.exists(path):
         return new
+    _, ogr, _ = C._gdal() if engine is not None else (None, None, None)
     with open(path, encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
@@ -378,10 +382,55 @@ def read_seq(path, base, store, inside):
             props = dict(f.get("properties") or {})
             if "osid" not in props and f.get("id"):
                 props["osid"] = f["id"]
-            k = store.add(base, props, inside)
+            here = inside
+            if engine is not None and f.get("geometry"):
+                og = ogr.CreateGeometryFromJson(json.dumps(f["geometry"]))
+                if og is not None:
+                    g = QgsGeometry()
+                    g.fromWkb(bytes(og.ExportToWkb()))
+                    here = bool(engine.intersects(g.constGet()))
+            k = store.add(base, props, here)
             if k:
                 new.append(k)
     return new
+
+
+def seq_extent(path):
+    """(xmin, ymin, xmax, ymax) of every feature in a downloaded file, or None."""
+    if not path or not os.path.exists(path):
+        return None
+    box = [float("inf"), float("inf"), float("-inf"), float("-inf")]
+
+    def walk(c):
+        if c and isinstance(c[0], (int, float)):
+            box[0], box[1] = min(box[0], c[0]), min(box[1], c[1])
+            box[2], box[3] = max(box[2], c[0]), max(box[3], c[1])
+        else:
+            for x in c or ():
+                walk(x)
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                walk((json.loads(line).get("geometry") or {}).get("coordinates"))
+    return tuple(box) if box[0] <= box[2] else None
+
+
+WIDEN_MAX_M2 = 1_000_000.0   # read at most 1 km² (or 4 × the area, if bigger) to complete the answer's features
+
+
+def widen(bbox, ext):
+    """The area grown to cover ``ext`` (the answer's features), limited to WIDEN_MAX_M2 or 4 × the area.
+    Returns (rectangle, capped)."""
+    u = (min(bbox[0], ext[0]), min(bbox[1], ext[1]), max(bbox[2], ext[2]), max(bbox[3], ext[3]))
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    cap = max(WIDEN_MAX_M2, 4 * w * h)
+    if (u[2] - u[0]) * (u[3] - u[1]) <= cap:
+        return u, False
+    # grow the area evenly by d on every side so that (w + 2d)(h + 2d) = cap, and keep what's inside that
+    d = (-(w + h) + math.sqrt((w + h) ** 2 - 4 * (w * h - cap))) / 4
+    c = (bbox[0] - d, bbox[1] - d, bbox[2] + d, bbox[3] + d)
+    return (max(u[0], c[0]), max(u[1], c[1]), min(u[2], c[2]), min(u[3], c[3])), True
 
 
 # ---------------------------------------------------------------------------------------------- links
@@ -637,7 +686,7 @@ def _sql_name(name):
     return '"' + name.replace('"', '""') + '"'
 
 
-def write_ngd_layer(area_seq, outside_seq, aoi, out_path, name, mode):
+def write_ngd_layer(area_seq, outside_seq, aoi, out_path, name, mode, widened=False):
     """One GeoPackage layer from the area download and the features fetched from outside it, written by
     GDAL. Area features are clipped as chosen; outside ones are kept whole. Adds ``ngd_in_area``.
     Returns the number of features written."""
@@ -651,7 +700,7 @@ def write_ngd_layer(area_seq, outside_seq, aoi, out_path, name, mode):
     for path, inside in srcs:
         opts = dict(format="GPKG", layerName=name, geometryType="PROMOTE_TO_MULTI", dstSRS="EPSG:27700",
                     reproject=False, transactionSize=100000)
-        if inside and mode == "clip":
+        if inside and mode == "clip" and not widened:
             opts["clipSrc"] = aoi_ogr.ExportToWkt()
         if created:
             opts.update(accessMode="append", addFields=True)
@@ -664,7 +713,7 @@ def write_ngd_layer(area_seq, outside_seq, aoi, out_path, name, mode):
             ds.ExecuteSQL(f"ALTER TABLE {tbl} ADD COLUMN ngd_in_area INTEGER")
             created = True
         ds.ExecuteSQL(f"UPDATE {tbl} SET ngd_in_area = {inside} WHERE ngd_in_area IS NULL")
-        if inside and mode != "clip" and not C._is_rect(aoi_ogr):
+        if inside and (widened or (mode != "clip" and not C._is_rect(aoi_ogr))):
             # the area filter sent to the API is simplified outwards: anything that doesn't touch the
             # real shape is kept, but marked as outside the area
             lyr = ds.GetLayerByName(name)
@@ -919,6 +968,7 @@ def geometry_column(out_path, name):
 
 
 MIXED = "Dual use (residential and commercial)"     # OS Places' name for mixed-use addresses
+PARENT_SHELL = "Parent shell"
 
 
 def _clean(expr, attr):
@@ -1011,8 +1061,15 @@ def answer_sql(ans, tables, columns, geom):
                 ename = layer_name(end)
                 ecols = columns.get(ename, set())
                 found = ename in columns and end_key in ecols
+                # a parent shell is the record for a whole building whose flats have addresses of their own:
+                # counting it as well would count the building twice
+                shell = (end == NL.PLACES_ADDRESS and found and "class_group" in ecols)
+                if shell:
+                    prev = (f"SELECT x.{_sql_name(end_key)} FROM {_sql_name(ename)} x WHERE x.{_sql_name(end_key)} "
+                            f"IN ({prev}) AND COALESCE(x.class_group, '') <> '{PARENT_SHELL}'")
                 if how == "count":
-                    expr = f"(SELECT COUNT(DISTINCT k) FROM ({prev}))"
+                    expr = f"(SELECT COUNT(DISTINCT k) FROM ({prev}))" if not shell else \
+                        f"(SELECT COUNT(DISTINCT {_sql_name(end_key)}) FROM ({prev}))"
                 elif how == "agg" and found:
                     a = attrs
                     body = "*" if a["expr"] == "*" else _fill(a["expr"], a["use"], ecols, "x")
@@ -1127,19 +1184,56 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
     ngd_types = [t for t in ngd_types if t in cids]
     expected = dict(expected or {})
 
+    # 0. the answer's own features first (e.g. postcodes or sites in the area): many reach beyond the area,
+    # and counting what's in them (addresses, buildings, land) needs everything over their whole extent - so
+    # the rest is read over the area widened to cover them
+    subj = (answer or {}).get("subject")
+    big, subj_files, subj_counts, subj_tr = None, {}, {}, False
+    first = subj in ngd_types and (len(ngd_types) > 1 or want_address)
+    if first:
+        task.report(1, f"Downloading the {NL.plural(subj)} in the area")
+        subj_files, subj_counts, subj_tr = download_area(ngd, cids, [subj], bbox, wkt, filters, expected, tmp,
+                                                         task, 1, 12, first_pages)
+        ext = seq_extent(subj_files.get(subj))
+        if ext and not subj_tr and not cancelled():
+            big, capped = widen(bbox, ext)
+            if big == tuple(bbox):
+                big = None
+            else:
+                km2 = (big[2] - big[0]) * (big[3] - big[1]) / 1e6
+                notes.append(f"Some {NL.plural(subj)} reach beyond your area, so everything else was read over "
+                             f"{km2:.2f} km² around them to count what's in each one in full (features outside "
+                             "your area have ngd_in_area = 0).")
+                if capped:
+                    notes.append(f"Some {NL.plural(subj)} are very large - their figures cover only the part within "
+                                 f"{km2:.1f} km² of your area.")
+    rest = [t for t in ngd_types if t != subj] if first else ngd_types
+    area_engine = None
+    if big:
+        area_engine = QgsGeometry.createGeometryEngine(aoi.constGet())
+        area_engine.prepareGeometry()
+
     # 1. the area and its addresses, side by side: every page of every feature type, and the address squares
     def area_job():
-        return download_area(ngd, cids, ngd_types, bbox, wkt, filters, expected, tmp, task, 1, 55, first_pages)
+        if big:
+            return download_area(ngd, cids, rest, big, None, filters, {}, tmp, task, 12, 55, None)
+        return download_area(ngd, cids, rest, bbox, wkt, filters, expected, tmp, task, 12 if first else 1, 55,
+                             first_pages)
 
     def address_job():
         if not want_address:
             return [], {}, False
+        if big:
+            return fetch_addresses(places, big, QgsGeometry.fromRect(QgsRectangle(*big)), None, 55, 62, cancelled)
         return fetch_addresses(places, bbox, aoi, None, 55, 62, cancelled)
     got = parallel([area_job, address_job])
     for r in got:
         if isinstance(r, Exception):
             raise r
     (area_files, counts, truncated), (addresses, pool, tr) = got
+    area_files.update(subj_files)
+    counts.update(subj_counts)
+    truncated = truncated or subj_tr
     if truncated:
         notes.append("Stopped at the transaction limit - partial download.")
     spent("OS NGD features and addresses in the area")
@@ -1147,16 +1241,22 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
         if not addresses and not tr:
             notes.append("OS Places returned no addresses for this area - if there should be some, check that "
                          "your API key's project includes the OS Places API.")
+        n_in = 0
         for r in addresses:
-            store.add(NL.PLACES_ADDRESS, r, True)
-        counts[NL.PLACES_ADDRESS] = len(addresses)
+            here = True
+            if area_engine is not None:
+                g = QgsGeometry.fromPointXY(QgsPointXY(r["easting"], r["northing"]))
+                here = bool(area_engine.intersects(g.constGet()))
+            n_in += here
+            store.add(NL.PLACES_ADDRESS, r, here)
+        counts[NL.PLACES_ADDRESS] = n_in
         if tr:
             truncated = True
             notes.append("OS Places stopped at the transaction limit - some addresses are missing.")
     clock("downloading the area")
     task.report(62, "Reading the downloaded features")
     for t, path in area_files.items():
-        read_seq(path, t, store, inside=True)
+        read_seq(path, t, store, inside=True, engine=area_engine if t != subj else None)
 
     # 2. find the links; fetch linked features outside the area by their ID
     detected, fetched, outside_files = {}, {}, {}
@@ -1252,7 +1352,8 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
     written = {}
     for i, t in enumerate(ngd_types):
         task.report(76 + 8 * i / max(1, len(ngd_types)), f"Writing {NL.title(t)}")
-        n = write_ngd_layer(area_files.get(t), outside_files.get(t), aoi, out_path, layer_name(t), mode)
+        n = write_ngd_layer(area_files.get(t), outside_files.get(t), aoi, out_path, layer_name(t), mode,
+                            widened=bool(big) and t != subj)
         if n:
             written[t] = n
     if want_address and addresses:

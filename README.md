@@ -82,7 +82,10 @@ cross-reference tables) aren't served by the APIs this plugin uses. Double-click
   | Site access and network | entrance | who it's for, distance to the network, roads and paths joined, width, dedication, restrictions, barriers, addresses on the site |
   | Community facilities | education / health / emergency / community / utility site | facility group, buildings, floor area, address mix, entrances and the roads that serve it |
 
-  Spatial links (worked out from location) are off by default: the quick picks use OS's own identifiers
+  Each answer counts its postcodes, sites, streets or buildings **in full**, even where they reach beyond
+  your drawn area: those are downloaded first, then everything else is read over the area widened to cover
+  them (up to 1 km², or 4 × your area). Parent shells (the record for a whole block of flats) aren't counted
+  on top of the flats. Spatial links (worked out from location) are off by default: the quick picks use OS's own identifiers
   and cross-references, so a site's addresses come through its buildings. Tick **Show spatial links** first
   to add them.
 - **Quick pick → Answer a question** starts from a question rather than a list of layers. Each one ticks the feature types and
