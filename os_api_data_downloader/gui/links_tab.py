@@ -263,6 +263,12 @@ class LinksTab(QWidget):
         self.outside.setToolTip("E.g. the Road Node at the far end of a Road Link, or the rest of a Site. Costs "
                                 "extra transactions (about 1 per 40 features), counted against 'Stop after'.")
         v.addWidget(self.outside)
+        self.open_table = QCheckBox("Open the answer's attribute table when it's ready")
+        self.open_table.setChecked(bool(S.get("links_open_table")))
+        self.open_table.setToolTip("Off: the answer is added to the map only - click a feature with Identify, or "
+                                   "right-click the layer > Open Attribute Table. Remembered.")
+        self.open_table.toggled.connect(lambda on: S.set_("links_open_table", bool(on)))
+        v.addWidget(self.open_table)
         row = QHBoxLayout()
         row.addWidget(QLabel("Show me"))
         self.view = QComboBox()
@@ -1043,14 +1049,17 @@ class LinksTab(QWidget):
         if answer_layer is not None:
             n = answer_layer.featureCount()
             lines = [f"<b>✔ Your answer: {answer['title']}</b> - {n:,} row(s), took {took}.",
-                     "Its table has opened: one row per feature, in plain columns. Or click any feature on the "
-                     "map with Identify (or hover with Map Tips on) to read its answer.",
+                     ("Its table has opened: one row per feature, in plain columns. Or click"
+                      if self.open_table.isChecked() else
+                      "One row per feature, in plain columns - right-click the layer > Open Attribute Table, or click")
+                     + " any feature on the map with Identify (or hover with Map Tips on) to read its answer.",
                      "The data it was built from is in 'Supporting layers' (switched off). Choose 'Show me: "
                      "Everything' for joined copies and link tables."]
             if self.iface is not None:
                 try:
                     self.iface.setActiveLayer(answer_layer)
-                    self.iface.showAttributeTable(answer_layer)
+                    if self.open_table.isChecked():
+                        self.iface.showAttributeTable(answer_layer)
                 except Exception:   # noqa: BLE001 - a convenience only
                     pass
         else:

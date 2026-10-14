@@ -16,6 +16,7 @@ DEFAULTS = {
     "hard_limit": 0,
     "folder": "",
     "clip_mode": "clip",
+    "links_open_table": False,      # NGD Data Linkages: open the answer's attribute table when it's ready
 }
 
 _BOOL_KEYS = {k for k, v in DEFAULTS.items() if isinstance(v, bool)}
