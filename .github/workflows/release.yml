@@ -1,0 +1,38 @@
+# Push a tag such as v2.8.4 and GitHub builds the plugin ZIP and attaches it to a Release,
+# ready for QGIS: Plugins > Manage and Install Plugins > Install from ZIP.
+name: Build plugin ZIP
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the code for mistakes
+        run: |
+          pip install pyflakes
+          python -m pyflakes os_api_data_downloader
+      - name: Build the ZIP
+        run: |
+          VERSION=$(grep '^version=' os_api_data_downloader/metadata.txt | cut -d= -f2)
+          zip -r "os_api_data_downloader-${VERSION}.zip" os_api_data_downloader -x '*/__pycache__/*'
+          echo "ZIP=os_api_data_downloader-${VERSION}.zip" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: ${{ env.ZIP }}
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP }}
