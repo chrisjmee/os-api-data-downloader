@@ -169,11 +169,10 @@ class QgisTransport:
 
 
 def default_transport():
-    try:
-        import qgis.core  # noqa: F401
+    import importlib.util
+    if importlib.util.find_spec("qgis") is not None:
         return QgisTransport()
-    except ImportError:
-        return UrllibTransport()
+    return UrllibTransport()
 
 
 # ---------------------------------------------------------------- retries
