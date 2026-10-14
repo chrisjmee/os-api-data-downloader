@@ -2,7 +2,7 @@ import os
 """The eight showcase quick picks each build their answer layer."""
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_links.py")).read().split("# --- tree behaviour")[0])
 from os_api_data_downloader.core import ngd_links as NL2
-DATA["asu-gbpcd-postcodeunitarea-1"] = [({"osid": "eeeeeeee-0000-0000-0000-000000000001", "postcode": "PR7 1AA"}, poly(0, 0, 100, 100), True)]
+DATA["asu-gbpcd-postcodeunitarea-1"] = [({"postcode": "PR7 1AA"}, poly(0, 0, 100, 100), True)]
 ADDRESSES["100"]["USRN"] = 123
 ok = []
 for k in range(len(NL2.SHOWCASE_RECIPES)):

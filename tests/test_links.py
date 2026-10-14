@@ -125,7 +125,7 @@ class FakeTransport:
                     rows = [r for r in rows if str(r[0].get(mi.group(1))) in vals]
             off, lim = int(q.get("offset", 0)), int(q.get("limit", 100))
             page = rows[off:off + lim]
-            feats = [{"type": "Feature", "id": p["osid"], "properties": p, "geometry": g} for p, g, _ in page]
+            feats = [{"type": "Feature", "id": p.get("osid", p.get("postcode")), "properties": p, "geometry": g} for p, g, _ in page]
             return 200, json.dumps({"type": "FeatureCollection", "features": feats, "links": []}).encode()
         if path.endswith("/places/v1/bbox"):
             res = [{"DPA": ADDRESSES["100"]}] if q.get("offset", "0") == "0" else []

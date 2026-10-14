@@ -125,10 +125,25 @@ def is_empty(flt):
 
 
 def _split_list(value):
-    parts = [p.strip() for p in re.split(r"[,;\n]", str(value)) if p.strip()]
+    """A list of values: given as a list (kept whole - OS values can contain commas, e.g. 'Ambulance, Fire
+    And Police Station'), or typed: separated by ; or new lines when either is used, otherwise by commas."""
+    if isinstance(value, (list, tuple, set)):
+        parts = [str(p).strip() for p in value if str(p).strip()]
+    elif re.search(r"[;\n]", str(value)):
+        parts = [p.strip() for p in re.split(r"[;\n]", str(value)) if p.strip()]
+    else:
+        parts = [p.strip() for p in str(value).split(",") if p.strip()]
     if not parts:
         raise FilterError("Enter at least one value (separate several values with commas).")
     return parts
+
+
+def split_values(value):
+    """The values typed or picked for 'is one of' (no error when empty)."""
+    try:
+        return _split_list(value)
+    except FilterError:
+        return []
 
 
 def _check_value(attr, typ, op, value):
@@ -188,14 +203,23 @@ def _cql_lit(value, typ):
     return "'" + str(value).replace("'", "''") + "'"
 
 
+# characters OS's API mishandles inside a quoted value: a doubled '' is rejected, and a comma or bracket
+# inside IN (...) is taken as the end of the value ("Ambulance, Fire And Police Station" becomes
+# 'Ambulance' + 'Fire And Police Station', HTTP 400)
+_AWKWARD = "',()"
+
+
 def _cql_like(value):
-    # % and _ are CQL wildcards - a user's literal ones are kept as typed (rare in OS data). An apostrophe
-    # becomes the one-character wildcard _ : OS's API doesn't accept a doubled '' inside a value.
-    return str(value).replace("'", "_")
+    # % and _ are CQL wildcards - a user's literal ones are kept as typed (rare in OS data). Each awkward
+    # character becomes the one-character wildcard _ , which matches it exactly in practice.
+    v = str(value)
+    for ch in _AWKWARD:
+        v = v.replace(ch, "_")
+    return v
 
 
 def _has_quote(value, typ):
-    return typ not in NUMERIC and typ != "boolean" and "'" in str(value)
+    return typ not in NUMERIC and typ != "boolean" and any(ch in str(value) for ch in _AWKWARD)
 
 
 def _rule_cql(rule, types):

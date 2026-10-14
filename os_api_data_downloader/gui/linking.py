@@ -69,8 +69,19 @@ def layer_name(base):
     return C._safe_name(NL.title(base).split(" (")[0]) if base != NL.PLACES_ADDRESS else "Address"
 
 
+_OWN_KEYS = {NL.PLACES_ADDRESS: "uprn",
+             # OS serves postcode units with the postcode as the feature id and no osid attribute, so the
+             # written layer has no osid column - the postcode itself is the unique key
+             "asu-gbpcd-postcodeunitarea": "postcode", "asu-gbpcd-postcodeunitpoint": "postcode"}
+
+
 def own_key(base):
-    return "uprn" if base == NL.PLACES_ADDRESS else "osid"
+    return _OWN_KEYS.get(base, "osid")
+
+
+def link_key(lk):
+    """The key a link's target is matched on: the stored key for an identifier link, else the target's own."""
+    return lk["key"] if lk["kind"] == "id" else own_key(lk["target"])
 
 
 _COLLECTIONS = {}
@@ -788,7 +799,7 @@ def gpkg_layer(out_path, name):
 def spatial_pairs(lk, holder_layer, target_layer, is_cancelled=None):
     """(holder key, target osid, op) pairs from geometry: 'within' - the holder's point on surface lies in
     the target polygon; 'nearest' - the closest target within ``tol`` metres."""
-    hkey, tkey = own_key(lk["holder"]), "osid"
+    hkey, tkey = own_key(lk["holder"]), own_key(lk["target"])
     geoms = {f.id(): (f.geometry(), f[tkey]) for f in target_layer.getFeatures()}
     index = QgsSpatialIndex()
     for fid, (g, _) in geoms.items():
@@ -851,7 +862,7 @@ def joined_sql(base, link_ids, tables, columns, attrs):
             if not lk["card"].startswith("N:1") and lk["card"] != "1:1":
                 selects.append(f"{a}.ks AS {col(pre + 'keys')}")
             tname = layer_name(lk["target"])
-            tkey = lk["key"] if lk["kind"] == "id" else "osid"
+            tkey = link_key(lk)
             if tname in columns and tkey in columns[tname]:
                 for at in attrs.get(lk["target"], []):
                     if at in columns[tname]:
@@ -859,7 +870,7 @@ def joined_sql(base, link_ids, tables, columns, attrs):
                                        f"x.{_sql_name(tkey)} = {a}.k LIMIT 1) AS {col(pre + at[:30])}")
         if lk["target"] == base and lk["holder"] != base:
             a = f"i{j}"
-            tkey = lk["key"] if lk["kind"] == "id" else "osid"
+            tkey = link_key(lk)
             if tkey not in columns.get(name, ()):
                 continue
             joins.append(f"LEFT JOIN (SELECT to_key AS tk, COUNT(DISTINCT from_key) AS n FROM {_sql_name(tbl)} GROUP BY to_key) "
@@ -970,7 +981,7 @@ def answer_sql(ans, tables, columns, geom):
                 if not tbl:
                     ok = False
                     break
-                need = own_key(lk["holder"]) if side == "out" else (lk["key"] if lk["kind"] == "id" else "osid")
+                need = own_key(lk["holder"]) if side == "out" else link_key(lk)
                 if need != have:
                     cname = layer_name(cur)
                     if need not in columns.get(cname, ()) or have not in columns.get(cname, ()):
@@ -982,7 +993,7 @@ def answer_sql(ans, tables, columns, geom):
                         prev = (f"SELECT c.{_sql_name(need)} FROM {_sql_name(cname)} c "
                                 f"WHERE c.{_sql_name(have)} IN ({prev})")
                 if side == "out":
-                    cur, have = lk["target"], (lk["key"] if lk["kind"] == "id" else "osid")
+                    cur, have = lk["target"], link_key(lk)
                 else:
                     cur, have = lk["holder"], own_key(lk["holder"])
                 if side == "out":
@@ -995,7 +1006,7 @@ def answer_sql(ans, tables, columns, geom):
                 expr = "'No addresses'"          # the link was looked for and none were found
             if ok:
                 last, side = steps[-1]
-                end_key = ((last["key"] if last["kind"] == "id" else "osid") if side == "out"
+                end_key = (link_key(last) if side == "out"
                            else own_key(last["holder"]))
                 ename = layer_name(end)
                 ecols = columns.get(ename, set())
@@ -1261,7 +1272,7 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
         if hl is None or tl is None:
             pairs[lid] = []
             continue
-        pairs[lid] = [(NL.norm(h, own_key(lk["holder"])), NL.norm(t, "osid"), op)
+        pairs[lid] = [(NL.norm(h, own_key(lk["holder"])), NL.norm(t, own_key(lk["target"])), op)
                       for h, t, op in spatial_pairs(lk, hl, tl)]
         sp_detected[lid] = lk["op"]
 
@@ -1281,7 +1292,7 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
         tl = gpkg_layer(out_path, layer_name(sp["target"]))
         if hl is None or tl is None:
             continue
-        found = [(NL.norm(h, own_key(sp["holder"])), NL.norm(t, "osid")) for h, t, _ in spatial_pairs(sp, hl, tl)]
+        found = [(NL.norm(h, own_key(sp["holder"])), NL.norm(t, own_key(sp["target"]))) for h, t, _ in spatial_pairs(sp, hl, tl)]
         if swap:     # e.g. (address uprn, building osid) -> (building osid, address uprn)
             pairs[lid] = [(t, h, "location") for h, t in found]
         else:
@@ -1306,7 +1317,7 @@ def run(task, ngd, places, types, link_ids, filters, aoi, bbox, wkt, mode, out_p
         lk = NL.LINK_BY_ID[lid]
         prs = pairs.get(lid) or []
         h, t = lk["holder"], lk["target"]
-        key = lk["key"] if lk["kind"] == "id" else "osid"
+        key = link_key(lk)
         hkeys, tkeys = keys(h, own_key(h)), keys(t, key)
         rows, found = [], 0
         for hk, tk, via in prs:

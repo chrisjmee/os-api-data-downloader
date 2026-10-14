@@ -154,7 +154,7 @@ def cql_for_values(attr, values):
     vals = sorted({v for v in (values or []) if v})
     if not attr or not vals:
         return None
-    rule = {"attr": attr["name"], "op": "IN", "value": ", ".join(vals)}
+    rule = {"attr": attr["name"], "op": "IN", "value": vals}      # a list: values can contain commas
     return F.to_cql({"join": "AND", "items": [rule]}, {attr["name"]: attr.get("type") or "string"})
 
 

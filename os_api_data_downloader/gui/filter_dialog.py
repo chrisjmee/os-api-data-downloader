@@ -117,10 +117,11 @@ class RuleRow(QWidget):
         """Choosing from the list: replaces the value, or for 'is one of' adds to the list."""
         text = self.value.itemText(index)
         if self.op.currentData() == "IN":
-            have = [p.strip() for p in self._typed.split(",") if p.strip()]
+            have = F.split_values(self._typed)
             if text not in have:
                 have.append(text)
-            text = ", ".join(have)
+            # ';' between values: OS values can contain commas ('Ambulance, Fire And Police Station')
+            text = "; ".join(have) if any("," in v for v in have) or ";" in self._typed else ", ".join(have)
         elif self.op.currentData() == "BETWEEN":
             have = [p.strip() for p in self._typed.split(",") if p.strip()][:1]
             text = ", ".join(have + [text]) if len(have) == 1 else text
@@ -133,7 +134,7 @@ class RuleRow(QWidget):
         self.value.setVisible(F.NEEDS_VALUE.get(op, True))
         hint = HINTS.get(self._spec()["type"], "text")
         if op == "IN":
-            hint = "values, separated by commas"
+            hint = "values, separated by commas (or ; if a value has a comma)"
         elif op == "BETWEEN":
             hint = "from, to   e.g. 5, 20"
         if self.values is not None and not (self.values or {}).get(self.attr.currentData()):
