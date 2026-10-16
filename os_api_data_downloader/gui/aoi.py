@@ -10,7 +10,8 @@ from __future__ import annotations
 import json
 
 from qgis.core import (
-    QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsMapLayerProxyModel,
+    QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsMapLayerProxyModel, QgsVectorLayer,
+    QgsWkbTypes,
     QgsProject,
 )
 from qgis.gui import QgsMapLayerComboBox
@@ -29,6 +30,12 @@ try:
     _POLYGONS = QgsMapLayerProxyModel.Filter.PolygonLayer
 except AttributeError:  # QGIS < 3.34
     _POLYGONS = QgsMapLayerProxyModel.PolygonLayer
+
+try:
+    from qgis.core import Qgis
+    _POLYGON_GEOM = Qgis.GeometryType.Polygon
+except AttributeError:  # QGIS < 3.30
+    _POLYGON_GEOM = QgsWkbTypes.PolygonGeometry
 
 BNG = QgsCoordinateReferenceSystem("EPSG:27700")
 MAX_FILTER_WKT = 4000   # keep GET URLs a sensible length; exact clipping happens locally
@@ -68,7 +75,8 @@ class AreaPanel(QWidget):
         self.clear_btn.clicked.connect(self.clear)
         self.layer = QgsMapLayerComboBox()
         self.layer.setFilters(_POLYGONS)
-        self.layer.layerChanged.connect(lambda _: self.r_layer.isChecked() and self.changed.emit())
+        self._watched = None       # the polygon layer whose selection is the area
+        self.layer.layerChanged.connect(self._layer_changed)
         grid.addWidget(self.r_view, 0, 0)
         grid.addWidget(self.r_window, 1, 0)
         grid.addWidget(self.draw_window_btn, 1, 1)
@@ -97,7 +105,68 @@ class AreaPanel(QWidget):
         v.addWidget(self.size)
         iface.mapCanvas().extentsChanged.connect(self._update_size)
         self.changed.connect(self._update_size)
+        # follow the Layers panel: the polygon layer selected there is the one offered, and selecting
+        # polygons in it makes them the area for every tab
+        iface.currentLayerChanged.connect(self._toc_layer_changed)
+        self._toc_layer_changed(iface.activeLayer())
+        self._layer_changed(self.layer.currentLayer())
         self._update_size()
+
+    # ---------------------------------------------------------------- selected polygons (Layers panel)
+    @staticmethod
+    def _is_polygon_layer(lyr):
+        try:
+            return isinstance(lyr, QgsVectorLayer) and QgsWkbTypes.geometryType(lyr.wkbType()) == _POLYGON_GEOM
+        except Exception:      # noqa: BLE001 - a deleted layer
+            return False
+
+    def _toc_layer_changed(self, lyr):
+        if not self._is_polygon_layer(lyr) or self.layer.currentLayer() is lyr:
+            return
+        # keep an area that's in use: only move to another layer when it has polygons selected, or when the
+        # area isn't 'selected polygons' (e.g. the answer layer becoming active after a download)
+        if (self.r_layer.isChecked() and self._watched is not None and self._watched.selectedFeatureCount()
+                and not lyr.selectedFeatureCount()):
+            return
+        self.layer.setLayer(lyr)          # -> _layer_changed
+
+    def _layer_changed(self, lyr):
+        if self._watched is not None:
+            try:
+                self._watched.selectionChanged.disconnect(self._selection_changed)
+            except (TypeError, RuntimeError):
+                pass
+        self._watched = lyr if self._is_polygon_layer(lyr) else None
+        if self._watched is not None:
+            self._watched.selectionChanged.connect(self._selection_changed)
+            if self._watched.selectedFeatureCount():
+                self._use_selection()
+                return
+        if self.r_layer.isChecked():
+            self._show_selection()
+            self.changed.emit()
+
+    def _selection_changed(self, *_):
+        if self._watched is not None and self._watched.selectedFeatureCount():
+            self._use_selection()
+        elif self.r_layer.isChecked():
+            self._show_selection()
+            self.changed.emit()
+
+    def _use_selection(self):
+        """Polygons selected in the chosen layer become the area (for every tab)."""
+        if not self.r_layer.isChecked():
+            self.r_layer.setChecked(True)       # -> _choice_changed -> changed
+        else:
+            self._show_selection()
+            self.changed.emit()
+
+    def _show_selection(self):
+        self.band.reset(_POLY)
+        try:
+            self.band.setToGeometry(self.geometry_bng(), BNG)
+        except Exception:      # noqa: BLE001 - nothing selected yet
+            pass
 
     # ---------------------------------------------------------------- drawing
     def _choice_changed(self, radio):
@@ -117,6 +186,8 @@ class AreaPanel(QWidget):
                 self.iface.mapCanvas().unsetMapTool(self._tool)
                 self._tool = None
             self._clear_band()
+            if radio is self.r_layer:
+                self._show_selection()
         self.changed.emit()
 
     def _unset_tool(self):
@@ -205,8 +276,10 @@ class AreaPanel(QWidget):
                 raise ValueError("Draw a window or polygon on the map first.")
             return L.geometry_to_bng(self.drawn, canvas.mapSettings().destinationCrs())
         lyr = self.layer.currentLayer()
-        if lyr is None or not lyr.selectedFeatureCount():
-            raise ValueError("Select one or more polygons in the chosen layer.")
+        if lyr is None:
+            raise ValueError("Choose a polygon layer, then select one or more of its polygons.")
+        if not lyr.selectedFeatureCount():
+            raise ValueError(f"Select one or more polygons in '{lyr.name()}' (Layers panel → select features).")
         geoms = [f.geometry() for f in lyr.selectedFeatures() if f.hasGeometry()]
         return L.geometry_to_bng(QgsGeometry.unaryUnion(geoms), lyr.crs())
 
@@ -234,7 +307,10 @@ class AreaPanel(QWidget):
         except Exception:
             return
         km2 = g.area() / 1e6
-        self.size.setText(f"Area: {km2:,.3f} km²" if km2 < 10 else f"Area: {km2:,.1f} km²")
+        text = f"Area: {km2:,.3f} km²" if km2 < 10 else f"Area: {km2:,.1f} km²"
+        if self.r_layer.isChecked():
+            text += f" - {self.description()}"
+        self.size.setText(text)
 
     @staticmethod
     def filter_wkt(geom):
@@ -255,3 +331,13 @@ class AreaPanel(QWidget):
     def cleanup(self):
         self.band.reset(_POLY)
         self.iface.mapCanvas().extentsChanged.disconnect(self._update_size)
+        for sig, slot in ((self.iface.currentLayerChanged, self._toc_layer_changed),):
+            try:
+                sig.disconnect(slot)
+            except (TypeError, RuntimeError):
+                pass
+        if self._watched is not None:
+            try:
+                self._watched.selectionChanged.disconnect(self._selection_changed)
+            except (TypeError, RuntimeError):
+                pass

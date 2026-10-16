@@ -41,6 +41,11 @@ chosen address or boundary in a layer.
 
 ## Area of interest and clipping
 
+**Selected polygons follow the Layers panel.** Select a polygon layer in the Layers panel and it becomes the
+layer offered under *Selected polygons in*; select one or more of its polygons (with any selection tool) and
+they become the area for every tab, outlined on the map. The area stays put if another layer becomes active
+(for example a downloaded answer), until you select polygons somewhere else.
+
 The panel at the top is shared by every tab:
 
 - **Map view**: exactly what's in the map window.

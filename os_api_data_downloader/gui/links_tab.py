@@ -1109,6 +1109,13 @@ class LinksTab(QWidget):
                 lyr = QgsVectorLayer(f"{path}|layername={name}", title, "ogr", opts)
             if not lyr.isValid():
                 return None
+            # on the map, only what's in your area: features fetched from outside it (to complete links or an
+            # answer) stay in the file, flagged ngd_in_area = 0 / in_your_area = 'No…'
+            fields = lyr.fields()
+            if fields.indexOf("ngd_in_area") >= 0:
+                lyr.setSubsetString('"ngd_in_area" = 1')
+            elif fields.indexOf("in_your_area") >= 0:
+                lyr.setSubsetString(""""in_your_area" = 'Yes'""")
             project.addMapLayer(lyr, False)
             layers[name] = lyr
             if parent is None:            # in the project (for the relations), not in the Layers panel
@@ -1162,7 +1169,10 @@ class LinksTab(QWidget):
                       "One row per feature, in plain columns - right-click the layer > Open Attribute Table, or click")
                      + " any feature on the map with Identify (or hover with Map Tips on) to read its answer.",
                      "The data it was built from is in 'Supporting layers' (switched off). Choose 'Show me: "
-                     "Everything' for joined copies and link tables."]
+                     "Everything' for joined copies and link tables.",
+                     f"<span style='color:{muted()}'>Every layer shows only what's in your {where}. Features "
+                     "read from outside it to complete the answer stay in the file (Layer Properties > Source > "
+                     "Query Builder, clear the filter, to see them).</span>"]
             if self.iface is not None:
                 try:
                     self.iface.setActiveLayer(answer_layer)
@@ -1171,7 +1181,10 @@ class LinksTab(QWidget):
                 except Exception:   # noqa: BLE001 - a convenience only
                     pass
         else:
-            lines = [f"✔ Saved · {result['used']:,} transaction(s) · took {took}"]
+            lines = [f"✔ Saved · {result['used']:,} transaction(s) · took {took}",
+                     f"<span style='color:{muted()}'>Layers show only what's in your {where}; linked features "
+                     "fetched from outside it are in the file with ngd_in_area = 0 (clear the layer filter to "
+                     "see them).</span>"]
             if rels:
                 lines.append(f"Click any feature with Identify to see what it's linked to ({len(rels)} link(s) set "
                              "up in QGIS).")
