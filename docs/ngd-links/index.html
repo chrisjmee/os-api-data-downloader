@@ -315,7 +315,7 @@ function ego(id, rs) {
     const g = groups.get(o) || {fam: {}, n: 0};
     g.n++; g.fam[e.family] = (g.fam[e.family] || 0) + 1; groups.set(o, g);
   }
-  const others = [...groups.keys()].sort((a, b) => (F[a].theme || "").localeCompare(F[b].theme || "") || title(a).localeCompare(title(b)));
+  const others = [...groups.keys()].sort((a, b) => title(a).localeCompare(title(b)));   // A to Z, down the left then the right
   const W = 780, n = others.length, half = Math.ceil(n / 2), rowH = 36;
   const H = Math.max(120, half * rowH + 36), cx = W / 2, cy = H / 2;
   let edges = "", nodes = "";
