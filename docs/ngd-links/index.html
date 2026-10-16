@@ -167,6 +167,7 @@ select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius
 .stat { font-family: var(--display); font-weight: 700; font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
 .stat-label { font-size: 0.86rem; color: var(--muted); margin: 4px 0 10px; }
 ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 80ch; }
+ul.plain.full { max-width: none; }
 a { color: var(--accent); }
 
 footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
@@ -422,7 +423,7 @@ function renderDelivery() {
     <p class="lead">Both give you the same OS NGD features and the same keys to join them. They differ in how much you get, how it arrives and how it stays up to date.</p></article>`;
   h += `<article class="card"><div class="tablewrap"><table class="compare"><thead><tr><th></th><th>OS NGD APIs</th><th>OS Select+Build</th></tr></thead><tbody>` +
     d.rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("") + `</tbody></table></div></article>`;
-  h += `<article class="card"><h3>What it means for linking</h3><ul class="plain">${d.linking.map(x => `<li>${esc(x)}</li>`).join("")}</ul></article>`;
+  h += `<article class="card"><h3>What it means for linking</h3><ul class="plain full">${d.linking.map(x => `<li>${esc(x)}</li>`).join("")}</ul></article>`;
   h += `<article class="card"><h3>The features in this model, by where to get them</h3><div class="split">` +
     [["api", "OS Select+Build and OS NGD APIs"], ["sb", "OS Select+Build only"], ["external", "Partner data – from the organisation named"]].map(([g, label]) =>
       `<div><div class="stat">${groups[g].length}</div><div class="stat-label">${esc(label)}</div><div class="chips">${groups[g].map(featChip).join("")}</div></div>`).join("") +
