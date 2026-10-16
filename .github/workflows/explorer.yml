@@ -1,5 +1,5 @@
 # NGD Data Linkages Explorer - published to GitHub Pages.
-# Rebuilds the NGD Data Linkages Explorer web page from the plugin's link registry and publishes it on
+# Rebuilds the NGD Data Linkages Explorer web page from OS's relationship model (explorer/) and publishes it on
 # GitHub Pages: https://<owner>.github.io/<repo>/ngd-links/
 # One-off set-up: Settings > Pages > Build and deployment > Source: GitHub Actions.
 name: Publish NGD Data Linkages Explorer
@@ -8,9 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "os_api_data_downloader/core/ngd_links.py"
-      - "os_api_data_downloader/data/**"
-      - "os_api_data_downloader/metadata.txt"
+      - "os_api_data_downloader/data/ngd_feature_types.csv"
       - "explorer/**"
       - ".github/workflows/explorer.yml"
   workflow_dispatch:

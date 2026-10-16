@@ -206,18 +206,24 @@ data is reported, never invented.
 
 ## NGD Data Linkages Explorer (web page)
 
-An interactive, read-only version of the NGD Data Linkages tab for anyone to explore - no QGIS, no API key,
-nothing to download: **https://chrisjmee.github.io/os-api-data-downloader/ngd-links/**
+An interactive, read-only guide to how OS National Geographic Database features join to each other and to
+partner data - no QGIS, no API key, nothing to download:
+**https://chrisjmee.github.io/os-api-data-downloader/ngd-links/**
 
-- **Feature types** - every OS NGD feature type, what it links to and what links to it, in plain English, with
-  a diagram, the attribute that carries each link and the kinds of each feature type.
-- **Quick picks** - each question, the feature types and links it uses, and every column of its answer with
-  the route the value comes from.
-- **How are two connected?** - the shortest chain of links between any two feature types.
+- **Use cases** - 13 everyday questions (what is at this address, which ward is it in, who owns it, who
+  maintains the street, how do emergency services reach a site…), the joins each one needs, the keys used and
+  where to get each dataset.
+- **Feature types** - every feature in OS's relationship model, what it joins to and the exact fields
+  (`Building.uprnreference.uprn = BuiltAddress.uprn`).
+- **Linking keys** - OSID, UPRN, USRN, postcode, GSS code, UDPRN, UARN and the rest: what each is, who issues
+  it and every join that uses it.
+- **Find a route** - the shortest chain of joins between any two features, with the key used at each step.
+- **API or Select+Build?** - how the two delivery routes differ, and what that means for joining data.
 
-It is built from the plugin's own link registry (`core/ngd_links.py`) by `explorer/build_explorer.py`, so it
-always matches the plugin; GitHub rebuilds and republishes it whenever the registry changes. The built page,
-`docs/ngd-links/index.html`, is one self-contained file that can also be emailed or opened offline.
+The relationships come from OS's UK Geospatial Entity Relationships model (`explorer/data/os_relationships.csv`);
+the written content is in `explorer/content.py`. `explorer/build_explorer.py` builds the page, and GitHub
+rebuilds and republishes it whenever either changes. The built page, `docs/ngd-links/index.html`, is one
+self-contained file that can also be emailed or opened offline.
 
 ## Find an NGD Feature Type tab
 
