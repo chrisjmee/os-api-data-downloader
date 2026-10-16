@@ -387,7 +387,7 @@ function renderCase() {
 function findRoute(a, z) {
   if (a === z) return [];
   const prev = new Map([[a, null]]), q = [a];
-  const rs = live().filter(e => state.ext || (F[e.s].org === "Ordnance Survey" && F[e.t].org === "Ordnance Survey"));
+  const rs = routeEdges();
   while (q.length) {
     const cur = q.shift();
     for (const e of rs) {
@@ -401,15 +401,28 @@ function findRoute(a, z) {
   }
   return null;
 }
-function options(sel) {
-  return themesOf().map(([th, ids]) => `<optgroup label="${esc(th)}">` + ids.map(id => `<option value="${esc(id)}"${id === sel ? " selected" : ""}>${esc(title(id))}</option>`).join("") + `</optgroup>`).join("");
+function routeEdges() { return live().filter(e => state.ext || (F[e.s].org === "Ordnance Survey" && F[e.t].org === "Ordnance Survey")); }
+function reachable(a) {            // every feature a chain of joins can reach from a, with the current options
+  const rs = routeEdges(), seen = new Set([a]), q = [a];
+  while (q.length) { const cur = q.shift(); for (const e of rs) { const n = e.s === cur ? e.t : e.t === cur ? e.s : null; if (n && !seen.has(n)) { seen.add(n); q.push(n); } } }
+  seen.delete(a); return seen;
+}
+function options(sel, only) {
+  return themesOf().map(([th, all]) => [th, only ? all.filter(id => only.has(id)) : all]).filter(([, ids]) => ids.length)
+    .map(([th, ids]) => `<optgroup label="${esc(th)}">` + ids.map(id => `<option value="${esc(id)}"${id === sel ? " selected" : ""}>${esc(title(id))}</option>`).join("") + `</optgroup>`).join("");
 }
 function renderRoute() {
+  // only offer routes that exist: 'From' lists features with at least one join, 'To' those reachable from it
+  const linked = new Set(routeEdges().flatMap(e => [e.s, e.t]));
+  if (!linked.has(state.from)) state.from = linked.has("BuiltAddress") ? "BuiltAddress" : [...linked][0];
+  const can = reachable(state.from);
+  if (!can.has(state.to)) state.to = can.has("RoadLink") ? "RoadLink" : [...can].sort((x, y) => title(x).localeCompare(title(y)))[0];
   const a = state.from, z = state.to, steps = findRoute(a, z);
   let h = `<article class="card"><p class="eyebrow">Route finder</p><h2>How do I get from one feature to another?</h2>
     <p class="muted">The shortest chain of joins between any two features, with the field and key used at each step. Joins can be followed in either direction.</p>
-    <div class="pathform"><label class="f" for="from">From<select id="from">${options(a)}</select></label><span class="arrow" aria-hidden="true">→</span>
-    <label class="f" for="to">To<select id="to">${options(z)}</select></label></div>
+    <div class="pathform"><label class="f" for="from">From<select id="from">${options(a, linked)}</select></label><span class="arrow" aria-hidden="true">→</span>
+    <label class="f" for="to">To<select id="to">${options(z, can)}</select></label></div>
+    <p class="muted" style="font-size:.84rem;margin:8px 0 0">‘To’ lists only the ${can.size} features that can be reached from ${esc(title(a))} with the options below.</p>
     <div class="checks"><label class="check" for="ext"><input type="checkbox" id="ext"${state.ext ? " checked" : ""}> Include partner data (Land Registry, VOA, ONS…)</label>
     <label class="check" for="old2"><input type="checkbox" id="old2"${state.old ? " checked" : ""}> Include older schema versions</label>
     <label class="check" for="sp2"><input type="checkbox" id="sp2"${state.spatial ? " checked" : ""}> Include joins worked out from location</label></div></article><article class="card">`;
