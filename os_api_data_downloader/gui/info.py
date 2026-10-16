@@ -120,24 +120,6 @@ TEXTS = {
               "them and adds them to the map. Each request returns up to 100 features and is one "
               "transaction.",
     },
-    "wfs": {
-        "list": "The OS Features API feature types, including OS MasterMap Topography Layer "
-                "(Topography_TopographicArea, _TopographicLine, _CartographicText…) and OS MasterMap Highways. "
-                "Tick the ones you want.",
-        "year": "Latest = the current data. A year gives that year's annual snapshot (the last full release "
-                "in that year), if OS holds one for the feature type.",
-        "estimate_btn": "Asks the service how many features are in your area (one transaction per type), "
-                        "so you know the cost first.",
-        "filter_btn": "Only download features whose attributes match your rules, e.g. Theme is one of Buildings, "
-                      "Land. Highlight a feature type (or double-click it), then '+ Add rule' or '+ Add group'. "
-                      "Each value list shows the values found in your area (up to 500 features, at most 5 "
-                      "transactions). "
-                      "Filtering happens on OS's server, so fewer matching features means fewer transactions.",
-        "limit": "A safety cap. The download stops after this many transactions and keeps what it has.",
-        "go": "Downloads the features in your area into a new GeoPackage (one layer per feature type), clips "
-              "them and adds them to the map. Each request returns up to 100 features and is one "
-              "transaction. OS plans to retire this API in favour of OS NGD API (around 2030).",
-    },
     "places": {
         "tree": "Tick the kinds of address you want, using OS's AddressBase classification: R = Residential, "
                 "C = Commercial (with sub-classes such as CE Education, CM Medical, CR Retail), X = Dual use, "

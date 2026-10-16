@@ -46,28 +46,27 @@ class OsApiDataDownloaderDock(QgsDockWidget):
         self.find = SearchTab(iface, self.area)
         self.links = LinksTab(iface, self.area)
         self.ngd = FeaturesTab(iface, self.area, "ngd")
-        self.wfs = FeaturesTab(iface, self.area, "wfs")
         self.places = PlacesTab(iface, self.area)
         self.downloads = DownloadsTab(iface, self.area)
         self.settings = SettingsTab(on_changed=self.refresh_settings)
         for w, label in ((self.find, "Find an NGD Feature Type"), (self.links, "NGD Data Linkages"),
-                         (self.ngd, "OS NGD"), (self.wfs, "OS MasterMap"), (self.places, "OS Addressing"), (self.downloads, "OS Data Packages"), (self.settings, "⚙")):
+                         (self.ngd, "OS NGD"), (self.places, "OS Addressing"), (self.downloads, "OS Data Packages"), (self.settings, "⚙")):
             self.tabs.addTab(w, label)
         self.tabs.setTabToolTip(self.tabs.indexOf(self.settings), "Settings: API key, transaction limits, folder")
         v.addWidget(self.tabs, 1)
         self.setWidget(scroll)
         for tab, section in ((self.search, "search"), (self.area, "area"), (self.find, "find"), (self.links, "links"),
-                             (self.ngd, "ngd"), (self.wfs, "wfs"), (self.places, "places"), (self.downloads, "downloads"),
+                             (self.ngd, "ngd"), (self.places, "places"), (self.downloads, "downloads"),
                              (self.settings, "settings")):
             info.apply(tab, section)
 
     def refresh_settings(self):
-        for tab in (self.find, self.links, self.ngd, self.wfs, self.places):
+        for tab in (self.find, self.links, self.ngd, self.places):
             tab.refresh_settings()
         self.downloads.folder.setFilePath(self.settings.folder.filePath() or self.downloads.folder.filePath())
 
     def cleanup(self):
         self.search.cleanup()
-        for tab in (self.find, self.links, self.ngd, self.wfs, self.places, self.downloads):
+        for tab in (self.find, self.links, self.ngd, self.places, self.downloads):
             tab.cleanup()
         self.area.cleanup()

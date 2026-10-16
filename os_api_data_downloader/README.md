@@ -2,14 +2,13 @@
 
 *Created by CJM*
 
-Get OS data for **just your area**, clipped to it, from three OS Data Hub APIs:
+Get OS data for **just your area**, clipped to it, from the OS Data Hub APIs:
 
 | Tab | API | What you get |
 |---|---|---|
 | **Find an NGD Feature Type** | OS Labs search tool + OS NGD API – Features | Search what an OS NGD feature is *described as* (e.g. "bridge") to find its feature type, then download it |
 | **NGD Data Linkages** | OS NGD API – Features + OS Places API | Pick feature types *and the links between them* in a tree (Building → Site, Road Link → Road Node, Street by USRN, addresses by UPRN…) and download them already joined: link tables, joined copies and QGIS relations |
 | **OS NGD** | OS NGD API – Features (OGC API – Features) | Any OS National Geographic Database feature type (buildings, land, sites, road links, water…) |
-| **OS MasterMap** | OS Features API (OGC WFS) | OS MasterMap Topography Layer (`Topography_TopographicArea`, `_TopographicLine`, `_CartographicText`…), OS MasterMap Highways and the other WFS feature types, including annual snapshots |
 | **OS Addressing** | OS Places API | Every address in the area, chosen by classification (Residential, Commercial, Education…), as one layer or a layer per classification |
 | **OS Data Packages** | OS Downloads API | OS OpenData products (as the 100 km tiles covering your area, or GB) and your premium / PSGA data packages |
 
@@ -21,7 +20,7 @@ QGIS 3.28 or later (also written for QGIS 4 / Qt6). No extra Python packages.
 button opens the dock (also under *Web → OS API Data Downloader*).
 
 On the **Settings** tab, save your OS Data Hub API key. Its project needs *OS NGD API – Features*,
-*OS Features API*, *OS Places API* and *OS Downloads API*. **Test** checks all three without using any transactions.
+*OS Places API* and *OS Downloads API*. **Test** checks them without using any transactions.
 OpenData downloads work without a key.
 
 ## Search for an address or place
@@ -239,16 +238,15 @@ python3 scripts/build_ngd_index.py --api-key YOUR_KEY
 The key can also come from the `OS_API_KEY` or `OS_PLACES_API_KEY` environment variable. By default it
 writes to `data/ngd_feature_types.csv` - the plugin's own bundled copy.
 
-## OS NGD and OS MasterMap tabs
+## OS NGD tab
 
 1. Press **Load list**, then tick the feature types you want. They're listed in alphabetical order,
    with version numbers in numerical order. Type in the box to filter the list. **Clear selection** unticks
    everything.
 2. Optionally, **⧩ Filter** a feature type on its attributes, in the same way as the OS Data Hub's
    filter options. See *Filtering features* below.
-3. **Estimate cost** counts the features in your area. OS MasterMap uses the WFS `resultType=hits`,
-   which costs one transaction per type. OS NGD API returns no counts, so the plugin makes a few
-   one-feature test requests instead.
+3. **Estimate cost** counts the features in your area. OS NGD API returns no counts, so the plugin makes
+   a few one-feature test requests instead.
 4. **Download for my area** fetches only the features in the area, 100 per transaction, into a new
    GeoPackage in your output folder (one layer per feature type), clips them, and adds them to the map
    in a group named after the source, area and time. The GeoPackage's own file name is built from the
@@ -256,13 +254,9 @@ writes to `data/ngd_feature_types.csv` - the plugin's own bundled copy.
    each layer is named after its feature type (e.g. "Building") rather than the technical id, with its
    feature count shown next to it.
 
-The area is sent to the API as a filter, so the API returns only features inside it:
-
-- **OS NGD:** a CQL `INTERSECTS` filter.
-- **OS MasterMap:** an OGC `BBOX` filter for a window or map view, and an `Intersects` filter for a
-  polygon. If the service refuses a polygon filter, the plugin uses the polygon's bounding box instead.
-
-Either way, results are clipped exactly to your shape afterwards. Large shapes are simplified outwards
+The area is sent to the API as a filter (a plain bounding box for a map view or window, a CQL
+`INTERSECTS` filter for a polygon), so the API returns only features inside it. Results are clipped
+exactly to your shape afterwards. Large shapes are simplified outwards
 for the filter so the request stays a sensible length; nothing inside your shape is ever missed.
 
 ### Filtering features
@@ -282,14 +276,12 @@ same way as the OS Data Hub's *Advanced Filter Options*:
   first 500. You can still type other values. The sample is remembered until the area changes, so
   reopening the window costs nothing. For *is one of*, each value picked from the list is added to the
   list of values.
-- **Where the attributes come from.** For OS NGD, the attributes and their allowed values come from the
-  API's queryables list, and the allowed values appear in a drop-down. For OS MasterMap, the attributes
-  come from the WFS `DescribeFeatureType`.
+- **Where the attributes come from.** The attributes and their allowed values come from the API's
+  queryables list, and the allowed values appear in a drop-down.
 - **Writing CQL yourself (OS NGD).** The query that will be sent is shown. To write your own CQL instead,
   tick *Write the query myself*.
 
-The filter is applied on OS's server together with the area: `INTERSECTS(…) AND (filter)` for OS NGD,
-and `<ogc:And>` for OS MasterMap. Only matching features are downloaded, so a narrow filter costs fewer
+The filter is applied on OS's server together with the area: `INTERSECTS(…) AND (filter)`. Only matching features are downloaded, so a narrow filter costs fewer
 transactions, and the estimate counts matching features only.
 
 A filtered feature type is shown in bold with *⧩ filtered*, and the rules are listed in words under the
@@ -298,8 +290,6 @@ list. **Remove filter** clears the filter.
 You're asked before any download over the threshold set on Settings (default 1,000 transactions), and
 **Stop after** caps a download. A capped download keeps what it has and says so.
 
-On the OS MasterMap tab, **Data** chooses the latest data or an annual snapshot (`/wfs/archive/{year}`).
-OS plans to retire the OS Features API in favour of OS NGD API (end of life expected in 2030).
 
 ## OS Addressing tab
 
@@ -364,6 +354,6 @@ in about 2.5 seconds (it used to take 3 minutes).
 
 ## Tests
 
-`tests/qgis_smoke_apidownloader.py` drives the plugin in a headless QGIS against fake OS NGD, OS Features
-(WFS) and OS Downloads servers. The fakes apply the area filters spatially, so the clipping results are
+`tests/qgis_smoke_apidownloader.py` drives the plugin in a headless QGIS against fake OS NGD and OS Downloads
+servers. The fakes apply the area filters spatially, so the clipping results are
 checked feature by feature.

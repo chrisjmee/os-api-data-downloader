@@ -245,7 +245,7 @@ class GroupBox(QFrame):
 
 
 class FilterDialog(QDialog):
-    """``attrs``: list from filters.parse_queryables / parse_describe_feature_type.
+    """``attrs``: list from filters.parse_queryables.
     ``current``: what FeaturesTab keeps per feature type - {'filter', 'cql'} or None."""
 
     def __init__(self, title, attrs, kind, current=None, note="", parent=None, values=None, values_note=""):
@@ -330,7 +330,7 @@ class FilterDialog(QDialog):
             cql = self.preview.toPlainText().strip()
             return None, cql, cql, cql
         flt = self.group.filter()
-        where = F.to_cql(flt, self.types) if self.kind == "ngd" else F.to_ogc(flt, self.types)
+        where = F.to_cql(flt, self.types)
         return flt, where, F.describe(flt, self.titles), None
 
     def _update(self):

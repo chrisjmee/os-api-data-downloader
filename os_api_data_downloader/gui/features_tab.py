@@ -1,4 +1,4 @@
-"""One tab per feature API: OS NGD API - Features, and OS Features API (OS MasterMap).
+"""The OS NGD tab: OS NGD API - Features.
 
 Tick feature types -> optionally filter each one on its attributes (like the
 OS Data Hub's filter options) -> estimate the cost for the area -> download only
@@ -16,13 +16,12 @@ import tempfile
 from qgis.core import QgsApplication, QgsProject, QgsVectorLayer
 from qgis.PyQt.QtCore import Qt, QTimer
 from qgis.PyQt.QtWidgets import (
-    QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
+    QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
     QProgressBar, QPushButton, QSpinBox, QVBoxLayout, QWidget,
 )
 
 from ..core import filters as F
 from ..core.budget import Budget
-from ..core.features_wfs import FeaturesWfsClient
 from ..core.ngd_features import NgdFeaturesClient
 from ..core.transport import QgisTransport
 from . import clipping as C
@@ -37,8 +36,6 @@ FILTER_MARK = "  ⧩ filtered"
 SOURCES = {
     "ngd": {"title": "OS NGD", "api": "OS NGD API - Features", "file": "os_ngd",
             "filter": "Filter, e.g. building, land, road…", "client": NgdFeaturesClient},
-    "wfs": {"title": "OS MasterMap", "api": "OS Features API", "file": "os_mastermap",
-            "filter": "Filter, e.g. topographic, highways…", "client": FeaturesWfsClient},
 }
 
 
@@ -111,14 +108,6 @@ class FeaturesTab(QWidget):
         v.addWidget(self.picked)
 
         f = QFormLayout()
-        self.year = QComboBox()
-        if kind == "wfs":
-            self.year.addItem("Latest data", None)
-            this_year = _dt.date.today().year
-            for y in range(this_year - 1, 2015, -1):
-                self.year.addItem(f"{y} annual snapshot", str(y))
-            self.year.currentIndexChanged.connect(lambda _: self.load_types() if self.list.count() else None)
-            f.addRow("Data", self.year)
         self.limit = QSpinBox()
         self.limit.setRange(0, 10_000_000)
         self.limit.setSingleStep(500)
@@ -160,7 +149,7 @@ class FeaturesTab(QWidget):
         return text.split("  (")[0]
 
     def client(self, limit=None):
-        kw = {"archive_year": self.year.currentData()} if self.kind == "wfs" else {}
+        kw = {}
         return self.src["client"](S.load_api_key(), transport=QgisTransport(), budget=Budget(limit), **kw)
 
     def _start(self, task, label):
@@ -299,13 +288,9 @@ class FeaturesTab(QWidget):
 
     def attributes(self, c):
         """Filterable attributes of a feature type (cached)."""
-        key = (c, self.year.currentData() if self.kind == "wfs" else None)
+        key = (c, None)
         if key not in self._attrs:
-            cl = self.client()
-            if self.kind == "ngd":
-                self._attrs[key] = F.parse_queryables(cl.queryables(c))
-            else:
-                self._attrs[key] = F.parse_describe_feature_type(cl.describe(c))
+            self._attrs[key] = F.parse_queryables(self.client().queryables(c))
         return self._attrs[key]
 
     def edit_filter(self, item=None, dialog_cls=FilterDialog):
@@ -329,9 +314,6 @@ class FeaturesTab(QWidget):
                 note += " You can still write the query yourself."
         finally:
             QgsApplication.restoreOverrideCursor()
-        if not attrs and self.kind == "wfs":
-            self.status.setText(f"✖ {note or 'This feature type has no attributes that can be filtered.'}")
-            return None
         if not attrs:
             return self._open_filter(it, c, attrs, note, None, "", dialog_cls)
         try:
@@ -342,7 +324,7 @@ class FeaturesTab(QWidget):
         bb = geom.boundingBox()
         bbox = (bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum())
         wkt = self.area.filter_wkt(geom)
-        key = (c, self.year.currentData() if self.kind == "wfs" else None, wkt or bbox)
+        key = (c, None, wkt or bbox)
         if key in self._samples:
             return self._open_filter(it, c, attrs, note, *self._sample_note(key), dialog_cls)
         client = self.client()

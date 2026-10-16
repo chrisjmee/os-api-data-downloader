@@ -2,25 +2,25 @@
 name=OS API Data Downloader
 qgisMinimumVersion=3.28
 qgisMaximumVersion=4.99
-description=Get OS NGD and OS MasterMap features, OS Places addresses and OS downloads for just your area - clipped to the map view, a drawn window or a polygon.
+description=Get OS NGD features, OS Places addresses and OS downloads for just your area - clipped to the map view, a drawn window or a polygon.
 about=Created by CJM.
     One search box finds addresses (address, postcode or UPRN) and places (OS NGD Named Areas) and zooms to them. Choose an area of interest - the map view, a window (rectangle) or polygon drawn on the map, selected polygons, or a named area from the search - then:
     OS NGD: download any OS NGD API - Features feature types (buildings, land, roads, water…) for the area only.
-    OS MasterMap: download OS MasterMap Topography Layer, Highways and other OS Features API (WFS) feature types for the area only, including annual snapshots.
     OS Addressing: every OS Places address in the area, chosen by classification (Residential, Commercial, Education…), as one layer or a layer per classification.
     OS Data Packages: OS OpenData products and your premium / PSGA data packages from the OS Downloads API, as 100 km tiles covering your area or for GB.
     NGD Data Linkages: tick OS NGD feature types and the links between them (Building to Site, Road Link to Road Node, Street by USRN, addresses by UPRN...) in a tree and download them already joined - link tables, joined copies and QGIS relations - with linked features outside the area fetched by ID.
     Find an NGD Feature Type: search what an OS NGD feature is described as (e.g. 'bridge') to find its feature type, grouped as polygons, lines then points, and download it straight away.
-    Everything can be clipped to the area (cut at the edge, or keep whole features that touch it), saved to a GeoPackage and added to the map. Filter NGD and MasterMap features on their attributes, like the OS Data Hub. Cost estimates, a confirmation threshold and a transaction cap for every API download.
-version=2.10.1
+    Everything can be clipped to the area (cut at the edge, or keep whole features that touch it), saved to a GeoPackage and added to the map. Filter NGD features on their attributes, like the OS Data Hub. Cost estimates, a confirmation threshold and a transaction cap for every API download.
+version=2.11.0
 author=Chris Mee
 email=cjmee@email.com
 category=Web
 icon=icon.svg
 experimental=False
 deprecated=False
-tags=ordnance survey, os places, addresses, uprn, classification, os ngd, mastermap, topography, features api, wfs, ogc api features, downloads, opendata, psga, clip
-changelog=2.10.1 Area of interest follows the Layers panel: the polygon layer you select there is the one offered, and selecting polygons in it makes them the area for every tab (with the area outlined on the map); the area stays put when another layer (such as a downloaded answer) becomes active. NGD Data Linkages: every layer it adds shows only what's in your area - features fetched from outside it to complete links or an answer stay in the file (ngd_in_area = 0) behind a layer filter.
+tags=ordnance survey, os places, addresses, uprn, classification, os ngd, ogc api features, linked data, downloads, opendata, psga, clip
+changelog=2.11.0 The OS MasterMap tab (OS Features API, WFS) has been removed so the plugin focuses on OS NGD; the API key no longer needs OS Features API.
+    2.10.1 Area of interest follows the Layers panel: the polygon layer you select there is the one offered, and selecting polygons in it makes them the area for every tab (with the area outlined on the map); the area stays put when another layer (such as a downloaded answer) becomes active. NGD Data Linkages: every layer it adds shows only what's in your area - features fetched from outside it to complete links or an answer stay in the file (ngd_in_area = 0) behind a layer filter.
     2.10.0 NGD Data Linkages: built on OS's UK Geospatial Entity Relationships model. The tree now shows every join in the model that the OS NGD API - Features and OS Places API can't make - greyed out with ⛔ under each feature type (e.g. Address → Ward, Council Tax, Land Registry title, which need OS NGD GB Address) and in an 'Only with OS Select+Build or partner data' section for boundaries, retail areas, catchments and partner data - with the fields to join on and why. 29 joins from the model added that the API can make: every address of a Site, Street → Road Links and Path Links, Road Junction → Road Links, Connecting Node → Road Link, Ferry Terminal → Site, Field Boundary → Structure Line, crowd-sourced names → the site, road, water, building part or structure they name, sitereference on land, water, rail and structures, linkid on bus lanes and street lights. Quick picks replaced with 15 questions that can be answered with the APIs, including three new ones: bus, cycle and tram lanes on each road; walking and cycling paths and where they meet roads; and local names.
     2.9.3 NGD Data Linkages: the answer's attribute table no longer opens after every download - tick 'Open the answer's attribute table when it's ready' to have it back (remembered).
     2.9.2 NGD Data Linkages answers now count each postcode, site, street or building in full, not just the part inside your drawn area: the answer's own features are downloaded first, and everything else (addresses, buildings, land…) is read over the area widened to cover them (up to 1 km², or 4 × your area). Features outside your area are marked ngd_in_area = 0. Parent shells (the building record of a block of flats) are no longer counted alongside the flats in address counts, mixes and percentages. Site densities (homes / addresses per hectare) now use the linked addresses when OS's own counts aren't on the Site.

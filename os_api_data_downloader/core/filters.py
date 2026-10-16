@@ -10,19 +10,15 @@ A filter is a plain dict, so it is easy to keep, copy and test::
     ]}
 
 ``to_cql`` turns it into CQL text for OS NGD API - Features (``filter``,
-``filter-lang=cql-text``); ``to_ogc`` turns it into OGC Filter XML for the OS Features
-API (WFS). Both are combined with the area filter by the API clients.
+``filter-lang=cql-text``), combined with the area filter by the API client.
 
-The attribute lists come from the APIs: ``parse_queryables`` reads OS NGD's
-``/collections/{id}/queryables`` (JSON Schema, with allowed values as ``enum``) and
-``parse_describe_feature_type`` reads a WFS ``DescribeFeatureType`` XML schema.
+The attribute lists come from the API: ``parse_queryables`` reads OS NGD's
+``/collections/{id}/queryables`` (JSON Schema, with allowed values as ``enum``).
 """
 
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as ET
-from xml.sax.saxutils import escape
 
 # (code, label, needs a value)
 OPERATORS = (
@@ -74,35 +70,6 @@ def parse_queryables(doc):
         out.append({"name": name, "title": spec.get("title") or name, "type": typ or "string",
                     "enum": [str(v) for v in spec.get("enum") or []],
                     "description": spec.get("description") or ""})
-    return sorted(out, key=lambda a: a["title"].lower())
-
-
-_XSD_TYPES = {"int": "integer", "integer": "integer", "long": "integer", "short": "integer",
-              "double": "number", "decimal": "number", "float": "number", "boolean": "boolean",
-              "date": "date", "dateTime": "date-time", "string": "string"}
-
-
-def parse_describe_feature_type(xml_text):
-    """WFS DescribeFeatureType (XML Schema) -> [{'name','title','type','enum'}]; geometry left out."""
-    root = ET.fromstring(xml_text)
-    out, seen = [], set()
-    for el in root.iter():
-        if el.tag.rsplit("}", 1)[-1] != "element" or "name" not in el.attrib:
-            continue
-        name, typ = el.attrib["name"], el.attrib.get("type", "")
-        local = typ.split(":")[-1]
-        if not typ:     # anonymous simple type with restrictions
-            base = next((r.attrib.get("base", "") for r in el.iter() if r.tag.endswith("restriction")), "")
-            local = base.split(":")[-1]
-            enum = [e.attrib["value"] for e in el.iter() if e.tag.endswith("enumeration")]
-        else:
-            enum = []
-        if "PropertyType" in local or local.endswith("GeometryType") or name.upper() == "SHAPE":
-            continue
-        if local not in _XSD_TYPES or name in seen:
-            continue      # the feature type itself (complexType) or something we can't filter
-        seen.add(name)
-        out.append({"name": name, "title": name, "type": _XSD_TYPES[local], "enum": enum, "description": ""})
     return sorted(out, key=lambda a: a["title"].lower())
 
 
@@ -264,59 +231,6 @@ def to_cql(flt, types=None, _top=True):
     join = " OR " if (flt.get("join") or "AND").upper() == "OR" else " AND "
     text = join.join(parts)
     return text if (_top or len(parts) == 1) else f"({text})"
-
-
-# ---------------------------------------------------------------- OGC Filter XML (OS Features API)
-def _ogc_prop(name):
-    return f"<ogc:PropertyName>{escape(name)}</ogc:PropertyName>"
-
-
-def _ogc_lit(v):
-    return f"<ogc:Literal>{escape(str(v))}</ogc:Literal>"
-
-
-_OGC_CMP = {"=": "PropertyIsEqualTo", "<>": "PropertyIsNotEqualTo", ">": "PropertyIsGreaterThan",
-            ">=": "PropertyIsGreaterThanOrEqualTo", "<": "PropertyIsLessThan", "<=": "PropertyIsLessThanOrEqualTo"}
-
-
-def _rule_ogc(rule, types):
-    vals, typ = _values(rule, types)
-    a, op = rule["attr"], rule["op"]
-    if op == "NULL":
-        return f"<ogc:PropertyIsNull>{_ogc_prop(a)}</ogc:PropertyIsNull>"
-    if op == "NOTNULL":
-        return f"<ogc:Not><ogc:PropertyIsNull>{_ogc_prop(a)}</ogc:PropertyIsNull></ogc:Not>"
-    if op == "IN":
-        eqs = "".join(f"<ogc:PropertyIsEqualTo>{_ogc_prop(a)}{_ogc_lit(v)}</ogc:PropertyIsEqualTo>" for v in vals)
-        return eqs if len(vals) == 1 else f"<ogc:Or>{eqs}</ogc:Or>"
-    if op == "BETWEEN":
-        return (f"<ogc:PropertyIsBetween>{_ogc_prop(a)}<ogc:LowerBoundary>{_ogc_lit(vals[0])}</ogc:LowerBoundary>"
-                f"<ogc:UpperBoundary>{_ogc_lit(vals[1])}</ogc:UpperBoundary></ogc:PropertyIsBetween>")
-    if op in TEXT_ONLY:
-        v = re.sub(r"([*?!])", r"!\1", vals[0])
-        pat = {"LIKE%": f"*{v}*", "LIKE^": f"{v}*", "LIKE$": f"*{v}"}[op]
-        return (f'<ogc:PropertyIsLike wildCard="*" singleChar="?" escapeChar="!">{_ogc_prop(a)}{_ogc_lit(pat)}'
-                f"</ogc:PropertyIsLike>")
-    tag = _OGC_CMP[op]
-    return f"<ogc:{tag}>{_ogc_prop(a)}{_ogc_lit(vals[0])}</ogc:{tag}>"
-
-
-def to_ogc(flt, types=None):
-    """OGC Filter XML body (no <ogc:Filter> wrapper) for a filter, or '' when it has no rules."""
-    parts = []
-    for it in (flt or {}).get("items", []):
-        if is_group(it):
-            sub = to_ogc(it, types)
-            if sub:
-                parts.append(sub)
-        else:
-            parts.append(_rule_ogc(it, types))
-    if not parts:
-        return ""
-    if len(parts) == 1:
-        return parts[0]
-    tag = "ogc:Or" if (flt.get("join") or "AND").upper() == "OR" else "ogc:And"
-    return f"<{tag}>{''.join(parts)}</{tag}>"
 
 
 # ---------------------------------------------------------------- plain-English summary

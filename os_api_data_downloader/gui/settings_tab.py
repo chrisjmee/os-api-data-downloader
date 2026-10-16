@@ -10,7 +10,6 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from ..core.downloads import DownloadsClient
-from ..core.features_wfs import FeaturesWfsClient
 from ..core.ngd_features import NgdFeaturesClient
 from ..core.transport import QgisTransport
 from . import settings as S
@@ -44,7 +43,7 @@ class SettingsTab(QWidget):
         self.key_status.setWordWrap(True)
         f.addRow(self.key_status)
         f.addRow(_hint("Stored encrypted in the QGIS authentication database. Add OS NGD API - Features, "
-                       "OS Features API, OS Places API and OS Downloads API to the key's OS Data Hub project. OpenData "
+                       "OS Places API and OS Downloads API to the key's OS Data Hub project. OpenData "
                        "downloads work without a key."))
         v.addWidget(g)
 
@@ -128,8 +127,6 @@ class SettingsTab(QWidget):
             for name, fn in (
                     ("OS NGD API - Features", lambda: f"{len(NgdFeaturesClient(key, QgisTransport()).collections())} "
                                                       "feature types"),
-                    ("OS Features API", lambda: f"{len(FeaturesWfsClient(key, QgisTransport()).collections())} "
-                                                "feature types"),
                     ("OS Downloads API", lambda: f"{len(DownloadsClient(key, QgisTransport()).data_packages())} "
                                                  "data package(s)")):
                 try:
