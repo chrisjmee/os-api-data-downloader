@@ -1,8 +1,8 @@
-# NGD Data Linkages Explorer - published to GitHub Pages.
-# Rebuilds the NGD Data Linkages Explorer web page from OS's relationship model (explorer/) and publishes it on
+# OS NGD Data Linkages Explorer - published to GitHub Pages.
+# Rebuilds the OS NGD Data Linkages Explorer web page from OS's relationship model (explorer/) and publishes it on
 # GitHub Pages: https://<owner>.github.io/<repo>/ngd-links/
 # One-off set-up: Settings > Pages > Build and deployment > Source: GitHub Actions.
-name: Publish NGD Data Linkages Explorer
+name: Publish OS NGD Data Linkages Explorer
 
 on:
   push:

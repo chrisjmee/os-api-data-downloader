@@ -1,4 +1,4 @@
-"""Written content for the NGD Data Linkages Explorer: the linking keys, how the two delivery routes differ,
+"""Written content for the OS NGD Data Linkages Explorer: the linking keys, how the two delivery routes differ,
 and the use cases. The relationships themselves come from OS's relationship model
 (explorer/data/os_relationships.csv) - every use-case step below must be a row in it (checked at build)."""
 
@@ -33,6 +33,8 @@ FAMILIES = {
     "same": ("Same thing", "Two records describe the same real-world thing (a site's matched address, a VOA record for an address)."),
     "access": ("Access", "How a feature is reached: an entrance onto a road, an address onto its street."),
     "hierarchy": ("Parent and child", "A family of records: flats within a block, a planned address and the one built."),
+    "spatial": ("Worked out from location", "Not supplied by OS: calculated from where the features are, for "
+                                            "questions no stored key answers. Off unless you ask for it."),
 }
 TYPE_FAMILY = {
     "Spatially Within": "within", "Spatially Contained By": "within", "Intersects With": "within",
@@ -118,6 +120,58 @@ KEYS = [
      "use": "Joins OS addresses and structures to those organisations' own records.",
      "open": "Varies by partner."},
 ]
+KEYS.append(
+    {"id": "location", "name": "Location", "full": "A join worked out from where features are",
+     "who": "You - calculated when you run it, not supplied by OS", "format": "Geometry (British National Grid)",
+     "what": "When no stored key joins two things, their positions can: an address point inside an Output Area, a "
+             "building inside a flood zone, the nearest watercourse. These joins are only shown when 'Include joins "
+             "worked out from location' is ticked.",
+     "use": "Answers questions OS's keys don't reach - statistical areas, environmental designations, distance to "
+            "things - and fills gaps where a stored key is missing.",
+     "open": "Needs both datasets with their geometry, and a GIS or spatial database (QGIS, PostGIS, DuckDB "
+             "spatial). Results depend on positional accuracy and boundary edges, and are only as current as the "
+             "last time you ran them."})
+
+# joins worked out from location: (source, target, method, SQL-style test, note)
+SPATIAL_FEATURES = {
+    "FloodZones": {"title": "Flood Map for Planning (Flood Zones)", "org": "Environment Agency", "theme": "Water",
+                   "subtheme": "Flood risk", "pk": ""},
+    "ConservationAreas": {"title": "Conservation Areas", "org": "Historic England and local authorities",
+                          "theme": "Land Use", "subtheme": "Designations", "pk": ""},
+}
+SPATIAL = [
+    ("BuiltAddress", "OutputAreaDec21BFE", "Address point inside the area",
+     "ST_Within(BuiltAddress.geometry, OutputAreaDec21BFE.geometry)",
+     "The usual way to put addresses into Output Areas (and on to LSOAs and MSOAs) for census-based statistics."),
+    ("BuiltAddress", "Building", "Address point inside the building footprint",
+     "ST_Within(BuiltAddress.geometry, Building.geometry)",
+     "A fallback where a building doesn't list the UPRN; address points can sit just outside small buildings."),
+    ("BuiltAddress", "Site", "Address point inside the site",
+     "ST_Within(BuiltAddress.geometry, Site.geometry)",
+     "Every address inside a site, not just the ones the site lists - useful for campuses and estates."),
+    ("Building", "Site", "Building's centre inside the site",
+     "ST_Within(ST_PointOnSurface(Building.geometry), Site.geometry)",
+     "A fallback where a building has no site reference."),
+    ("Building", "LowerTierLocalAuthority", "Building's centre inside the council area",
+     "ST_Within(ST_PointOnSurface(Building.geometry), LowerTierLocalAuthority.geometry)",
+     "Building parts carry the council code; whole buildings don't, so this gives it for a building."),
+    ("Site", "Ward", "Site's centre inside the ward",
+     "ST_Within(ST_PointOnSurface(Site.geometry), Ward.geometry)",
+     "Large sites can cross ward boundaries - use the overlap area instead if that matters."),
+    ("Building", "PostcodeUnitArea", "Building's centre inside the postcode area",
+     "ST_Within(ST_PointOnSurface(Building.geometry), PostcodeUnitArea.geometry)",
+     "For buildings with no address of their own (garages, outbuildings)."),
+    ("Building", "FloodZones", "Building overlaps the flood zone",
+     "ST_Intersects(Building.geometry, FloodZones.geometry)",
+     "Which buildings - and through their UPRNs, which addresses - are in Flood Zone 2 or 3."),
+    ("BuiltAddress", "ConservationAreas", "Address point inside the conservation area",
+     "ST_Within(BuiltAddress.geometry, ConservationAreas.geometry)",
+     "Which properties need extra consent for changes. Boundaries come from each local authority."),
+    ("Building", "Water", "Nearest water feature, within 50 m",
+     "ST_DWithin(Building.geometry, Water.geometry, 50)",
+     "Distance to rivers, lakes and the sea - choose the distance to suit the question."),
+]
+
 KEY_OF = {"osid": "osid", "uprn": "uprn", "usrn": "usrn", "postcode": "postcode", "udprn": "udprn",
           "gsscode": "gsscode", "uarn": "uarn", "atcocode": "atcocode", "waterbodyid": "waterbodyid",
           "grid1km": "grid", "grid100m": "grid", "gridid_25m": "grid", "featureid": "featureid"}
@@ -379,3 +433,154 @@ USE_CASES = [
                  "Can a caller's description ('the old mill', 'the rec') be resolved to a location?"],
      "watch": "Crowd-sourced names are matched by OS but come from the public - treat them as aliases."},
 ]
+
+# ------------------------------------------------------------------------------------------ what each feature is
+# one or two plain sentences, shown in the pop-up and at the top of each feature's page
+FEATURE_INFO = {
+    # Address
+    "BuiltAddress": "Every current address that physically exists - homes, businesses, schools, flats - with its "
+                    "UPRN, position, classification and links to its street, postcode and areas.",
+    "PrebuildAddress": "Addresses for properties that are planned or under construction, before they are built.",
+    "HistoricAddress": "Addresses that no longer exist - demolished, merged or otherwise retired - kept with their "
+                       "UPRN for history.",
+    "NonAddressableObject": "Things with a UPRN but no postal address: bus shelters, telephone boxes, car parks, "
+                            "electricity substations, monuments.",
+    "RoyalMailAddress": "Royal Mail's postal address (from the Postcode Address File) for each delivery point, "
+                        "keyed by UDPRN.",
+    "StreetAddress": "The street-level address record: street name, locality and town for each USRN.",
+    "CouncilTax": "The Valuation Office Agency's council tax record for each home, keyed by UARN.",
+    "NonDomesticRates": "The Valuation Office Agency's business rates (rateable value) record for each non-domestic "
+                        "property, keyed by UARN.",
+    "ChannelIslandsUniqueIdentifier": "The property identifier used by the Channel Islands' own address gazetteers.",
+    # Administrative and statistical units
+    "Country": "England, Scotland and Wales.",
+    "Region": "The English regions (formerly government office regions).",
+    "RegionalAuthority": "Combined and regional authorities, such as the Greater London Authority.",
+    "UpperTierLocalAuthority": "County councils and unitary authorities - the upper tier of local government.",
+    "LowerTierLocalAuthority": "District, borough, city and unitary councils - the lower tier of local government.",
+    "LocalAuthorityDistricts": "ONS's local authority district boundaries and codes, used for official statistics.",
+    "ElectoralDivision": "The areas that elect county councillors.",
+    "Ward": "The areas that elect district, borough and unitary councillors.",
+    "ParishOrCommunity": "Civil parishes in England and communities in Wales - the most local tier of government.",
+    "PollingDistrict": "The areas each polling station serves at elections.",
+    "DevolvedParliamentConstituency": "Constituencies for the Scottish Parliament and the Senedd.",
+    "DevolvedParliamentElectoralRegion": "The regions that elect additional members to the Scottish Parliament and "
+                                         "the Senedd.",
+    "GreaterLondonAuthorityAssemblyConstituency": "The constituencies that elect London Assembly members.",
+    "NHSHealthAuthority": "NHS health areas (such as Integrated Care Boards) that a postcode falls in.",
+    "NHSRegionalHealthAuthority": "NHS regions that a postcode falls in.",
+    "OutputAreaDec21BFE": "ONS's 2021 Census Output Areas - the smallest areas census statistics are published for "
+                          "(around 125 households). Full-resolution boundaries.",
+    "NationalPostcodeDirectory": "ONS's directory linking every postcode to the statistical and administrative areas "
+                                 "it falls in.",
+    "NationalPostcodeLookup": "ONS's best-fit lookup from postcodes to statistical areas.",
+    "PostcodeUnitArea": "The area covered by each postcode, drawn from the addresses in it.",
+    "PostcodeUnitPoint": "A single point for each postcode, with the codes of the areas it falls in.",
+    "RetailAreaMinor": "Small clusters of shops and retail addresses.",
+    "RetailAreaMajor": "Larger retail areas - town centres, high streets and shopping centres.",
+    "RetailAreaAggregated": "Retail areas grouped into a single town or city retail centre.",
+    # Building
+    "Building": "A whole building: the building parts that make up one structure, with its use, age, height, "
+                "floors, roof and the UPRNs of the addresses inside it.",
+    "BuildingPart": "Each separately constructed part of a building, as drawn on the map, with its height and land "
+                    "use.",
+    "BuildingAccessLocation": "The entrances to a building - where people get in.",
+    # Names
+    "NamedPoint": "Named places shown as points: towns, villages, hills, landmarks.",
+    "NamedArea": "Named places shown as areas: woods, estates, bays.",
+    "NamedRoadJunction": "Named road junctions, such as motorway junctions and roundabouts.",
+    "CrowdSourcedNamePoint": "Local and informal names suggested by the public and matched by OS to the feature, "
+                             "address or street they describe.",
+    "BuiltUpArea": "Built-up areas - the extent of towns and villages - as defined for statistics.",
+    # Geology
+    "BGS/UKHSARadondata:IndicativeAtlasofRadon(GB)": "The British Geological Survey and UK Health Security Agency "
+                                                    "map of radon potential.",
+    # Grids
+    "Grid1km": "The 1 km squares of the British National Grid.",
+    "Grid100m": "The 100 m squares of the British National Grid.",
+    # Land
+    "Land": "Every piece of land that isn't a building, road or water - grass, woodland, gardens, paved areas - with "
+            "what it is and the site it lies in.",
+    "LandPoint": "Small land features shown as points, such as individual trees or springs.",
+    "Landform": "The shape of the land: cliffs, slopes, embankments, cuttings.",
+    "LandformPoint": "Landform features shown as points, such as spot heights.",
+    # Land parcels
+    "NationalPolygonDataset": "HM Land Registry's index polygons showing the extent of registered titles.",
+    "TitleNumberandUPRNLookUpdataset": "HM Land Registry's lookup from title numbers to the UPRNs of the properties "
+                                       "they cover.",
+    # Land use
+    "Site": "A site with one purpose - a school, hospital, farm, industrial estate, park - with its land use and the "
+            "buildings, land and addresses that belong to it.",
+    "SiteAccessLocation": "The entrances to a site and the road or path node each one joins - where you actually "
+                          "get in.",
+    "SiteRoutingPoint": "An earlier way of giving a site's routing point; replaced by Site Access Location.",
+    "ConservationAreas": "Areas of special architectural or historic interest designated by local authorities.",
+    # Structures
+    "Structure": "Built structures that aren't buildings: bridges, walls, towers, pylons, tanks.",
+    "StructureLine": "Linear structures: walls, fences, hedges, retaining walls.",
+    "StructurePoint": "Small structures shown as points: posts, masts, monuments.",
+    "CompoundStructure": "Structures made of several parts, such as bridges, piers and dams, treated as one.",
+    "FieldBoundary": "The hedges, walls and fences that divide fields.",
+    "CanalBridges": "The Canal and River Trust's record of bridges over its waterways.",
+    # Transport
+    "RoadLink": "A stretch of road between two junctions or ends - the building block of the road network, with "
+                "its name, class, width, speed and direction.",
+    "RoadNode": "Where road links meet or end - junctions and dead ends.",
+    "Road": "A named or numbered road made up of many road links, such as the A6.",
+    "RoadJunction": "A junction made up of several road nodes, such as a large roundabout.",
+    "RoadTrackOrPath": "The surface area of roads, tracks and paths, as drawn on the map.",
+    "Street": "A street as recorded in the National Street Gazetteer, with its USRN, name and the authority "
+              "responsible for it.",
+    "PathLink": "A stretch of footpath, cycle path or track between two nodes - the building block of the path "
+                "network.",
+    "PathNode": "Where path links meet or end.",
+    "Path": "A named path made up of path links, such as a long-distance trail.",
+    "ConnectingLink": "The short links that join the path network to the road network.",
+    "ConnectingNode": "Points on road links where the path network connects.",
+    "PavementLink": "Pavements alongside road links.",
+    "BusLane": "Bus lanes, with the road link they are on and when they apply.",
+    "CycleLane": "Cycle lanes, with the road link they are on.",
+    "TramOnRoad": "Where trams run on roads shared with traffic.",
+    "StreetLight": "Street lighting along road links.",
+    "FerryLink": "Ferry routes between terminals.",
+    "FerryNode": "The ends of ferry routes.",
+    "FerryTerminal": "Ferry terminals, linked to the road and path networks and to NaPTAN.",
+    "Rail": "The surface area of railway land and track, as drawn on the map.",
+    "RailwayLink": "A stretch of railway between two nodes - the building block of the rail network.",
+    "RailwayNode": "Where railway links meet or end, including stations.",
+    "RailwayLinkSet": "A named railway line made up of railway links.",
+    "Restriction": "Legal and physical restrictions on roads: one way, no turn, height, width and weight limits.",
+    "RoutingHazard": "Hazards for routing such as fords and level crossings.",
+    "RoutingStructure": "Structures that affect routing: bridges, tunnels, barriers, gates.",
+    "HighwayDedication": "Whether a road is a public highway, and for whom (all vehicles, pedestrians, cyclists…).",
+    "MaintenanceArea": "Who maintains a street, as an area - for example maintained at public expense.",
+    "MaintenanceLine": "Who maintains a street, as a line.",
+    "MaintenancePoint": "Who maintains a street, as a point.",
+    "ReinstatementArea": "The reinstatement standard for street works (how a road must be reinstated after digging), "
+                         "as an area.",
+    "ReinstatementLine": "The reinstatement standard for street works, as a line.",
+    "ReinstatementPoint": "The reinstatement standard for street works, as a point.",
+    "SpecialDesignationArea": "Special designations on streets - traffic sensitive, protected, special engineering "
+                              "difficulty - as an area.",
+    "SpecialDesignationLine": "Special designations on streets, as a line.",
+    "SpecialDesignationPoint": "Special designations on streets, as a point.",
+    "Naptan": "The national list of public transport access points - bus stops, stations, ferry terminals.",
+    "NationalPublicTransportAccessNodes": "NaPTAN stops, joined to the street they're on.",
+    "DigitalTrafficRegulationOrders": "Traffic regulation orders (speed limits, parking, restrictions) published in "
+                                      "digital form.",
+    "ChannelIslandsStreetIdentifier": "The street identifier used in the Channel Islands' gazetteers.",
+    "IsleofManStreetIdentifier": "The street identifier used in the Isle of Man's gazetteer.",
+    "NorthernIrelandStreetIdentifier": "The street identifier used in Northern Ireland's gazetteer.",
+    # Water
+    "Water": "The surface area of water: rivers, lakes, reservoirs, the sea, with the site it lies in.",
+    "WaterPoint": "Small water features shown as points, such as springs and wells.",
+    "WaterLink": "A stretch of watercourse between two nodes - the building block of the water network.",
+    "WaterNode": "Where watercourses meet, start or end.",
+    "WaterLinkSet": "A named watercourse made up of water links, such as a river.",
+    "WaterCatchment": "The land area that drains to a stretch of watercourse.",
+    "WaterBodyCatchment": "Catchments of the water bodies used in water management.",
+    "RiverBasinDistrictCatchment": "Catchments grouped into river basin districts.",
+    "RiverBasinDistrict": "The river basin districts used to manage water across Great Britain.",
+    "InterTidalLine": "The lines of mean high and low water.",
+    "FloodZones": "The Environment Agency's flood zones (2 and 3) for planning.",
+}

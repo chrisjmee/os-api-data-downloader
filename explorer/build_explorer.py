@@ -1,4 +1,4 @@
-"""Builds the NGD Data Linkages Explorer: one self-contained web page (no downloads, no API key).
+"""Builds the OS NGD Data Linkages Explorer: one self-contained web page (no downloads, no API key).
 
     python explorer/build_explorer.py            -> docs/ngd-links/index.html
 
@@ -104,6 +104,18 @@ def build():
         seen[k] = e
         edges.append(e)
 
+    # joins worked out from location (not supplied by OS) - shown only when asked for
+    for name, info in C.SPATIAL_FEATURES.items():
+        feats.setdefault(name, dict(info, id=name, versions=set()))
+    for s, t, method, test, note in C.SPATIAL:
+        for f in (s, t):
+            if f not in feats:
+                raise SystemExit(f"Spatial join {s} -> {t}: no feature {f}")
+        edges.append({"id": f"r{len(edges)}", "s": s, "t": t, "sf": "geometry", "tf": "geometry", "key": "location",
+                      "type": "Worked out from location", "family": "spatial", "join": method,
+                      "owners": [], "freq": "When you run it", "sv": "", "tv": "", "purpose": note,
+                      "test": test, "spatial": True})
+
     # older schema versions: a relationship from an earlier major version of its source feature
     for f in feats.values():
         nums = [version_num(v) for v in f["versions"] if version_num(v) is not None]
@@ -111,9 +123,13 @@ def build():
         f["versions"] = sorted(f["versions"], key=lambda v: (version_num(v) is None, version_num(v) or 0, v))
     for e in edges:
         latest = version_major(feats[e["s"]]["latest"])
-        mine = version_major(e["sv"])
+        mine = version_major(e["sv"]) if e["sv"] else None
         e["old"] = bool(latest is not None and mine is not None and mine < latest)
+    missing = [n for n in feats if n not in C.FEATURE_INFO]
+    if missing:
+        print("No description yet for:", ", ".join(missing))
     for f in feats.values():
+        f["about"] = C.FEATURE_INFO.get(f["id"], "")
         cid = api.get(norm(f["id"])) if f["org"] == "Ordnance Survey" else None
         f["api"] = cid or ""
         f["route"] = "api" if cid else ("sb" if f["org"] == "Ordnance Survey" else "external")

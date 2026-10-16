@@ -1,4 +1,4 @@
-<title>NGD Data Linkages Explorer</title>
+<title>OS NGD Data Linkages Explorer</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="How OS National Geographic Database features link to each other and to partner data - by OSID, UPRN, USRN, postcode and GSS code - with use cases and the difference between the API and Select+Build.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +17,8 @@
   --f-access: #b34700; --f-access-soft: #fbe8dc;
   --f-hierarchy: #7a3f9e; --f-hierarchy-soft: #f1e6f8;
   --warn: #8a5a00; --warn-soft: #fbf0d6;
+  --f-spatial: #5d6670; --f-spatial-soft: #eceef0;
+  --shadow: 0 6px 24px rgba(20, 30, 40, .16);
   --display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -28,6 +30,7 @@
     --f-within: #e5ae6e; --f-within-soft: #3a2a17; --f-network: #7ad69b; --f-network-soft: #17321f;
     --f-same: #8ab8ff; --f-same-soft: #1b2b44; --f-access: #ffa45c; --f-access-soft: #40260f;
     --f-hierarchy: #d3a6f0; --f-hierarchy-soft: #33223f; --warn: #f0c060; --warn-soft: #3a2f12;
+    --f-spatial: #b6c0c8; --f-spatial-soft: #26313a; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
     color-scheme: dark;
   }
 }
@@ -37,6 +40,7 @@
   --f-within: #e5ae6e; --f-within-soft: #3a2a17; --f-network: #7ad69b; --f-network-soft: #17321f;
   --f-same: #8ab8ff; --f-same-soft: #1b2b44; --f-access: #ffa45c; --f-access-soft: #40260f;
   --f-hierarchy: #d3a6f0; --f-hierarchy-soft: #33223f; --warn: #f0c060; --warn-soft: #3a2f12;
+  --f-spatial: #b6c0c8; --f-spatial-soft: #26313a; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -101,6 +105,8 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 
 .fam-same { background: var(--f-same-soft); color: var(--f-same); }
 .fam-access { background: var(--f-access-soft); color: var(--f-access); }
 .fam-hierarchy { background: var(--f-hierarchy-soft); color: var(--f-hierarchy); }
+.fam-spatial { background: var(--f-spatial-soft); color: var(--f-spatial); border: 1px dashed var(--f-spatial); }
+.chip.calc { background: var(--warn-soft); color: var(--warn); }
 .chip.key { font-family: var(--mono); font-size: 0.74rem; background: var(--accent-soft); color: var(--accent); cursor: pointer; letter-spacing: 0.02em; }
 .chip.key:hover { border-color: var(--accent); }
 .chip.feat { background: var(--sunk); color: var(--ink); cursor: pointer; border-color: var(--line); }
@@ -123,6 +129,7 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 
 .diagram .e-within { stroke: var(--f-within); } .diagram .e-network { stroke: var(--f-network); }
 .diagram .e-same { stroke: var(--f-same); } .diagram .e-access { stroke: var(--f-access); }
 .diagram .e-hierarchy { stroke: var(--f-hierarchy); }
+.diagram .e-spatial { stroke: var(--f-spatial); stroke-dasharray: 5 4; }
 .diagram .count { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
 
 .rels { display: grid; }
@@ -165,6 +172,11 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 8
 ul.plain.full { max-width: none; }
 a { color: var(--accent); }
 
+.pop { position: fixed; z-index: 50; max-width: min(340px, calc(100vw - 32px)); background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); padding: 10px 12px; font-size: 0.86rem; pointer-events: none; }
+.pop b { display: block; font-family: var(--display); font-size: 1rem; margin-bottom: 2px; }
+.pop .org { color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
+.about { margin: 10px 0 0; font-size: 1.02rem; }
 footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .item, .tab, .chip.feat, .chip.key { transition: background-color .12s, color .12s, border-color .12s; } }
 </style>
@@ -172,7 +184,7 @@ footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
 <header class="sheet">
   <div class="sheet-in">
     <div class="titlerow">
-      <h1>NGD Data Linkages Explorer</h1>
+      <h1>OS NGD Data Linkages Explorer</h1>
       <span class="grid-ref" id="stamp"></span>
     </div>
     <p class="lede">How OS National Geographic Database features join to each other and to partner data – which
@@ -195,6 +207,7 @@ footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
       <div class="search">
         <input id="q" type="search" placeholder="Search…" autocomplete="off" aria-label="Search">
         <label class="check" for="old" id="oldwrap"><input type="checkbox" id="old"> Include older schema versions</label>
+        <label class="check" for="sp" id="spwrap"><input type="checkbox" id="sp"> Include joins worked out from location</label>
       </div>
       <div class="list" id="list"></div>
     </aside>
@@ -202,6 +215,7 @@ footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
   </div>
 </main>
 <footer id="foot"></footer>
+<div class="pop" id="pop" role="tooltip" hidden></div>
 
 <script>
 const D = /*__DATA__*/null;
@@ -210,21 +224,21 @@ const byId = Object.fromEntries(E.map(e => [e.id, e]));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const title = f => (F[f] && F[f].title) || f;
 const ROUTE = {api: "OS Select+Build and OS NGD APIs", sb: "OS Select+Build only", external: "Partner data"};
-const state = {view: "cases", type: "Building", key: "uprn", kase: 0, q: "", old: false, ext: true, from: "BuiltAddress", to: "RoadLink"};
+const state = {view: "cases", type: "Building", key: "uprn", kase: 0, q: "", old: false, ext: true, spatial: false, from: "BuiltAddress", to: "RoadLink"};
 
-const live = () => E.filter(e => state.old || !e.old);
+const live = () => E.filter(e => (state.old || !e.old) && (state.spatial || !e.spatial));
 const relsOf = f => live().filter(e => e.s === f || e.t === f);
 const famChip = e => `<span class="chip fam-${e.family}">${esc(e.type)}</span>`;
 const keyChip = k => K[k] ? `<button class="chip key" data-key="${esc(k)}">${esc(K[k].name)}</button>` : "";
 const featChip = f => `<button class="chip feat" data-type="${esc(f)}">${esc(title(f))}</button>`;
 const routeChip = f => `<span class="chip route-${F[f].route}">${esc(F[f].route === "external" ? "From " + F[f].org : ROUTE[F[f].route])}</span>`;
-const joinCode = e => `<div class="join"><span>${esc(e.s)}.${esc(e.sf)}</span> <span class="eq">=</span> <span>${esc(e.t)}.${esc(e.tf)}</span></div>`;
+const joinCode = e => e.spatial ? `<div class="join">${esc(e.test)}</div>` : `<div class="join"><span>${esc(e.s)}.${esc(e.sf)}</span> <span class="eq">=</span> <span>${esc(e.t)}.${esc(e.tf)}</span></div>`;
 
 // ------------------------------------------------------------------ header
 (function header() {
   const nAPI = Object.values(F).filter(f => f.route === "api").length;
   document.getElementById("stamp").textContent =
-    `${Object.keys(F).length} features · ${E.length} relationships · ${D.keys.length} linking keys · ${D.cases.length} use cases`;
+    `${Object.keys(F).length} features · ${E.filter(e => !e.spatial).length} relationships · ${E.filter(e => e.spatial).length} location joins · ${D.keys.length} linking keys · ${D.cases.length} use cases`;
   document.getElementById("key").innerHTML = "<span>Relationships:</span>" +
     Object.entries(D.families).map(([id, [name, text]]) => `<span class="chip fam-${id}" title="${esc(text)}">${esc(name)}</span>`).join("");
   document.getElementById("foot").innerHTML =
@@ -272,9 +286,10 @@ function renderList() {
 // ------------------------------------------------------------------ one relationship
 function relRow(e, from) {
   const other = e.s === from ? e.t : e.s;
-  const meta = [`Join: ${esc(e.join)}`, `Owner: ${esc(e.owners.join(", ") || "not stated")}`, `Updated: ${esc(e.freq || "not stated")}`,
+  const meta = e.spatial ? [`Method: ${esc(e.join)}`, "Calculated when you run it"] :
+    [`Join: ${esc(e.join)}`, `Owner: ${esc(e.owners.join(", ") || "not stated")}`, `Updated: ${esc(e.freq || "not stated")}`,
     `Versions: ${esc(title(e.s))} v${esc(e.sv)} → ${esc(title(e.t))} v${esc(e.tv)}`];
-  return `<div class="rel"><div class="head">${famChip(e)} ${keyChip(e.key)} ${e.old ? '<span class="chip old">Older schema version</span>' : ""}</div>
+  return `<div class="rel"><div class="head">${famChip(e)} ${keyChip(e.key)} ${e.old ? '<span class="chip old">Older schema version</span>' : ""}${e.spatial ? '<span class="chip calc">Not supplied by OS</span>' : ""}</div>
     <div class="path">${from ? (e.s === from ? `${esc(title(from))} → <button class="linkto" data-type="${esc(other)}">${esc(title(other))}</button>`
       : `<button class="linkto" data-type="${esc(other)}">${esc(title(other))}</button> → ${esc(title(from))}`)
       : `<button class="linkto" data-type="${esc(e.s)}">${esc(title(e.s))}</button> → <button class="linkto" data-type="${esc(e.t)}">${esc(title(e.t))}</button>`}</div>
@@ -286,7 +301,7 @@ function relRow(e, from) {
 function renderType() {
   const id = state.type, f = F[id], rs = relsOf(id);
   const out = rs.filter(e => e.s === id), inn = rs.filter(e => e.t === id && e.s !== id);
-  let h = `<article class="card"><p class="eyebrow">${esc(f.theme)}${f.subtheme ? " · " + esc(f.subtheme) : ""}</p><h2>${esc(f.title)}</h2>
+  let h = `<article class="card"><p class="eyebrow">${esc(f.theme)}${f.subtheme ? " · " + esc(f.subtheme) : ""}</p><h2>${esc(f.title)}</h2>${f.about ? `<p class="about">${esc(f.about)}</p>` : ""}
     <div class="facts"><span>Organisation <b>${esc(f.org)}</b></span>` +
     (f.pk ? `<span>Primary key ${K[f.pk] ? keyChip(f.pk) : `<b class="mono">${esc(f.pk)}</b>`}</span>` : "") +
     (f.versions.length ? `<span>Schema version${f.versions.length > 1 ? "s" : ""} <b>${esc(f.versions.join(", "))}</b></span>` : "") +
@@ -333,7 +348,7 @@ function ego(id, rs) {
 
 // ------------------------------------------------------------------ linking key view
 function renderKey() {
-  const k = K[state.key], rs = live().filter(e => e.key === k.id);
+  const k = K[state.key], rs = E.filter(e => e.key === k.id && (state.old || !e.old));
   const carriers = [...new Set(rs.map(e => e.s))].sort((a, b) => title(a).localeCompare(title(b)));
   const holders = [...new Set(rs.map(e => e.t))].sort((a, b) => title(a).localeCompare(title(b)));
   let h = `<article class="card"><p class="eyebrow">Linking key</p><h2>${esc(k.name)}</h2><p class="lead">${esc(k.full)}</p>
@@ -394,7 +409,8 @@ function renderRoute() {
     <div class="pathform"><label class="f" for="from">From<select id="from">${options(a)}</select></label><span class="arrow" aria-hidden="true">→</span>
     <label class="f" for="to">To<select id="to">${options(z)}</select></label></div>
     <div class="checks"><label class="check" for="ext"><input type="checkbox" id="ext"${state.ext ? " checked" : ""}> Include partner data (Land Registry, VOA, ONS…)</label>
-    <label class="check" for="old2"><input type="checkbox" id="old2"${state.old ? " checked" : ""}> Include older schema versions</label></div></article><article class="card">`;
+    <label class="check" for="old2"><input type="checkbox" id="old2"${state.old ? " checked" : ""}> Include older schema versions</label>
+    <label class="check" for="sp2"><input type="checkbox" id="sp2"${state.spatial ? " checked" : ""}> Include joins worked out from location</label></div></article><article class="card">`;
   if (steps === null) h += `<h3>No route</h3><p class="empty">${esc(title(a))} and ${esc(title(z))} aren't joined by any chain of relationships${state.ext ? "" : " within OS data – try including partner data"}.</p>`;
   else if (!steps.length) h += `<h3>Same feature</h3><p class="empty">Pick two different features.</p>`;
   else {
@@ -402,7 +418,7 @@ function renderRoute() {
       <div class="keychain"><span>Keys</span> ${steps.map(s => keyChip(s[0].key)).join(' <span aria-hidden="true">→</span> ')}</div><ol class="steps" style="margin-top:12px">` +
       steps.map(([e, d, p, k], i) => `<li><span class="no">${i + 1}</span><div><div class="head" style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center">
         <b>${esc(title(p))} → ${esc(title(k))}</b> ${famChip(e)} ${keyChip(e.key)}</div>
-        <div class="muted" style="font-size:.86rem;margin:4px 0">${d === "out" ? `${esc(title(p))} holds the ${esc(K[e.key] ? K[e.key].name : e.key)} of the ${esc(title(k))}` : `${esc(title(k))} holds the ${esc(K[e.key] ? K[e.key].name : e.key)} of the ${esc(title(p))} – follow it backwards`}.</div>${joinCode(e)}</div></li>`).join("") + `</ol>`;
+        <div class="muted" style="font-size:.86rem;margin:4px 0">${e.spatial ? `Worked out from location: ${esc(e.join.toLowerCase())} – not supplied by OS` : d === "out" ? `${esc(title(p))} holds the ${esc(K[e.key] ? K[e.key].name : e.key)} of the ${esc(title(k))}` : `${esc(title(k))} holds the ${esc(K[e.key] ? K[e.key].name : e.key)} of the ${esc(title(p))} – follow it backwards`}.</div>${joinCode(e)}</div></li>`).join("") + `</ol>`;
   }
   return h + `</article>`;
 }
@@ -433,6 +449,8 @@ function render() {
   document.getElementById("bench").classList.toggle("wide", wide);
   document.getElementById("oldwrap").hidden = state.view !== "types" && state.view !== "keys";
   document.getElementById("old").checked = state.old;
+  document.getElementById("sp").checked = state.spatial;
+  document.getElementById("spwrap").hidden = state.view !== "types";
   document.getElementById("q").placeholder = {types: "Search features and fields…", keys: "Search keys…", cases: "Search use cases…"}[state.view] || "Search…";
   renderList();
   const v = state.view;
@@ -440,7 +458,7 @@ function render() {
   const hash = v === "types" ? "feature-" + state.type : v === "keys" ? "key-" + state.key : v === "cases" ? "case-" + D.cases[state.kase].id : v;
   try { history.replaceState(null, "", "#" + hash); } catch (e) { /* some frames refuse */ }
 }
-function go(patch) { Object.assign(state, patch); render(); document.getElementById("detail").scrollIntoView({block: "nearest"}); }
+function go(patch) { hidePop(); Object.assign(state, patch); render(); document.getElementById("detail").scrollIntoView({block: "nearest"}); }
 document.addEventListener("click", e => {
   const tab = e.target.closest(".tab"); if (tab) return go({view: tab.dataset.view, q: (document.getElementById("q").value = "")});
   const ty = e.target.closest("[data-type]"); if (ty && F[ty.dataset.type]) return go({view: "types", type: ty.dataset.type});
@@ -457,8 +475,36 @@ document.addEventListener("change", e => {
   if (id === "to") go({to: e.target.value});
   if (id === "ext") go({ext: e.target.checked});
   if (id === "old" || id === "old2") go({old: e.target.checked});
+  if (id === "sp" || id === "sp2") go({spatial: e.target.checked});
 });
 document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; renderList(); });
+// pop-up: what a feature is, on hover or keyboard focus of anything that names one
+const pop = document.getElementById("pop");
+let popTimer = null;
+function showPop(el) {
+  const f = F[el.dataset.type];
+  if (!f || !f.about) return;
+  pop.innerHTML = `<b>${esc(f.title)}</b>${esc(f.about)}<div class="org">${esc(f.org)} · ${esc(f.route === "external" ? "Partner data" : ROUTE[f.route])}</div>`;
+  pop.hidden = false;
+  const r = el.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = Math.min(Math.max(16, r.left), window.innerWidth - pw - 16);
+  let y = r.bottom + 8;
+  if (y + ph > window.innerHeight - 8) y = Math.max(8, r.top - ph - 8);
+  pop.style.left = x + "px"; pop.style.top = y + "px";
+}
+function hidePop() { clearTimeout(popTimer); pop.hidden = true; }
+for (const ev of ["mouseover", "focusin"]) document.addEventListener(ev, e => {
+  const el = e.target.closest && e.target.closest("[data-type]");
+  clearTimeout(popTimer);
+  if (!el) { if (ev === "mouseover") pop.hidden = true; return; }
+  popTimer = setTimeout(() => showPop(el), ev === "focusin" ? 0 : 280);
+});
+for (const ev of ["mouseout", "focusout"]) document.addEventListener(ev, e => {
+  const el = e.target.closest && e.target.closest("[data-type]");
+  if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) hidePop();
+});
+window.addEventListener("scroll", hidePop, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape") hidePop(); });
 (function start() {
   const h = decodeURIComponent((location.hash || "").slice(1));
   if (h.startsWith("feature-") && F[h.slice(8)]) Object.assign(state, {view: "types", type: h.slice(8)});
