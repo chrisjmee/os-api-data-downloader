@@ -210,7 +210,7 @@ An interactive, read-only guide to how OS National Geographic Database features 
 partner data - no QGIS, no API key, nothing to download:
 **https://chrisjmee.github.io/os-api-data-downloader/ngd-links/**
 
-- **Use cases** - 13 everyday questions (what is at this address, which ward is it in, who owns it, who
+- **Use cases** - 14 everyday questions (tell me everything about this property, what is at this address, which ward is it in, who owns it, who
   maintains the street, how do emergency services reach a site…), the joins each one needs, the keys used and
   where to get each dataset.
 - **Feature types** - every feature in OS's relationship model, what it joins to and the exact fields
@@ -218,7 +218,7 @@ partner data - no QGIS, no API key, nothing to download:
 - **Linking keys** - OSID, UPRN, USRN, postcode, GSS code, UDPRN, UARN and the rest: what each is, who issues
   it and every join that uses it.
 - **Find a route** - the shortest chain of joins between any two features, with the key used at each step.
-- **API or Select+Build?** - how the two delivery routes differ, and what that means for joining data.
+- **APIs or Select+Build?** - how the two delivery routes differ; every feature and use case says whether it comes from OS Select+Build and the OS NGD APIs, OS Select+Build only, or a partner, and what that means for joining data.
 
 The relationships come from OS's UK Geospatial Entity Relationships model (`explorer/data/os_relationships.csv`);
 the written content is in `explorer/content.py`. `explorer/build_explorer.py` builds the page, and GitHub

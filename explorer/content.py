@@ -165,6 +165,38 @@ DELIVERY = {
 # ------------------------------------------------------------------------------------------ use cases
 # step: (source feature, source join key, target feature) - must be a row in the relationship file
 USE_CASES = [
+    {"id": "everything", "title": "Tell me everything about this property",
+     "who": "Councils, emergency services, housing, revenues, insurers, property and asset managers",
+     "summary": "Start from one UPRN and pull together everything OS data and its partners hold about the "
+                "property: its building and site, its street and who maintains it, its postcode and areas, its "
+                "Royal Mail address, council tax or business rates, Land Registry title and any parent address.",
+     "steps": [("Building", "uprnreference.uprn", "BuiltAddress"),
+               ("Building", "buildingpartreference.buildingpartid", "BuildingPart"),
+               ("Building", "sitereference.siteid", "Site"),
+               ("BuiltAddress", "parentuprn", "BuiltAddress"),
+               ("BuiltAddress", "udprn", "RoyalMailAddress"),
+               ("BuiltAddress", "usrn", "Street"),
+               ("MaintenanceArea", "usrn", "Street"),
+               ("BuiltAddress", "relatedentity.crossreferenceid", "RoadLink"),
+               ("BuiltAddress", "postcode", "PostcodeUnitArea"),
+               ("BuiltAddress", "lowertierlocalauthoritygsscode", "LowerTierLocalAuthority"),
+               ("BuiltAddress", "relatedentity.crossreferenceid", "Ward"),
+               ("BuiltAddress", "relatedentity.crossreferenceid", "ParishOrCommunity"),
+               ("BuiltAddress", "relatedentity.crossreferenceid", "CouncilTax"),
+               ("BuiltAddress", "relatedentity.crossreferenceid", "NonDomesticRates"),
+               ("TitleNumberandUPRNLookUpdataset", "uprn", "BuiltAddress")],
+     "answers": ["What is the full address, its classification (house, flat, shop, school…) and its Royal Mail "
+                 "postal address?",
+                 "Which building is it in - use, age, height, floors, footprint, roof, construction - and how many "
+                 "other addresses share it?",
+                 "Which site does it belong to and what is the land used for?",
+                 "Is it a flat in a block (parent UPRN), and which other flats share the parent?",
+                 "Which street is it on, which road link gives access, and is the street maintained at public "
+                 "expense?",
+                 "Which postcode, council, ward and parish is it in?",
+                 "Does it have a council tax or business rates record, and which Land Registry title covers it?"],
+     "watch": "This combines OS NGD (API and Select+Build), GB Address (Select+Build only) and partner data with "
+              "their own licences - the address, VOA and Land Registry joins need GB Address from Select+Build."},
     {"id": "property", "title": "What is at this address?",
      "who": "Councils, housing, emergency planning, insurers, property analysts",
      "summary": "Start from a UPRN and build a full picture of the property: the building it is in, the "

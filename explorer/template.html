@@ -183,7 +183,7 @@ footer { padding-block: 0 32px; font-size: 0.82rem; color: var(--muted); }
       <button class="tab" role="tab" aria-selected="false" data-view="types">Feature types</button>
       <button class="tab" role="tab" aria-selected="false" data-view="keys">Linking keys</button>
       <button class="tab" role="tab" aria-selected="false" data-view="route">Find a route</button>
-      <button class="tab" role="tab" aria-selected="false" data-view="delivery">API or Select+Build?</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="delivery">APIs or Select+Build?</button>
     </nav>
   </div>
 </header>
@@ -208,7 +208,7 @@ const F = D.features, E = D.edges, K = Object.fromEntries(D.keys.map(k => [k.id,
 const byId = Object.fromEntries(E.map(e => [e.id, e]));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const title = f => (F[f] && F[f].title) || f;
-const ROUTE = {api: "OS NGD API – Features and Select+Build", sb: "OS Select+Build", external: "Partner data"};
+const ROUTE = {api: "OS Select+Build and OS NGD APIs", sb: "OS Select+Build only", external: "Partner data"};
 const state = {view: "cases", type: "Building", key: "uprn", kase: 0, q: "", old: false, ext: true, from: "BuiltAddress", to: "RoadLink"};
 
 const live = () => E.filter(e => state.old || !e.old);
@@ -411,15 +411,15 @@ function renderDelivery() {
   const d = D.delivery, groups = {api: [], sb: [], external: []};
   for (const [id, f] of Object.entries(F)) groups[f.route].push(id);
   for (const g in groups) groups[g].sort((a, b) => title(a).localeCompare(title(b)));
-  let h = `<article class="card"><p class="eyebrow">Getting the data</p><h2>OS NGD API or OS Select+Build?</h2>
+  let h = `<article class="card"><p class="eyebrow">Getting the data</p><h2>OS NGD APIs or OS Select+Build?</h2>
     <p class="lead">Both give you the same OS NGD features and the same keys to join them. They differ in how much you get, how it arrives and how it stays up to date.</p></article>`;
-  h += `<article class="card"><div class="tablewrap"><table class="compare"><thead><tr><th></th><th>OS NGD API</th><th>OS Select+Build</th></tr></thead><tbody>` +
+  h += `<article class="card"><div class="tablewrap"><table class="compare"><thead><tr><th></th><th>OS NGD APIs</th><th>OS Select+Build</th></tr></thead><tbody>` +
     d.rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("") + `</tbody></table></div></article>`;
   h += `<article class="card"><h3>What it means for linking</h3><ul class="plain">${d.linking.map(x => `<li>${esc(x)}</li>`).join("")}</ul></article>`;
   h += `<article class="card"><h3>The features in this model, by where to get them</h3><div class="split">` +
-    [["api", "In the API and Select+Build"], ["sb", "Select+Build only (not in the Features API)"], ["external", "Partner data"]].map(([g, label]) =>
+    [["api", "OS Select+Build and OS NGD APIs"], ["sb", "OS Select+Build only"], ["external", "Partner data – from the organisation named"]].map(([g, label]) =>
       `<div><div class="stat">${groups[g].length}</div><div class="stat-label">${esc(label)}</div><div class="chips">${groups[g].map(featChip).join("")}</div></div>`).join("") +
-    `</div><p class="muted" style="font-size:.86rem;margin:12px 0 0">‘Select+Build only’ means the feature isn't among the OS NGD API – Features collections; some OS products here (such as boundaries) are also in OS NGD API – Tiles.</p></article>`;
+    `</div><p class="muted" style="font-size:.86rem;margin:12px 0 0">‘OS Select+Build only’ means the feature isn't served by OS NGD API – Features; some (such as boundaries and catchments) can still be seen as map layers in OS NGD API – Tiles.</p></article>`;
   h += `<article class="card"><h3>Sources</h3><ul class="plain">${d.sources.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("")}</ul></article>`;
   return h;
 }
