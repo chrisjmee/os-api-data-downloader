@@ -60,59 +60,41 @@ Building its UPRNs. This tab downloads feature types **with those links already 
 
 **The tree** follows the Find tab: themes → feature types → links. Tick a feature type to download it; under
 it are its links, in plain English - under Building, *→ The Site it mainly belongs to*; under Site, *← Buildings
-that mainly belong to this Site*. Ticking a link ticks both feature types it joins. Colours give the link's class (from the *OS NGD Relationship Knowledge
-Specification v2*): blue = explicit identifier, green = network topology, brown = authoritative containment,
+that mainly belong to this Site*. Ticking a link ticks both feature types it joins. Colours give the link's class: blue = explicit identifier, green = network topology, brown = authoritative containment,
 orange `⇢` = spatially derived. Selecting a row explains it underneath: the attribute that carries it, its
-cardinality, class and caveats. Greyed-out entries (administrative units, retail areas, Select+Build-only
-cross-reference tables) aren't served by the APIs this plugin uses. Double-click a feature type (or
+cardinality, class and caveats. Greyed-out ⛔ entries are joins only OS Select+Build (or a partner) can supply - see below. Double-click a feature type (or
 **⧩ Filter…**) to download only some of it, e.g. only *School* Sites.
 
-- **Quick pick → Show off OS NGD** - eight picks built to show what OS NGD holds, each with the
-  residential / commercial / mixed-use address split (numbers and %) and a *Character* column for colouring
-  (mainly residential, mainly commercial, mixed…):
+- **Quick pick** - 15 questions you can answer in QGIS with the OS NGD API - Features and OS Places API. Each
+  ticks the feature types and links it needs, explains the route, and gives one answer layer:
 
-  | Pick | One row per… | Highlights |
+  | Quick pick | One row per… | Highlights |
   |---|---|---|
-  | Site address mix | site | addresses through its buildings, residential / commercial / mixed counts and %, homes and addresses per hectare, floor area per address, main address and main building |
-  | Housing stock profile | building | detached / semi / terrace, age, floors, height, materials, floor area per home, address mix, postcodes and streets |
-  | Street profile (USRN) | street | addresses and mix, buildings and their ages, road length, addresses per 100 m, road class, pavement, maintenance, highway dedication, special designations, restrictions |
-  | Postcode profile | postcode | addresses and mix, densities, building ages and types, tallest building, floor area per address, sites and streets |
-  | Solar and roof potential | building | roof area facing each of 8 directions, flat roof, usable roof, panels already fitted, High / Medium / Low potential, addresses that would benefit |
-  | Green and sealed land | site | m² and % under grass, trees, gardens, paving, buildings, water and roads; % green, % sealed, green space per home, address mix |
-  | Site access and network | entrance | who it's for, distance to the network, roads and paths joined, width, dedication, restrictions, barriers, addresses on the site |
-  | Community facilities | education / health / emergency / community / utility site | facility group, buildings, floor area, address mix, entrances and the roads that serve it |
+  | 1. Tell me everything about this property | address | the address and its type; its building in full and how many addresses share it; site and land use; parent block; street, USRN, who maintains it, dedication and designations; postcode |
+  | 2. Which street is it on, and who looks after it? | street | addresses and mix, buildings and ages, road length, addresses per 100 m, class, pavement, maintenance, dedication, designations, restrictions |
+  | 3. How do emergency services reach a site? | site entrance | who it's for, distance to the network, roads and paths joined, width, dedication, restrictions, barriers, addresses on the site |
+  | 4. What is each postcode like? | postcode | addresses and mix, densities, building ages and types, floor area per address, sites and streets |
+  | 5. What is a site made of? | site | buildings, floor area, plot ratio, addresses and mix, entrances, structures, land cover and full site composition |
+  | 6. Which sites are residential, commercial or mixed? | site | residential / commercial / mixed counts and %, homes per hectare, floor area per address, main address and building |
+  | 7. What are the buildings like? | building | detached / semi / terrace, age, floors, height, materials, floor area per home, address mix |
+  | 8. Which roofs could take solar panels? | building | roof area by direction, flat roof, panels fitted, High / Medium / Low potential, addresses that would benefit |
+  | 9. How green is each site? | site | % grass, trees, gardens, paving, buildings, water and roads; % green, % sealed, green space per home |
+  | 10. Where are the schools, health, emergency and community sites? | facility site | facility group, buildings, floor area, address mix, entrances and roads |
+  | 11. Which utility sites are here, and what's on them? | utility site | structures, buildings, main address, ground composition |
+  | 12. What does each road serve? | road link | road details, site entrances and sites served, buildings and addresses on them |
+  | 13. Which roads have bus, cycle or tram lanes? | road link | bus and cycle lanes (count and %), trams, street lights, pavement, dedication, restrictions, hazards, structures |
+  | 14. Can you walk or cycle there? | path link | path type, name, length, street and connections to the road network |
+  | 15. What do local people call it? | crowd-sourced name | the local name and the address, street, site, road or feature it's matched to |
 
   Each answer counts its postcodes, sites, streets or buildings **in full**, even where they reach beyond
-  your drawn area: those are downloaded first, then everything else is read over the area widened to cover
-  them (up to 1 km², or 4 × your area). Parent shells (the record for a whole block of flats) aren't counted
-  on top of the flats. Spatial links (worked out from location) are off by default: the quick picks use OS's own identifiers
-  and cross-references, so a site's addresses come through its buildings. Tick **Show spatial links** first
-  to add them.
-- **Quick pick → Answer a question** starts from a question rather than a list of layers. Each one ticks the feature types and
-  links that answer it and explains the path underneath:
-  1. *Property and address intelligence* - "Tell me everything about this property" (Address → Building →
-     Building Part → Site → land use)
-  2. *Site understanding* - "What makes up this site?" (Site → buildings, addresses, roads, structures, land,
-     water, entrances)
-  3. *Emergency services access* - "How do I get into this site?" (Site → Site Access Location → Road Node →
-     Road Link, plus restrictions)
-  4. *Building context* - "What surrounds this building?" (Building → Site → address → postcode / street →
-     roads)
-  5. *Education analysis* - Sites narrowed to schools, colleges, universities and nurseries, with their
-     buildings, addresses, entrances and road access
-  6. *Transport impact assessment* - "What does this road serve?" (Road Link → Road Node → Site Access
-     Location → Site → buildings)
-  7. *Utility and infrastructure discovery* - Sites narrowed to utility sites, with their structures,
-     buildings and addresses
-  8. *Asset management* - buildings, main building and address counts per site
-  9. *Land use exploration* - "What is this area used for?" (every topographic area → Site → land use Tier
-     A / B)
-  10. *How are two feature types connected?* - pick a start and an end (e.g. Address and Road Link); the
-     shortest chain of links between them is ticked and each step explained.
-
-  Further down are whole networks for data engineers (road with routing information, path, street works by
-  USRN, water, rail) and *Everything available*. Local authority and ward boundaries aren't served by the
-  OS NGD API, so *Building context* uses the postcode instead.
+  your drawn area. Parent shells (the record for a whole block of flats) aren't counted on top of the flats.
+  Spatial links (worked out from location) are off by default; tick **Show spatial links** to add them.
+  *How are two feature types connected?* finds and ticks the shortest chain of links between any two.
+- **Only with OS Select+Build or partner data** - the tree also shows every join in OS's *UK Geospatial Entity
+  Relationships* model that the APIs can't make, greyed out with ⛔ and never ticked: under each feature type
+  (e.g. Address → Ward, Council Tax, Land Registry title, which need OS NGD GB Address from Select+Build), and
+  in a section of its own for features the APIs don't serve (boundaries, retail areas, catchments, partner
+  data). Select one to see the fields to join on and why it needs Select+Build.
 - **Link everything ticked** ticks every link between the feature types you've ticked.
 - **Show spatial links** adds links worked out from geometry (address inside Building Part, access point
   on the edge of a Site…). They're useful where no identifier link exists, but are derived, not

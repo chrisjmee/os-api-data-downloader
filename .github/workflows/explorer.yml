@@ -10,6 +10,8 @@ on:
     paths:
       - "os_api_data_downloader/data/ngd_feature_types.csv"
       - "explorer/**"
+      - "os_api_data_downloader/data/os_relationships.csv"
+      - "os_api_data_downloader/core/ngd_model.py"
       - ".github/workflows/explorer.yml"
   workflow_dispatch:
 

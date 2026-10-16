@@ -64,7 +64,8 @@ TEXTS = {
     },
     "links": {
         "recipe": "Start from a question instead of a list of layers - e.g. 'Tell me everything about this "
-                  "property' or 'How do I get into this site?'. Each ticks the feature types and links that "
+                  "property' or 'How do emergency services reach a site?'. Every question can be answered with "
+                  "the OS NGD API - Features and OS Places API. Each ticks the feature types and links that "
                   "answer it (and explains the path underneath); some also narrow Sites, e.g. to schools. "
                   "'How are two feature types connected?' finds and ticks the chain of links between any two. "
                   "Whole networks for data engineers are further down. A quick pick replaces what's ticked - "
@@ -77,7 +78,9 @@ TEXTS = {
         "tree": "Themes > feature types > links. Tick a feature type to download it; tick a link (🔗 stored in "
                 "the data, ⇢ spatial) to join two feature types - both are ticked for you. '→' links are held by "
                 "that feature type, '←' links point at it. Colours: blue identifier, green network topology, "
-                "brown containment, orange spatial. Greyed-out feature types aren't served by the OS APIs this "
+                "brown containment, orange spatial. Greyed ⛔ rows are joins from OS's relationship model "
+                "that the APIs can't make - they need OS NGD data from OS Select+Build (or a partner's data); "
+                "select one to see the fields to join on. Greyed-out feature types aren't served by the OS APIs this "
                 "plugin uses. Addresses come from OS Places, matched on UPRN.",
         "link_all_btn": "Ticks every link between the feature types you've ticked - the quickest way to link "
                         "everything you're downloading to everything else.",

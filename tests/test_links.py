@@ -187,19 +187,21 @@ for i in range(tab.recipe.count()):
 emerg = [i for i in range(tab.recipe.count()) if tab.recipe.itemText(i).startswith("3.")][0]
 tab._apply_recipe(emerg)
 assert "sal_roadnode" in tab.checked_links()
-assert "get into this site" in tab.details.text()
-edu = [i for i in range(tab.recipe.count()) if tab.recipe.itemText(i).startswith("5.")][0]
+assert "get into" in tab.details.text()
+edu = [i for i in range(tab.recipe.count()) if tab.recipe.itemText(i).startswith("10.")][0]
 tab.show_spatial.setChecked(False)
 tab._apply_recipe(edu)
 assert "School" in tab.filters["lus-fts-site"] and "School" in (tab.where("lus-fts-site") or "")
+site = [i for i in range(tab.recipe.count()) if tab.recipe.itemText(i).startswith("5.")][0]
+tab._apply_recipe(site)
 assert "sp_address_site" not in tab.checked_links()      # spatial links stay off unless asked for
 tab.show_spatial.setChecked(True)
-tab._apply_recipe(edu)
+tab._apply_recipe(site)
 assert "sp_address_site" in tab.checked_links()
 tab.show_spatial.setChecked(False)
 steps = tab.show_path(NL.PLACES_ADDRESS, "trn-ntwk-roadlink")
 assert steps and "trn-ntwk-street" in tab.checked_types() and "How Address connects" in tab.details.text()
-assert tab.show_path("wtr-ntwk-waterlinkset", "lus-fts-site") is None
+assert tab.show_path("trn-ntwk-railwaylink", "lus-fts-site") is None
 tab._apply_recipe(emerg)
 tab.tree.setCurrentItem(tab.link_items["sal_roadnode"][0])
 assert "accessednetworknodeid" in tab.details.text() and "Road Node" in tab.details.text()

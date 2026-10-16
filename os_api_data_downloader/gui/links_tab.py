@@ -31,6 +31,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..core import ngd_index as NI
 from ..core import ngd_links as NL
+from ..core import ngd_model as NM
 from ..core import places as P
 from ..core.budget import Budget
 from ..core.ngd_features import NgdFeaturesClient
@@ -78,6 +79,8 @@ def legend_html():
     fg = "#111111" if dark_theme() else "#ffffff"
     chips = [f"<span style='background-color:{cols[k]};color:{fg};font-weight:600'>&nbsp;"
              f"{t.replace(' ', '&nbsp;')}&nbsp;</span>" for k, t in LEGEND]      # a chip never splits over lines
+    chips.append(f"<span style='background-color:{muted()};color:{fg};font-weight:600'>&nbsp;"
+                 "⛔&nbsp;Only&nbsp;with&nbsp;OS&nbsp;Select+Build&nbsp;</span>")
     return " ".join(chips)
 
 
@@ -162,6 +165,7 @@ class LinksTab(QWidget):
         self.index = NI.load() or {}
         self.type_items = {}     # base id -> item
         self.link_items = {}     # link id -> [items]
+        self.sb_edges = []       # joins from OS's model this plugin can't make (tree items point here)
         self.theme_items = {}
         self._syncing = False
         v = QVBoxLayout(self)
@@ -175,13 +179,15 @@ class LinksTab(QWidget):
         row = QHBoxLayout()
         self.recipe = QComboBox()
         self.recipe.addItem("Quick pick - start from a question…", None)
-        self._recipe_header("Show off OS NGD")
-        for i, r in enumerate(NL.SHOWCASE_RECIPES):
-            self.recipe.addItem(f"{r['name']} - \"{r['question']}\"", ("s", i))
-        self._recipe_header("Answer a question")
+        if NL.SHOWCASE_RECIPES:
+            self._recipe_header("Show off OS NGD")
+            for i, r in enumerate(NL.SHOWCASE_RECIPES):
+                self.recipe.addItem(f"{r['name']} - \"{r['question']}\"", ("s", i))
+        self._recipe_header("Answer a question (with the OS NGD and OS Places APIs)")
         for i, r in enumerate(NL.RECIPES):
-            self.recipe.addItem(f"{r['name']} - \"{r['question']}\"", ("q", i))
-        self.recipe.addItem("10. How are two feature types connected? (find the path…)", "path")
+            self.recipe.addItem(r["name"], ("q", i))
+            self.recipe.setItemData(self.recipe.count() - 1, r["question"], Qt.ItemDataRole.ToolTipRole)
+        self.recipe.addItem("How are two feature types connected? (find the route…)", "path")
         self._recipe_header("For data engineers")
         for i, r in enumerate(NL.ENGINEER_RECIPES):
             self.recipe.addItem(r["name"], ("e", i))
@@ -360,6 +366,7 @@ class LinksTab(QWidget):
     def _populate(self):
         self.tree.blockSignals(True)
         self.tree.clear()
+        self.sb_edges = []
         for theme, items in NL.THEMES:
             top = QTreeWidgetItem([theme])
             top.setData(0, KIND_ROLE, "theme")
@@ -404,10 +411,68 @@ class LinksTab(QWidget):
                         li.setToolTip(0, self._link_tip(lk))
                         it.addChild(li)
                         self.link_items.setdefault(lk["id"], []).append(li)
+                if info["available"]:
+                    self._add_sb_group(it, base)
                 top.addChild(it)
             self.tree.addTopLevelItem(top)
             top.setExpanded(True)
+        self._add_sb_theme()
         self.tree.blockSignals(False)
+
+    # ---------------------------------------------------------------- joins this plugin can't make
+    def _sb_item(self, text, kind, ident, tip):
+        it = QTreeWidgetItem([text])
+        it.setData(0, KIND_ROLE, kind)
+        it.setData(0, ID_ROLE, ident)
+        it.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)     # shown, never ticked
+        it.setForeground(0, GREY)
+        f = it.font(0)
+        f.setItalic(True)
+        it.setFont(0, f)
+        it.setToolTip(0, tip)
+        return it
+
+    def _sb_edge_item(self, e, here):
+        """One join from OS's relationship model that needs OS Select+Build (or partner data)."""
+        feats, _ = NM.model()
+        out = here in (e["s"], NM.base_for(e["s"]))
+        other = e["t"] if out else e["s"]
+        tag = "Select+Build only" if e["avail"] == "sb" else feats[other]["org"]
+        idx = len(self.sb_edges)
+        self.sb_edges.append(e)
+        return self._sb_item(f"⛔ {'→' if out else '←'} {feats[other]['title']}  ({tag})", "sbedge", idx,
+                             f"{e['s']}.{e['sf']} = {e['t']}.{e['tf']}\n{e['why']}")
+
+    def _add_sb_group(self, it, base):
+        es = NM.edges_for(base)
+        if not es:
+            return
+        grp = self._sb_item(f"⛔ Only with OS Select+Build or partner data ({len(es)})", "sbgroup", base,
+                            "Joins in OS's relationship model that the APIs this plugin uses can't make - they "
+                            "need OS NGD data from OS Select+Build, or another organisation's data.")
+        for e in sorted(es, key=lambda e: NM.model()[0][e["t"] if NM.base_for(e["s"]) == base else e["s"]]["title"]):
+            grp.addChild(self._sb_edge_item(e, base))
+        it.addChild(grp)
+
+    def _add_sb_theme(self):
+        feats, _ = NM.model()
+        missing = NM.unreachable_features()
+        top = self._sb_item(f"Only with OS Select+Build or partner data ({len(missing)})", "sbtheme", "",
+                            "Features in OS's relationship model that the OS NGD API - Features and OS Places API "
+                            "don't serve. Shown so you can see how they join; download them from OS Select+Build "
+                            "(or the partner) and join them yourself.")
+        f = top.font(0)
+        f.setBold(True)
+        top.setFont(0, f)
+        for name in sorted(missing, key=lambda n: feats[n]["title"]):
+            fi = feats[name]
+            label = fi["title"] + ("" if fi["org"] == NM.OS else f"  ({fi['org']})")
+            ft = self._sb_item(label, "sbtype", name, fi["about"] or fi["title"])
+            for e in missing[name]:
+                ft.addChild(self._sb_edge_item(e, name))
+            top.addChild(ft)
+        self.tree.addTopLevelItem(top)
+        top.setExpanded(False)
 
     def _filter(self, text=None):
         t = (self.find.text() if text is None else text).strip().lower()
@@ -423,6 +488,10 @@ class LinksTab(QWidget):
                 any_link = False
                 for k in range(it.childCount()):
                     li = it.child(k)
+                    if li.data(0, KIND_ROLE) in ("sbgroup", "sbedge"):
+                        hit = self._filter_sb(li, t, type_hit)
+                        any_link = any_link or (hit and bool(t))
+                        continue
                     lk = NL.LINK_BY_ID[li.data(0, ID_ROLE)]
                     allowed = spatial or lk["kind"] == "id"
                     hit = type_hit or (t and (t in li.text(0).lower() or t in " ".join(lk["fields"]).lower()))
@@ -436,6 +505,20 @@ class LinksTab(QWidget):
                     it.setExpanded(False)
                 any_type = any_type or show
             top.setHidden(not any_type)
+
+    def _filter_sb(self, item, t, parent_hit):
+        """Show a Select+Build-only group or join when its parent matches, or its own text does."""
+        if item.data(0, KIND_ROLE) == "sbedge":
+            e = self.sb_edges[item.data(0, ID_ROLE)]
+            hit = parent_hit or t in item.text(0).lower() or t in (e["sf"] + " " + e["tf"]).lower()
+            item.setHidden(not hit)
+            return hit
+        hits = [self._filter_sb(item.child(i), t, parent_hit) for i in range(item.childCount())]
+        show = parent_hit or any(hits)
+        item.setHidden(not show)
+        if t and any(hits) and not parent_hit:
+            item.setExpanded(True)
+        return show
 
     def _spatial_toggled(self, on):
         if not on:
@@ -691,6 +774,9 @@ class LinksTab(QWidget):
             return
         kind = it.data(0, KIND_ROLE)
         self.filter_btn.setEnabled(kind == "type" and self._values_for(it.data(0, ID_ROLE)) is not None)
+        if kind in ("sbtheme", "sbgroup", "sbtype", "sbedge"):
+            self.details.setText(self._sb_details(it, kind))
+            return
         if kind == "theme":
             n = sum(1 for j in range(it.childCount()) if it.child(j).data(0, ID_ROLE) in self.type_items)
             self.details.setText(f"<b>{it.text(0)}</b> theme · {n} feature type(s) available. Tick the theme to "
@@ -732,6 +818,28 @@ class LinksTab(QWidget):
             f"{NL.card_sentence(lk)}<br>"
             f"<b>{cls_name}</b> - {cls_text}.<br>{how}"
             + (f"<br><i>{lk['note']}</i>" if lk["note"] else ""))
+
+    def _sb_details(self, it, kind):
+        feats, _ = NM.model()
+        sb = (f"<span style='color:{warn()}'>⛔ Can't be made here: the OS NGD API - Features and OS Places API "
+              "don't supply it.</span>")
+        if kind == "sbtheme":
+            return ("<b>Only with OS Select+Build or partner data</b><br>These features are in OS's relationship "
+                    "model but not served by the APIs this plugin uses - for example GB Address (with its links to "
+                    "wards, council tax and Land Registry titles), boundaries and retail areas. Order them from OS "
+                    "Select+Build (or the partner) and join them on the keys shown.")
+        if kind == "sbgroup":
+            return (f"<b>Joins that need OS Select+Build</b><br>{sb}<br>Select one to see the fields to join on "
+                    "and why it isn't available through the APIs.")
+        if kind == "sbtype":
+            fi = feats[it.data(0, ID_ROLE)]
+            where = "OS Select+Build" if fi["org"] == NM.OS else f"{fi['org']} (partner data)"
+            return (f"<b>{fi['title']}</b> · {fi['theme']}<br>{fi['about']}<br>Get it from: <b>{where}</b>.<br>{sb}")
+        e = self.sb_edges[it.data(0, ID_ROLE)]
+        owners = ", ".join(e["owners"]) or "not stated"
+        return (f"<b>{feats[e['s']]['title']} → {feats[e['t']]['title']}</b> · {e['type']}<br>"
+                f"Join: <code>{e['s']}.{e['sf']} = {e['t']}.{e['tf']}</code><br>"
+                f"Owner: {owners} · updated: {e['freq'] or 'not stated'}<br>{sb}<br>{e['why']}")
 
     # ---------------------------------------------------------------- description filters
     def _values_for(self, base):

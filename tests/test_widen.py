@@ -61,8 +61,8 @@ class BoxTransport(FakeTransport):
 
 LT.QgisTransport = BoxTransport
 tab = LT.LinksTab(None, FakeArea())          # the area is 0..100 x 0..100: only 4 of the 10 houses
-k = [i for i, r in enumerate(NL2.SHOWCASE_RECIPES) if r["key"] == "postcode"][0]
-i = [i for i in range(tab.recipe.count()) if tab.recipe.itemData(i) == ("s", k)][0]
+k = [i for i, r in enumerate(NL2.RECIPES) if r["key"] == "postcode"][0]
+i = [i for i in range(tab.recipe.count()) if tab.recipe.itemData(i) == ("q", k)][0]
 tab._apply_recipe(i)
 tab.download()
 t0 = time.time()

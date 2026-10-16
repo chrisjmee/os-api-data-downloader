@@ -186,7 +186,7 @@ def _link(lid, holder, target, label, fields=(), sub=(), key="osid", card="N:1",
                                 else f"is linked from {title(holder)}")
 
 
-_SITE_FIELDS = ("smallestsite_siteid", "largestsite_siteid")
+_SITE_FIELDS = ("smallestsite_siteid", "largestsite_siteid", "sitereference")   # sitereference: every Site (newer schemas)
 # ---- Buildings
 _link("building_primary_site", "bld-fts-building", "lus-fts-site", "lies in primary Site",
       ["primarysiteid", "primarysite_id"], card="N:1 (0..1)", cls="C",
@@ -236,12 +236,12 @@ _link("srp_site", "lus-fts-siteroutingpoint", "lus-fts-site", "is the routing po
 for _bid in ("bld-fts-buildingpart", "lnd-fts-land", "str-fts-structure", "wtr-fts-water", "trn-fts-rail",
              "trn-fts-roadtrackorpath"):
     _link(f"{short(_bid)}_site", _bid, "lus-fts-site", "lies in Site (smallest & largest)",
-          _SITE_FIELDS, all_fields=True, card="N:M", cls="C",
+          _SITE_FIELDS, sub=["siteid"], all_fields=True, card="N:M", cls="C",
           note="Topographic areas carry the smallest and largest Site they lie in, and inherit its land-use "
                "classification (Tier A/B). The link table says which (via_field).",
           inverse=f"contains {title(_bid)}")
 # ---- Address (OS Places rows)
-_link("address_parent", PLACES_ADDRESS, PLACES_ADDRESS, "has parent address (UPRN)", ["parent_uprn"], key="uprn",
+_link("address_parent", PLACES_ADDRESS, PLACES_ADDRESS, "has parent address (UPRN)", ["parent_uprn", "parentuprn"], key="uprn",
       card="N:1", note="Parent/child UPRNs, e.g. flats in a block.", inverse="has child address")
 _link("address_street", PLACES_ADDRESS, "trn-ntwk-street", "is on Street (USRN)", ["usrn"], key="usrn",
       card="N:1", note="Needs LPI addresses from OS Places (the Royal Mail DPA record has no USRN) - "
@@ -314,7 +314,8 @@ for _bid in ("trn-ntwk-cyclelane", "trn-ntwk-buslane", "trn-ntwk-tramonroad", "t
              "trn-rami-restriction", "trn-rami-routinghazard", "trn-rami-routingstructure",
              "trn-rami-averageandindicativespeed", "trn-rami-highwaydedication"):
     _link(f"{short(_bid)}_roadlink", _bid, "trn-ntwk-roadlink", "applies to Road Link",
-          ["roadlinkreference", "roadlinkid", "roadlink_reference"] + _NETREF, sub=["roadlinkid", "networkreferenceid"],
+          ["roadlinkreference", "roadlinkid", "roadlink_reference", "linkid"] + _NETREF,
+          sub=["roadlinkid", "networkreferenceid", "linkid"],
           card="N:M", rev=[f"{short(_bid)}reference"], rev_sub=[f"{short(_bid)}id"],
           match={"networkfeaturetype": ["Road Link", "roadlink"]}, inverse=f"has {title(_bid)}")
 for _bid in ("trn-rami-restriction", "trn-rami-routinghazard", "trn-rami-routingstructure"):
@@ -343,11 +344,49 @@ _link("namedroadjunction_junction", "gnm-fts-namedroadjunction", "trn-ntwk-roadj
       note="Verify the exact reference field in the schema - falls back to the spatial link if absent.",
       inverse="is named by")
 _link("crowdsourced_uprn", "gnm-fts-crowdsourcednamepoint", PLACES_ADDRESS, "names address (UPRN)",
-      ["uprn", "uprnreference"], sub=["uprn"], key="uprn", card="N:1", inverse="has crowd-sourced name")
+      ["matcheduprn", "uprn", "uprnreference"], sub=["uprn"], key="uprn", card="N:1", inverse="has crowd-sourced name")
 _link("crowdsourced_street", "gnm-fts-crowdsourcednamepoint", "trn-ntwk-street", "names Street (USRN)",
-      ["usrn", "streetreference"], sub=["usrn"], key="usrn", card="N:1", inverse="has crowd-sourced name")
+      ["matchedusrn", "usrn", "streetreference"], sub=["usrn"], key="usrn", card="N:1", inverse="has crowd-sourced name")
 _link("namedpoint_street", "gnm-fts-namedpoint", "trn-ntwk-street", "is on Street (USRN)",
       ["usrn", "streetreference"], sub=["usrn"], key="usrn", card="N:1", inverse="has Named Point")
+
+# ---- from OS's UK Geospatial Entity Relationships model: joins the OS NGD API - Features can make
+_link("site_addresses", "lus-fts-site", PLACES_ADDRESS, "has address (all UPRNs)",
+      ["sitetoaddressreference", "siteaddressreference"], sub=["uprn"], key="uprn", card="1:N",
+      note="Site-to-address cross-reference table: every address that belongs to the Site, not just its main one.",
+      inverse="belongs to Site")
+_link("street_roadlinks", "trn-ntwk-street", "trn-ntwk-roadlink", "is carried by Road Link",
+      ["roadlinkreference", "roadlinkid"], sub=["roadlinkid"], card="1:N", cls="B",
+      note="The Street's own list of the Road Links that carry it.", inverse="carries Street")
+_link("street_pathlinks", "trn-ntwk-street", "trn-ntwk-pathlink", "is carried by Path Link",
+      ["pathlinkreference", "pathlinkid"], sub=["pathlinkid"], card="1:N", cls="B",
+      note="The Street's own list of the Path Links that carry it (footpaths, alleys).", inverse="carries Street")
+_link("connectingnode_roadlink", "trn-ntwk-connectingnode", "trn-ntwk-roadlink", "lies on Road Link",
+      ["roadlinkid", "roadlinkreference"], sub=["roadlinkid"], card="N:1", cls="B",
+      note="Where the path network meets a road.", inverse="has Connecting Node")
+_link("roadjunction_roadlink", "trn-ntwk-roadjunction", "trn-ntwk-roadlink", "includes Road Link",
+      ["roadlinkreference", "roadlinkid"], sub=["roadlinkid"], card="1:N", cls="B",
+      note="The Road Links that make up a junction, such as a roundabout.", inverse="is part of Road Junction")
+_link("siteroutingpoint_roadlink", "lus-fts-siteroutingpoint", "trn-ntwk-roadlink", "is reached from Road Link",
+      ["roadlinkid"], card="N:1", cls="B", note="Legacy - routing moved to Site Access Location.",
+      inverse="reaches Site Routing Point")
+_link("sal_routingpoint", "lus-fts-siteaccesslocation", "lus-fts-siteroutingpoint", "uses Site Routing Point",
+      ["routingpointid"], card="N:1", note="Older Site Access Location versions only.",
+      inverse="is used by Site Access Location")
+_link("cyclelane_parent", "trn-ntwk-cyclelane", "trn-ntwk-cyclelane", "is part of Cycle Lane", ["parentid"],
+      card="N:1", cls="C", inverse="contains Cycle Lane")
+_link("ferryterminal_site", "trn-ntwk-ferryterminal", "lus-fts-site", "lies in Site", ["siteid"], card="N:1",
+      cls="C", inverse="contains Ferry Terminal")
+_link("fieldboundary_structureline", "str-fts-fieldboundary", "str-fts-structureline", "is drawn as Structure Line",
+      ["structureline_osid", "structurelineid"], card="N:1", inverse="is a Field Boundary")
+for _bid in ("lus-fts-site", "bld-fts-buildingpart", "str-fts-compoundstructure", "str-fts-structure",
+             "str-fts-structureline", "str-fts-structurepoint", "lnd-fts-land", "lnd-fts-landpoint",
+             "lnd-fts-landform", "lnd-fts-landformpoint", "wtr-fts-water", "wtr-fts-waterpoint",
+             "wtr-ntwk-waterlinkset", "wtr-fts-intertidalline", "trn-ntwk-road", "trn-ntwk-roadnode",
+             "trn-fts-roadtrackorpath", "gnm-fts-namedarea", "gnm-fts-namedroadjunction"):
+    _link(f"crowdsourced_{short(_bid)}", "gnm-fts-crowdsourcednamepoint", _bid, f"names {title(_bid)}",
+          ["matchedosid"], card="N:1", note="Crowd-sourced names are matched by OS to the feature they describe.",
+          inverse="has crowd-sourced name")
 
 # ---- Spatially derived (class D) - calculated from geometry, never stored. Off unless shown.
 _SP = "Calculated from geometry, not an authoritative identifier link."
@@ -475,7 +514,23 @@ _SAY = {
     "site_mainbuilding": ("its main Building", "the Site this is the main Building of"),
     "sal_pathnode": ("the Path Node where it joins the path network", "Site entrances that join the path here"),
     "roadnode_rtp": ("the road surface areas it sits on", "Road Nodes on this surface"),
+    "site_addresses": ("every address that belongs to it", "the Site this address belongs to"),
+    "street_roadlinks": ("the Road Links that carry it", "the Streets this Road Link carries"),
+    "street_pathlinks": ("the Path Links that carry it", "the Streets this Path Link carries"),
+    "connectingnode_roadlink": ("the Road Link it sits on", "where paths join this Road Link"),
+    "roadjunction_roadlink": ("the Road Links that make it up", "the Road Junction it's part of"),
+    "siteroutingpoint_roadlink": ("the Road Link it's reached from", "Site Routing Points reached from here"),
+    "sal_routingpoint": ("its Site Routing Point (older versions)", "Site entrances using this routing point"),
+    "cyclelane_parent": ("the Cycle Lane it's part of", "the stretches that make up this Cycle Lane"),
+    "ferryterminal_site": ("the Site it lies in", "Ferry Terminals on this Site"),
+    "fieldboundary_structureline": ("the Structure Line that draws it", "the Field Boundary it draws"),
 }
+for _bid in ("lus-fts-site", "bld-fts-buildingpart", "str-fts-compoundstructure", "str-fts-structure",
+             "str-fts-structureline", "str-fts-structurepoint", "lnd-fts-land", "lnd-fts-landpoint",
+             "lnd-fts-landform", "lnd-fts-landformpoint", "wtr-fts-water", "wtr-fts-waterpoint",
+             "wtr-ntwk-waterlinkset", "wtr-fts-intertidalline", "trn-ntwk-road", "trn-ntwk-roadnode",
+             "trn-fts-roadtrackorpath", "gnm-fts-namedarea", "gnm-fts-namedroadjunction"):
+    _SAY[f"crowdsourced_{short(_bid)}"] = (f"the {title(_bid)} it names", "the local names people use for it")
 for _lk in LINKS:
     _id = _lk["id"]
     if _id in _SAY:
@@ -1664,3 +1719,150 @@ def field_prefix(link, side="target"):
     if len(same) > 1:
         base = link["id"].replace(short(link["holder"]) + "_", "")
     return re.sub(r"[^a-z0-9_]", "_", base.lower())[:24] + "_"
+
+
+# ---------------------------------------------------------------------------------------------- the quick picks
+# Questions this plugin can answer from the APIs it uses (OS NGD API - Features and the OS Places API). Joins
+# that need OS Select+Build - wards and parishes, council tax and Land Registry, planned and historic addresses,
+# retail areas, catchments - are shown in the tree as 'Only with OS Select+Build' instead.
+_SHOW = {r["key"]: r for r in SHOWCASE_RECIPES}
+_OLD = {r["name"][:2]: r for r in RECIPES}
+
+_EVERYTHING = {
+    "subject": A, "title": "Everything about each property (one row per address)", "colour_by": "building_use",
+    "only_in_area": True,
+    "columns": [c for c in _ANSWERS["1."]["columns"] if c[0] not in ("building_osid", "site_osid")] + [
+        ("parent_uprn", "Parent address (block) UPRN", ["address_parent"], "attr", ["uprn"]),
+        ("street", "Street", ["address_street"], "attr", _STREET),
+        ("usrn", "USRN", ["address_street"], "attr", ["usrn"]),
+        ("street_authority", "Street authority", ["address_street"], "attr",
+         ["responsibleauthority_name", "administrativearea1_text"]),
+        ("maintained", "Street maintenance", ["address_street", "maintenancearea_street"], "list",
+         ["maintenanceresponsibility"]),
+        ("highway_dedication", "Highway dedication", ["address_street", "highwaydedication_street"], "list", _DESC),
+        ("street_designations", "Street designations", ["address_street", "specialdesignationarea_street"], "list",
+         ["designation"]),
+        ("postcode_area_m2", "Postcode area (m²)", ["address_pcarea"], "attr", _AREA),
+        ("site_addresses", "Addresses belonging to the site", ["building_uprn", "building_primary_site",
+                                                               "site_addresses"], "count", []),
+        ("building_osid", "Building ID", ["building_uprn"], "attr", ["osid"]),
+        ("site_osid", "Site ID", ["building_uprn", "building_primary_site"], "attr", ["osid"]),
+    ]}
+_TRANSPORT = {
+    "subject": "trn-ntwk-roadlink", "title": "Bus, cycle and tram on each road (one row per road link)",
+    "colour_by": "road_class",
+    "columns": [
+        ("road", "Road", [], "attr", _DESC),
+        ("road_name", "Road name", [], "attr", ["name1_text"]),
+        ("road_class", "Road classification", [], "attr", ["roadclassification"]),
+        ("length_m", "Length (m)", [], "attr", _LENGTH),
+        ("street", "Street", ["roadlink_street"], "list", _STREET),
+        ("bus_lanes", "Bus lanes", ["buslane_roadlink"], "count", []),
+        ("bus_lane_pct", "Bus lane (% of length)", [], "attr", ["presenceofbuslane_overallpercentage"]),
+        ("cycle_lanes", "Cycle lanes", ["cyclelane_roadlink"], "count", []),
+        ("cycle_lane_types", "Cycle lane types", ["cyclelane_roadlink"], "list", _DESC),
+        ("cycle_lane_pct", "Cycle lane (% of length)", [], "attr", ["presenceofcyclelane_overallpercentage"]),
+        ("tram", "Trams on the road", ["tramonroad_roadlink"], "count", []),
+        ("street_lights", "Street lights", ["streetlight_roadlink"], "count", []),
+        ("pavement_pct", "Pavement (% of length)", [], "attr", ["presenceofpavement_overallpercentage"]),
+        ("dedication", "Highway dedication", ["highwaydedication_roadlink"], "list", _DESC),
+        ("restrictions", "Restrictions", ["restriction_roadlink"], "list", ["restriction"]),
+        ("hazards", "Routing hazards", ["routinghazard_roadlink"], "list", _DESC),
+        ("structures", "Bridges, barriers and other structures", ["routingstructure_roadlink"], "list", _DESC),
+        ("road_osid", "Road Link ID", [], "attr", ["osid"]),
+    ]}
+_NAMES = {
+    "subject": "gnm-fts-crowdsourcednamepoint", "title": "Local names (one row per crowd-sourced name)",
+    "colour_by": "named_kind",
+    "columns": [
+        ("local_name", "Local name", [], "attr", ["name1_text", "name", "crowdsourcedname"]),
+        ("named_kind", "What it names", [], "attr", _DESC),
+        ("address", "Address it names", ["crowdsourced_uprn"], "attr", ["address"]),
+        ("street", "Street it names", ["crowdsourced_street"], "attr", _STREET),
+        ("site", "Site it names", ["crowdsourced_site"], "attr", _DESC),
+        ("site_name", "Site name", ["crowdsourced_site"], "attr", _SITE_NAME),
+        ("road", "Road it names", ["crowdsourced_road"], "attr", ["name1_text", "roadclassificationnumber"]),
+        ("water", "Water it names", ["crowdsourced_water"], "attr", _DESC),
+        ("building_part", "Building part it names", ["crowdsourced_buildingpart"], "attr", _DESC),
+        ("structure", "Structure it names", ["crowdsourced_structure"], "attr", _DESC),
+        ("land", "Land it names", ["crowdsourced_land"], "attr", _DESC),
+    ]}
+_WALKING = {
+    "subject": "trn-ntwk-pathlink", "title": "Paths (one row per path link)", "colour_by": "path_type",
+    "columns": [
+        ("path_type", "Path", [], "attr", _DESC),
+        ("path_name", "Path name", ["pathlink_path"], "list", ["name1_text", "designatedname1_text"]),
+        ("length_m", "Length (m)", [], "attr", _LENGTH),
+        ("street", "Street (USRN)", ["pathlink_street"], "list", _STREET),
+        ("connections_to_roads", "Connections to the road network at its ends",
+         ["pathlink_nodes", "connectinglink_pathnode"], "count", []),
+        ("path_osid", "Path Link ID", [], "attr", ["osid"]),
+    ]}
+
+
+def _pick(key, name, question, path, answers, types, links, answer, note="", filters=None):
+    return {"key": key, "name": name, "question": question, "path": path, "answers": answers, "types": types,
+            "links": links, "answer": answer, "note": note, "filters": filters or {}}
+
+
+def _from(r, key, name, question=None):
+    return dict(r, key=key, name=name, question=question or r["question"])
+
+
+RECIPES = [
+    _pick("everything", "1. Tell me everything about this property",
+          "Tell me everything about this property.",
+          "Address (UPRN) → Building → Building Part → Site; → Street (USRN) → highway records; → postcode",
+          "The address and its type; its building in full (use, age, height, floors, roof, floor area) and how "
+          "many addresses share it; its site and land use; its parent block; its street, who maintains it and "
+          "its designations; its postcode.",
+          [A, "bld-fts-building", "bld-fts-buildingpart", "lus-fts-site", "trn-ntwk-street",
+           "trn-rami-maintenancearea", "trn-rami-highwaydedication", "trn-rami-specialdesignationarea",
+           "asu-gbpcd-postcodeunitarea"],
+          ["building_uprn", "building_parts", "building_primary_site", "building_sites", "buildingpart_site",
+           "site_uprn", "site_addresses", "address_parent", "address_street", "maintenancearea_street",
+           "highwaydedication_street", "specialdesignationarea_street", "address_pcarea"],
+          _EVERYTHING,
+          note="Council tax, business rates, Land Registry titles, wards and parishes need OS NGD GB Address from "
+               "OS Select+Build - see 'Only with OS Select+Build' in the tree."),
+    _from(_SHOW["street"], "street", "2. Which street is it on, and who looks after it?"),
+    _from(_SHOW["access"], "access", "3. How do emergency services reach a site?"),
+    _from(_SHOW["postcode"], "postcode", "4. What is each postcode like?"),
+    _from(_OLD["2."], "site", "5. What is a site made of?"),
+    _from(_SHOW["site_mix"], "site_mix", "6. Which sites are residential, commercial or mixed?"),
+    _from(_SHOW["housing"], "housing", "7. What are the buildings like?"),
+    _from(_SHOW["solar"], "solar", "8. Which roofs could take solar panels?"),
+    _from(_SHOW["green"], "green", "9. How green is each site?"),
+    _from(_SHOW["community"], "community", "10. Where are the schools, health, emergency and community sites?"),
+    _from(_OLD["7."], "utility", "11. Which utility sites are here, and what's on them?"),
+    _from(_OLD["6."], "roads", "12. What does each road serve?"),
+    _pick("transport", "13. Which roads have bus, cycle or tram lanes?",
+          "How is each road used by buses, bikes and trams - and what restricts it?",
+          "Road Link ← Bus Lane, Cycle Lane, Tram on Road, Street Light, RAMI records",
+          "Bus and cycle lanes (count and % of length), trams, street lights, pavement, highway dedication, "
+          "restrictions, hazards and structures on every road link.",
+          ["trn-ntwk-roadlink", "trn-ntwk-street", "trn-ntwk-buslane", "trn-ntwk-cyclelane", "trn-ntwk-tramonroad",
+           "trn-fts-streetlight", "trn-rami-highwaydedication", "trn-rami-restriction", "trn-rami-routinghazard",
+           "trn-rami-routingstructure"],
+          ["roadlink_street", "buslane_roadlink", "cyclelane_roadlink", "tramonroad_roadlink",
+           "streetlight_roadlink", "highwaydedication_roadlink", "restriction_roadlink", "routinghazard_roadlink",
+           "routingstructure_roadlink"], _TRANSPORT,
+          note="Traffic regulation orders and NaPTAN stops are Department for Transport data, not in OS's APIs."),
+    _pick("walking", "14. Can you walk or cycle there?",
+          "Where do the paths go, and where do they meet the roads?",
+          "Path Link → Path Node ← Connecting Link; Path Link → Path, Street",
+          "Every path link with its type, name, length and street, and how many connections to the road network "
+          "it has at its ends.",
+          ["trn-ntwk-pathlink", "trn-ntwk-pathnode", "trn-ntwk-path", "trn-ntwk-street", "trn-ntwk-connectinglink"],
+          ["pathlink_nodes", "pathlink_path", "pathlink_street", "connectinglink_pathnode"], _WALKING),
+    _pick("names", "15. What do local people call it?",
+          "Which places, streets and buildings have local names?",
+          "Crowd Sourced Name Point → Address, Street, Site, Road, Water, Building Part, Structure, Land",
+          "Every crowd-sourced local name and the address, street, site, road or feature OS has matched it to.",
+          ["gnm-fts-crowdsourcednamepoint", A, "trn-ntwk-street", "lus-fts-site", "trn-ntwk-road", "wtr-fts-water",
+           "bld-fts-buildingpart", "str-fts-structure", "lnd-fts-land"],
+          ["crowdsourced_uprn", "crowdsourced_street", "crowdsourced_site", "crowdsourced_road", "crowdsourced_water",
+           "crowdsourced_buildingpart", "crowdsourced_structure", "crowdsourced_land"], _NAMES,
+          note="Names come from the public and are matched by OS - treat them as aliases."),
+]
+SHOWCASE_RECIPES = []      # folded into RECIPES above

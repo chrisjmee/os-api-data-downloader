@@ -15,9 +15,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
+sys.path.insert(0, ROOT)
 import content as C  # noqa: E402
 
-REL_CSV = os.path.join(HERE, "data", "os_relationships.csv")
+REL_CSV = os.path.join(ROOT, "os_api_data_downloader", "data", "os_relationships.csv")
 API_CSV = os.path.join(ROOT, "os_api_data_downloader", "data", "ngd_feature_types.csv")
 TEMPLATE = os.path.join(HERE, "template.html")
 OUT = os.path.join(ROOT, "docs", "ngd-links", "index.html")       # the full web page (GitHub Pages, email)
