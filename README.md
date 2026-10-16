@@ -221,8 +221,6 @@ partner data - no QGIS, no API key, nothing to download:
 - **Joins worked out from location** (off by default) - for questions no stored key answers: address to Output
   Area, building to flood zone, address to conservation area, nearest water. Shown dashed and marked
   "Not supplied by OS".
-- **Pop-ups** - hover over (or tab to) any feature name for a plain description of what it is, who supplies it
-  and where to get it.
 - **APIs or Select+Build?** - how the two delivery routes differ; every feature and use case says whether it comes from OS Select+Build and the OS NGD APIs, OS Select+Build only, or a partner, and what that means for joining data.
 
 The relationships come from OS's UK Geospatial Entity Relationships model (`explorer/data/os_relationships.csv`);
