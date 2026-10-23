@@ -1,4 +1,4 @@
-import { DELIVERY, FEATURES, KEYS, keyStyle, LINKS, linksOf, STORAGE } from "../lib/data";
+import { themeColor, DELIVERY, FEATURES, KEYS, keyStyle, LINKS, linksOf, STORAGE } from "../lib/data";
 
 /** A linking key shown the same way as in the key: a short line in its colour and its name. */
 function KeyChip({ id }) {
@@ -34,7 +34,9 @@ function FeatureDetails({ id, withExternal, onSelect, onFocus }) {
   const { out, in: inn, self } = linksOf(id, withExternal);
   return (
     <>
-      <p className="eyebrow">{f.theme} · {f.group}</p>
+      <p className="eyebrow">
+        <i className="swatch" style={{ background: themeColor(f.theme) }} /> {f.theme} · {f.group}
+      </p>
       <h2>{f.title}</h2>
       <p className={`delivery delivery--${f.delivery}`}>{f.delivery === "external" ? f.org : DELIVERY[f.delivery]}</p>
       {f.about && <p>{f.about}</p>}

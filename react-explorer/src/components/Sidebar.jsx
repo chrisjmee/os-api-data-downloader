@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DATA, featuresByTheme } from "../lib/data";
+import { DATA, featuresByTheme, themeColor } from "../lib/data";
 
 function FeatureSelect({ label, value, onChange, withExternal }) {
   return (
@@ -78,7 +78,10 @@ export default function Sidebar({ view, onFocus, onRoute, onCase, withExternal, 
                   aria-expanded={isOpen}
                   onClick={() => setOpen((o) => ({ ...o, [theme]: !isOpen }))}
                 >
-                  <span>{theme}</span>
+                  <span className="theme__name">
+                    <i className="swatch" style={{ background: themeColor(theme) }} />
+                    {theme}
+                  </span>
                   <span className="theme__count">{items.length}</span>
                 </button>
                 {isOpen && (

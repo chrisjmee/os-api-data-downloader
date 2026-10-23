@@ -6,7 +6,7 @@ import Sidebar from "./components/Sidebar";
 import Details from "./components/Details";
 import FeatureNode from "./components/FeatureNode";
 import KeyEdge from "./components/KeyEdge";
-import { CASES, FEATURES, isExternal, KEY_STYLE, LINKS, linksOf, OTHER_KEY, shortestRoutes, STORAGE } from "./lib/data";
+import { CASES, DATA, FEATURES, themeColor, isExternal, KEY_STYLE, LINKS, linksOf, OTHER_KEY, shortestRoutes, STORAGE } from "./lib/data";
 import { dagreColumns, grid, NODE_H, orderByNeighbours } from "./lib/layout";
 
 const nodeTypes = { feature: FeatureNode };
@@ -33,7 +33,7 @@ function featureNode(id, pos, extra = {}) {
     type: "feature",
     position: { x: pos.x, y: pos.y },
     data: { title: f.title, sub: f.delivery === "external" ? f.org : f.group, about: f.about, width: pos.width,
-            height: NODE_H, external: f.delivery === "external", ...extra },
+            height: NODE_H, external: f.delivery === "external", themeColor: themeColor(f.theme), ...extra },
   };
 }
 
@@ -124,6 +124,12 @@ function Legend() {
         <span><LineSample dash={STORAGE.table.dash} /> in a reference table</span>
         <span><LineSample dash={STORAGE.related.dash} /> Related Entity table</span>
         <span className="muted">Click a line for the attributes to join on.</span>
+      </div>
+      <div className="legend__row">
+        <strong>Theme</strong>
+        {DATA.themes.map((t) => (
+          <span key={t}><i className="swatch" style={{ background: themeColor(t) }} /> {t}</span>
+        ))}
       </div>
     </div>
   );
@@ -259,7 +265,7 @@ function Explorer() {
           onPaneClick={() => setSelectedId(null)}
           nodesConnectable={false}
           fitView
-          fitViewOptions={{ padding: { top: "90px", bottom: "120px", left: "30px", right: "30px" }, maxZoom: 1 }}
+          fitViewOptions={{ padding: { top: "90px", bottom: "150px", left: "30px", right: "30px" }, maxZoom: 1 }}
           minZoom={0.15}
           colorMode="system"
           proOptions={{ hideAttribution: true }}

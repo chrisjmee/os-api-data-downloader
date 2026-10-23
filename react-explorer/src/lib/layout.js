@@ -10,7 +10,7 @@ const ctx = typeof document !== "undefined" ? document.createElement("canvas").g
 export function nodeWidth(title) {
   if (!ctx) return 180;
   ctx.font = "600 14px system-ui, -apple-system, 'Segoe UI', sans-serif";
-  return Math.max(140, Math.ceil(ctx.measureText(title).width) + 32);
+  return Math.max(140, Math.ceil(ctx.measureText(title).width) + 48); // padding, theme stripe and a little slack
 }
 
 /** Place columns of {id, title}: every box in a column starts at the same left edge, columns are spaced by

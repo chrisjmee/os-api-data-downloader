@@ -17,6 +17,23 @@ export const KEY_STYLE = {
   postcode: { label: "Postcode", color: "#0e7c86" },
 };
 export const OTHER_KEY = "#8a8580";
+
+// Theme colours, after OS map conventions (building salmon, vegetation green, water blue, road amber...).
+// Kept lighter than the line colours above so a box's theme never reads as a linking key.
+export const THEME_COLORS = {
+  Buildings: "#d98b74",
+  "Land Use": "#d6b56d",
+  Land: "#8fc165",
+  Address: "#e07a8a",
+  Structures: "#a39a8e",
+  Transport: "#f2b134",
+  Water: "#6cb4e0",
+  "Administrative and statistical units": "#b4a0d8",
+  "Geographical Names": "#5d5955",
+  Grids: "#c9c5bf",
+  "Other organisations": "#e3dccf",
+};
+export const themeColor = (theme) => THEME_COLORS[theme] ?? "#c9c5bf";
 export function keyStyle(id) {
   return KEY_STYLE[id] ?? { label: KEYS.get(id)?.name ?? id, color: OTHER_KEY };
 }
