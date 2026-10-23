@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OS NGD Relationship Explorer</title>
   <!--
-    OS NGD Relationship Explorer v4.2
+    OS NGD Relationship Explorer v4.3
     How OS NGD themes link together, through five linking keys (OSID, UPRN, USRN, GSS code, postcode).
 
     Files, all in one folder (open this page with Live Server, or any local web server):
@@ -91,7 +91,7 @@
     .react-flow__handle { opacity: 0 !important; width: 1px !important; height: 1px !important; min-width: 0 !important; min-height: 0 !important; border: 0 !important; }
     .react-flow__edge-path { stroke-linecap: round; }
     .react-flow__edge { cursor: pointer; }
-    .react-flow__edge:hover .react-flow__edge-path { stroke-width: 4.5px !important; }
+    .react-flow__edge:hover .react-flow__edge-path { stroke-width: 3px !important; }
     .react-flow__controls { bottom: 16px !important; right: 16px !important; left: auto !important; }
 
     /* boxes */
@@ -323,7 +323,7 @@
       }));
     }
 
-    function lineEdge(id, source, target, key, { type = "attribute", width = 2.4, sourceHandle = "r-out", targetHandle = "l-in", data = {} } = {}) {
+    function lineEdge(id, source, target, key, { type = "attribute", width = 1.6, sourceHandle = "r-out", targetHandle = "l-in", data = {} } = {}) {
       return {
         id, source, target, sourceHandle, targetHandle, type: "default",
         style: { stroke: KEY_COLORS[key] ?? KEY_COLORS.other, strokeWidth: width, strokeDasharray: STORAGE[type]?.dash },
@@ -361,7 +361,8 @@
         list.forEach(t => keys.forEach(k => {
           const n = counts.get(`${t.id}|${k}`);
           if (!n) return;
-          const width = 1.5 + 7 * Math.sqrt(n / max);
+          /* a little thicker for more links, but never heavy: 1px to 3px */
+          const width = Math.min(3, 1 + 2 * Math.sqrt(n / max));
           edges.push(side === "left"
             ? lineEdge(`ov:${t.id}:${k}`, `theme:${t.id}`, `key:${k}`, k, { width, data: { kind: "themeKey", theme: t.id, count: n } })
             : lineEdge(`ov:${t.id}:${k}`, `key:${k}`, `theme:${t.id}`, k, { width, data: { kind: "themeKey", theme: t.id, count: n } }));
@@ -406,7 +407,7 @@
       feats.forEach(id => featureKeys.get(id).forEach(k => edges.push(lineEdge(`tf:${id}:${k}`, id, `key:${k}`, k, { data: { kind: "featureKey", feature: id } }))));
       for (const [k2, links] of keyThemes) {
         const [k, oid] = k2.split("|");
-        edges.push(lineEdge(`tk:${k}:${oid}`, `key:${k}`, `theme:${oid}`, k, { width: 1.5 + Math.min(6, links.length), data: { kind: "keyTheme", theme: themeId, other: oid, links: links.map(l => l.id) } }));
+        edges.push(lineEdge(`tk:${k}:${oid}`, `key:${k}`, `theme:${oid}`, k, { width: Math.min(3, 1 + links.length / 4), data: { kind: "keyTheme", theme: themeId, other: oid, links: links.map(l => l.id) } }));
       }
       return { nodes: toNodes(cols, pos), edges };
     }
@@ -796,7 +797,7 @@
       /* a selected line stands out; the rest fade */
       const selEdgeId = sel?.edge;
       const edges = useMemo(() => shown.edges.map(e => selEdgeId
-        ? { ...e, style: { ...e.style, opacity: e.id === selEdgeId ? 1 : 0.15, strokeWidth: e.id === selEdgeId ? (e.style.strokeWidth ?? 2) + 1.5 : e.style.strokeWidth } }
+        ? { ...e, style: { ...e.style, opacity: e.id === selEdgeId ? 1 : 0.15, strokeWidth: e.id === selEdgeId ? (e.style.strokeWidth ?? 2) + 1 : e.style.strokeWidth } }
         : e), [shown, selEdgeId]);
 
       const onNodeClick = useCallback((_, n) => {
