@@ -6,22 +6,25 @@ import Sidebar from "./components/Sidebar";
 import Details from "./components/Details";
 import FeatureNode from "./components/FeatureNode";
 import KeyEdge from "./components/KeyEdge";
-import { DATA, FEATURES, isExternal, KEY_STYLE, linksOf, shortestRoutes } from "./lib/data";
+import { CASES, FEATURES, isExternal, KEY_STYLE, LINKS, linksOf, shortestRoutes } from "./lib/data";
 import { columns, layout } from "./lib/layout";
 
 const nodeTypes = { feature: FeatureNode };
 const edgeTypes = { key: KeyEdge };
 const START = "Building";
 
-// The view is kept in the address bar (#Building or #route=Building,Street) so a view can be bookmarked or shared.
+// What's on screen: one feature, a route between two, or a use case. It's kept in the address bar
+// (#Building, #route=Building,Ward, #case=property) so a view can be bookmarked or shared.
 function readHash() {
   const h = decodeURIComponent(window.location.hash.slice(1));
   if (h.startsWith("route=")) {
     const [from, to] = h.slice(6).split(",");
-    if (FEATURES.has(from) && FEATURES.has(to)) return { focus: from, route: { from, to } };
+    if (FEATURES.has(from) && FEATURES.has(to)) return { kind: "route", from, to };
   }
-  return { focus: FEATURES.has(h) ? h : START, route: null };
+  if (h.startsWith("case=") && CASES.has(h.slice(5))) return { kind: "case", id: h.slice(5) };
+  return { kind: "feature", id: FEATURES.has(h) ? h : START };
 }
+const hashOf = (v) => (v.kind === "route" ? `route=${v.from},${v.to}` : v.kind === "case" ? `case=${v.id}` : v.id);
 
 function featureNode(id, pos, extra = {}) {
   const f = FEATURES.get(id);
@@ -77,6 +80,26 @@ function routeView(route, withExternal) {
   return { nodes, edges: spreadBadges(edges), result: r };
 }
 
+/** A use case: the feature types and links it follows, laid out left to right. */
+function caseView(id) {
+  const uc = CASES.get(id);
+  const links = uc.links.map((l) => LINKS.get(l)).filter((l) => l.source !== l.target);
+  const ids = [...new Set(links.flatMap((l) => [l.source, l.target]))];
+  const items = ids.map((x) => ({ id: x, title: FEATURES.get(x).title }));
+  const pos = layout(items, links);
+  const nodes = ids.map((x) => featureNode(x, pos[x]));
+  const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "#6a6664" };
+  const seen = new Set();
+  const edges = links.map((l) => {
+    const back = seen.has(`${l.target}|${l.source}`); // the reverse link is already drawn: share its line
+    seen.add(`${l.source}|${l.target}`);
+    return back
+      ? { id: l.id, source: l.target, target: l.source, type: "key", data: { link: l }, markerStart: arrow }
+      : { id: l.id, source: l.source, target: l.target, type: "key", data: { link: l }, markerEnd: arrow };
+  });
+  return { nodes, edges: spreadBadges(edges) };
+}
+
 /** Two links drawn between the same pair of boxes would hide each other's badge: stack the badges instead. */
 function spreadBadges(edges) {
   const groups = new Map();
@@ -109,22 +132,22 @@ function Legend() {
 }
 
 function Explorer() {
-  const initial = readHash();
-  const [focus, setFocus] = useState(initial.focus);
-  const [route, setRoute] = useState(initial.route);
+  const [view, setView] = useState(readHash);
+  // the feature shown in the right-hand panel; on a use case nothing until a box is clicked
+  const [focus, setFocus] = useState(() => (view.kind === "feature" ? view.id : view.kind === "route" ? view.from : null));
   const [selectedId, setSelectedId] = useState(null);
   const [withExternal, setWithExternal] = useState(true);
 
   // keep the address bar in step, and follow the browser's back and forward buttons
   useEffect(() => {
-    const h = route ? `route=${route.from},${route.to}` : focus;
+    const h = hashOf(view);
     if (decodeURIComponent(window.location.hash.slice(1)) !== h) window.history.pushState(null, "", `#${h}`);
-  }, [focus, route]);
+  }, [view]);
   useEffect(() => {
     const onPop = () => {
-      const s = readHash();
-      setFocus(s.focus);
-      setRoute(s.route);
+      const v = readHash();
+      setView(v);
+      setFocus(v.kind === "feature" ? v.id : v.kind === "route" ? v.from : null);
       setSelectedId(null);
     };
     window.addEventListener("popstate", onPop);
@@ -132,40 +155,54 @@ function Explorer() {
   }, []);
 
   const goFeature = useCallback((id) => {
-    setRoute(null);
+    setView({ kind: "feature", id });
     setFocus(id);
     setSelectedId(null);
   }, []);
-  const goRoute = useCallback((r) => {
-    setRoute(r);
-    setFocus(r.from);
+  const goRoute = useCallback(({ from, to }) => {
+    setView({ kind: "route", from, to });
+    setFocus(from);
     setSelectedId(null);
   }, []);
-  // a feature hidden by the "other organisations" switch can't stay in view
+  const goCase = useCallback((id) => {
+    setView({ kind: "case", id });
+    setFocus(null);
+    setSelectedId(null);
+  }, []);
+  // a feature hidden by the "other organisations" switch can't stay in view (use cases always show all their links)
   useEffect(() => {
-    if (!withExternal && isExternal(focus)) goFeature(START);
-    if (!withExternal && route && (isExternal(route.from) || isExternal(route.to))) goFeature(route.from);
-  }, [withExternal, focus, route, goFeature]);
+    if (withExternal) return;
+    if (view.kind === "feature" && isExternal(view.id)) goFeature(START);
+    if (view.kind === "route" && (isExternal(view.from) || isExternal(view.to))) goFeature(view.from);
+  }, [withExternal, view, goFeature]);
 
-  const view = useMemo(
-    () => (route ? routeView(route, withExternal) : featureView(focus, withExternal)),
-    [focus, route, withExternal]
+  const shown = useMemo(
+    () =>
+      view.kind === "route"
+        ? routeView(view, withExternal)
+        : view.kind === "case"
+          ? caseView(view.id)
+          : featureView(view.id, withExternal),
+    [view, withExternal]
   );
-  const selected = selectedId ? DATA.links.find((l) => l.id === selectedId) : null;
-
-  const nodes = view.nodes;
+  const selected = selectedId ? LINKS.get(selectedId) : null;
   const edges = useMemo(
     () =>
-      view.edges.map((e) => ({
+      shown.edges.map((e) => ({
         ...e,
         data: { ...e.data, selected: e.id === selectedId, dim: !!selectedId && e.id !== selectedId, onSelect: setSelectedId },
       })),
-    [view, selectedId]
+    [shown, selectedId]
+  );
+  const nodes = useMemo(
+    () => shown.nodes.map((n) => (view.kind === "case" ? { ...n, data: { ...n.data, focus: n.id === focus } } : n)),
+    [shown, view.kind, focus]
   );
 
-  const viewKey = route ? `r:${route.from}:${route.to}:${withExternal}` : `f:${focus}:${withExternal}`;
-  const fromT = route && FEATURES.get(route.from).title;
-  const toT = route && FEATURES.get(route.to).title;
+  const viewKey = `${hashOf(view)}:${withExternal}`;
+  const fromT = view.kind === "route" && FEATURES.get(view.from).title;
+  const toT = view.kind === "route" && FEATURES.get(view.to).title;
+  const uc = view.kind === "case" && CASES.get(view.id);
 
   return (
     <div className="app">
@@ -174,20 +211,20 @@ function Explorer() {
         <p>How OS NGD feature types join: which key, which attribute, and the route between any two.</p>
       </header>
       <Sidebar
-        focus={route ? null : focus}
+        view={view}
         onFocus={goFeature}
-        route={route}
         onRoute={goRoute}
+        onCase={goCase}
         withExternal={withExternal}
         onExternal={setWithExternal}
       />
       <main className="canvas">
-        {route && (
+        {view.kind === "route" && (
           <div className="banner">
-            {view.result?.found ? (
+            {shown.result?.found ? (
               <span>
-                <strong>{fromT}</strong> to <strong>{toT}</strong>: {view.result.steps} link{view.result.steps > 1 ? "s" : ""}
-                {view.edges.length > view.result.steps ? " (every shortest route shown)" : ""}
+                <strong>{fromT}</strong> to <strong>{toT}</strong>: {shown.result.steps} link{shown.result.steps > 1 ? "s" : ""}
+                {shown.edges.length > shown.result.steps ? " (every shortest route shown)" : ""}
               </span>
             ) : (
               <span>
@@ -195,7 +232,15 @@ function Explorer() {
                 {withExternal ? "." : " without other organisations' datasets."}
               </span>
             )}
-            <button type="button" onClick={() => goFeature(route.from)}>Close route</button>
+            <button type="button" onClick={() => goFeature(view.from)}>Close route</button>
+          </div>
+        )}
+        {uc && (
+          <div className="banner">
+            <span>
+              <strong>{uc.title}</strong>
+            </span>
+            <button type="button" onClick={() => goFeature(START)}>Close</button>
           </div>
         )}
         <ReactFlow
@@ -205,11 +250,12 @@ function Explorer() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodeClick={(_, n) => {
-            if (route) {
-              // on a route, a click shows that feature's details without leaving the route
+            if (view.kind === "feature") goFeature(n.id);
+            else {
+              // on a route or use case, a click shows that feature's details without leaving the view
               setSelectedId(null);
               setFocus(n.id);
-            } else goFeature(n.id);
+            }
           }}
           onEdgeClick={(_, e) => setSelectedId(e.id)}
           onPaneClick={() => setSelectedId(null)}
@@ -227,11 +273,12 @@ function Explorer() {
       </main>
       <Details
         focus={focus}
+        useCase={uc || null}
         selected={selected}
         withExternal={withExternal}
         onSelect={setSelectedId}
         onFocus={goFeature}
-        onClose={() => setSelectedId(null)}
+        onBack={() => (selected ? setSelectedId(null) : setFocus(null))}
       />
     </div>
   );

@@ -6,7 +6,8 @@ Same source as the Explorer page: OS's relationship model (os_api_data_downloade
 and the written content in explorer/content.py. Kept simple on purpose:
 * current schema versions only (relationships from superseded versions are left out);
 * one link per pair of feature types, listing every attribute that joins them;
-* no joins worked out from location, and no use cases.
+* no joins worked out from location;
+* the use cases, each listing the links it follows.
 
 Run it again whenever the relationship model changes; GitHub Actions does this before building the app.
 """
@@ -23,7 +24,7 @@ import build_explorer as B  # noqa: E402
 import content as C  # noqa: E402
 from export_ngd_hierarchy import KEY_NAMES, storage, table_title  # noqa: E402
 
-DATA_VERSION = "1.0.0"
+DATA_VERSION = "1.1.0"
 OUT = os.path.join(ROOT, "react-explorer", "src", "data", "ngd-links.json")
 OS = "Ordnance Survey"
 THEME_ORDER = ["Building", "Land Use", "Land", "Address", "Structures", "Transport", "Water",
@@ -78,6 +79,17 @@ def export():
             "joins": joins,
         })
 
+    by_edge = {e["id"]: e for e in data["edges"]}
+    link_ids = {l["id"] for l in links}
+    cases = []
+    for c in data["cases"]:
+        ids = list(dict.fromkeys(f"{by_edge[s]['s']}->{by_edge[s]['t']}" for s in c["steps"]))
+        missing = [i for i in ids if i not in link_ids]
+        if missing:
+            raise SystemExit(f"Use case '{c['id']}': links not in the current data: {missing}")
+        cases.append({"id": c["id"], "title": c["title"], "who": c.get("who", ""), "summary": c.get("summary", ""),
+                      "answers": c.get("answers", []), "watch": c.get("watch", ""), "links": ids})
+
     keys = [{"id": k["id"], "name": k["name"], "full": k["full"], "what": k["what"]}
             for k in data["keys"] if k["id"] != "location"]
     themes = sorted({f["theme"] for f in features},
@@ -85,13 +97,13 @@ def export():
     out = {"version": DATA_VERSION, "built": dt.date.today().isoformat(),
            "source": "OS relationship model (UK Geospatial Entity Relationships), via github.com/chrisjmee/"
                      "os-api-data-downloader",
-           "themes": themes, "keys": keys, "features": features, "links": links}
+           "themes": themes, "keys": keys, "features": features, "links": links, "cases": cases}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=1, ensure_ascii=False)
         fh.write("\n")
     print(f"ngd-links.json v{DATA_VERSION}: {len(features)} feature types, {len(links)} links, "
-          f"{len(keys)} keys, themes: {', '.join(themes)}")
+          f"{len(keys)} keys, {len(cases)} use cases, themes: {', '.join(themes)}")
 
 
 if __name__ == "__main__":

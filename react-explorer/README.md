@@ -4,6 +4,8 @@ A simple explorer of how OS NGD feature types join, built in React with React Fl
 as the OS NGD Data Linkages Explorer page in this repository: OS's relationship model
 (`os_api_data_downloader/data/os_relationships.csv`), current schema versions only.
 
+- **Use cases**: pick a question, such as "What is at this address?", to see the feature types and links that
+  answer it, who it's for, and what to watch out for.
 - **Pick a feature type** on the left. It sits in the middle; what it stores the IDs of is on the right,
   and what stores its ID is on the left.
 - **Each line is coloured by its linking key** (OSID, UPRN, USRN, GSS code, postcode, others grey). A solid
@@ -11,7 +13,7 @@ as the OS NGD Data Linkages Explorer page in this repository: OS's relationship 
   separate Related Entity table (Select+Build). The arrow points to the feature whose ID is stored.
 - **Click a badge or line** for the attributes to join on, in plain English.
 - **How are two connected?** shows every shortest chain of links between two feature types.
-- The address bar follows what you look at (`#Street`, `#route=Building,Ward`), so views can be bookmarked
+- The address bar follows what you look at (`#Street`, `#route=Building,Ward`, `#case=property`), so views can be bookmarked
   and shared.
 
 ## Run it in VS Code

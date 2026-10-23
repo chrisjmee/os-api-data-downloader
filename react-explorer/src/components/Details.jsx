@@ -1,4 +1,4 @@
-import { DELIVERY, FEATURES, KEYS, keyStyle, linksOf, STORAGE } from "../lib/data";
+import { DELIVERY, FEATURES, KEYS, keyStyle, LINKS, linksOf, STORAGE } from "../lib/data";
 
 function KeyChip({ id }) {
   const k = keyStyle(id);
@@ -120,18 +120,65 @@ function LinkDetails({ link, onFocus }) {
   );
 }
 
-export default function Details({ focus, selected, withExternal, onSelect, onFocus, onClose }) {
+function CaseDetails({ uc, onSelect, onFocus }) {
+  return (
+    <>
+      <p className="eyebrow">Use case</p>
+      <h2>{uc.title}</h2>
+      {uc.who && <p className="muted small">For: {uc.who}</p>}
+      <p>{uc.summary}</p>
+      {uc.answers.length > 0 && (
+        <>
+          <h3>Questions it answers</h3>
+          <ul className="answers">
+            {uc.answers.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <h3>Links it follows ({uc.links.length})</h3>
+      <ol className="steps">
+        {uc.links.map((id) => {
+          const l = LINKS.get(id);
+          return (
+            <li key={id}>
+              <button type="button" className="text-link" onClick={() => onSelect(id)}>
+                {FEATURES.get(l.source).title} → {FEATURES.get(l.target).title}
+              </button>{" "}
+              {l.keys.map((k) => (
+                <KeyChip key={k} id={k} />
+              ))}
+              {l.source === l.target && <span className="muted small"> (between records of the same type, not drawn)</span>}
+            </li>
+          );
+        })}
+      </ol>
+      {uc.watch && (
+        <p className="watch">
+          <strong>Watch out: </strong>
+          {uc.watch}
+        </p>
+      )}
+    </>
+  );
+}
+
+export default function Details({ focus, useCase, selected, withExternal, onSelect, onFocus, onBack }) {
+  const backTo = selected ? FEATURES.get(focus)?.title ?? useCase?.title : focus && useCase ? useCase.title : null;
   return (
     <aside className="details">
-      {selected && (
-        <button type="button" className="details__back" onClick={onClose}>
-          ‹ Back to {FEATURES.get(focus)?.title ?? "feature"}
+      {backTo && (
+        <button type="button" className="details__back" onClick={onBack}>
+          ‹ Back to {backTo}
         </button>
       )}
       {selected ? (
         <LinkDetails link={selected} onFocus={onFocus} />
       ) : focus ? (
         <FeatureDetails id={focus} withExternal={withExternal} onSelect={onSelect} onFocus={onFocus} />
+      ) : useCase ? (
+        <CaseDetails uc={useCase} onSelect={onSelect} onFocus={onFocus} />
       ) : null}
     </aside>
   );

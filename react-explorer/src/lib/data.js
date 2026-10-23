@@ -5,6 +5,8 @@ import raw from "../data/ngd-links.json";
 export const DATA = raw;
 export const FEATURES = new Map(raw.features.map((f) => [f.id, f]));
 export const KEYS = new Map(raw.keys.map((k) => [k.id, k]));
+export const LINKS = new Map(raw.links.map((l) => [l.id, l]));
+export const CASES = new Map(raw.cases.map((c) => [c.id, c]));
 
 // Colour for each linking key. The five keys most links use get their own colour; the rest share grey.
 export const KEY_STYLE = {

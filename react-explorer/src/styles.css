@@ -163,3 +163,9 @@ p { margin: 0 0 8px; }
   .details { border-left: 0; border-top: 1px solid var(--line); }
   .legend { display: none; }
 }
+
+/* ---------- use cases ---------- */
+.answers, .steps { margin: 0; padding-left: 20px; }
+.answers li, .steps li { margin-bottom: 6px; }
+.steps .chip { margin-left: 4px; }
+.watch { margin-top: 16px; padding: 10px 12px; border-left: 3px solid #c45200; background: var(--bg); font-size: 13px; }

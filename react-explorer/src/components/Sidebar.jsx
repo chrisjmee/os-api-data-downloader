@@ -21,16 +21,43 @@ function FeatureSelect({ label, value, onChange, withExternal }) {
   );
 }
 
-export default function Sidebar({ focus, onFocus, route, onRoute, withExternal, onExternal }) {
+export default function Sidebar({ view, onFocus, onRoute, onCase, withExternal, onExternal }) {
+  const focus = view.kind === "feature" ? view.id : null;
   const [filter, setFilter] = useState("");
   const [open, setOpen] = useState({});
-  const [from, setFrom] = useState(route?.from ?? "");
-  const [to, setTo] = useState(route?.to ?? "");
+  const [casesOpen, setCasesOpen] = useState(view.kind === "case");
+  const [from, setFrom] = useState(view.kind === "route" ? view.from : "");
+  const [to, setTo] = useState(view.kind === "route" ? view.to : "");
   const groups = featuresByTheme(filter, withExternal);
   const searching = filter.trim().length > 0;
 
   return (
     <aside className="sidebar">
+      <section>
+        <h2>Use cases</h2>
+        <div className="theme">
+          <button type="button" className="theme__head" aria-expanded={casesOpen} onClick={() => setCasesOpen(!casesOpen)}>
+            <span>Questions OS data can answer</span>
+            <span className="theme__count">{DATA.cases.length}</span>
+          </button>
+          {casesOpen && (
+            <ul>
+              {DATA.cases.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    className={`feature-item${view.kind === "case" && view.id === c.id ? " is-active" : ""}`}
+                    onClick={() => onCase(c.id)}
+                  >
+                    {c.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
       <section>
         <h2>Feature types</h2>
         <input
