@@ -7,7 +7,7 @@ import Details from "./components/Details";
 import FeatureNode from "./components/FeatureNode";
 import KeyEdge from "./components/KeyEdge";
 import { CASES, FEATURES, isExternal, KEY_STYLE, LINKS, linksOf, OTHER_KEY, shortestRoutes, STORAGE } from "./lib/data";
-import { COL, dagreColumns, grid, NODE_H, NODE_W, orderByNeighbours, ROW } from "./lib/layout";
+import { dagreColumns, grid, NODE_H, orderByNeighbours } from "./lib/layout";
 
 const nodeTypes = { feature: FeatureNode };
 const edgeTypes = { key: KeyEdge };
@@ -32,7 +32,7 @@ function featureNode(id, pos, extra = {}) {
     id,
     type: "feature",
     position: { x: pos.x, y: pos.y },
-    data: { title: f.title, sub: f.delivery === "external" ? f.org : f.group, about: f.about, width: NODE_W,
+    data: { title: f.title, sub: f.delivery === "external" ? f.org : f.group, about: f.about, width: pos.width,
             height: NODE_H, external: f.delivery === "external", ...extra },
   };
 }
@@ -51,8 +51,9 @@ function edge(link, source, target, { sourceHandle = "out", targetHandle = "in" 
   return { id: link.id, source, target, sourceHandle, targetHandle, type: "key", data: { link } };
 }
 
-/** One feature type in the middle, what stores its ID on the left, what it stores the IDs of on the right.
- *  The middle box spans both columns with one connection point per row, so every line runs straight across. */
+const item = (id) => ({ id, title: FEATURES.get(id).title });
+
+/** One feature type in the middle, what stores its ID on the left, what it stores the IDs of on the right. */
 function featureView(focus, withExternal) {
   const { out, in: inn } = linksOf(focus, withExternal);
   const outOf = new Map(out.map((l) => [l.target, l]));
@@ -60,27 +61,11 @@ function featureView(focus, withExternal) {
   // a feature linked both ways goes on the right only
   const right = [...outOf.keys()].sort(byKeyThenTitle((id) => outOf.get(id)));
   const left = [...inOf.keys()].filter((id) => !outOf.has(id)).sort(byKeyThenTitle((id) => inOf.get(id)));
-  const pos = grid([left, [], right]);
-  const rows = Math.max(left.length, right.length, 1);
-  const height = (rows - 1) * ROW + NODE_H;
-  const top = -height / 2;
-  pos[focus] = { x: COL, y: top };
-  const portTop = (id) => pos[id].y + NODE_H / 2 - top;
-  const ports = {
-    in: left.length ? left.map((id) => ({ id: `in-${id}`, top: portTop(id) })) : [{ id: "in" }],
-    out: right.length ? right.map((id) => ({ id: `out-${id}`, top: portTop(id) })) : [{ id: "out" }],
-  };
-  const nodes = [
-    featureNode(focus, pos[focus], { focus: true, height, ports }),
-    ...[...left, ...right].map((id) => featureNode(id, pos[id])),
-  ];
+  const pos = grid([left.map(item), [item(focus)], right.map(item)]);
+  const nodes = [focus, ...left, ...right].map((id) => featureNode(id, pos[id], { focus: id === focus }));
   const edges = [
-    ...out.map((l) => edge(l, focus, l.target, { sourceHandle: `out-${l.target}` })),
-    ...inn.map((l) =>
-      outOf.has(l.source)
-        ? edge(l, focus, l.source, { sourceHandle: `out-${l.source}` })
-        : edge(l, l.source, focus, { targetHandle: `in-${l.source}` })
-    ),
+    ...out.map((l) => edge(l, focus, l.target)),
+    ...inn.map((l) => (outOf.has(l.source) ? edge(l, focus, l.source) : edge(l, l.source, focus))),
   ];
   return { nodes, edges };
 }
@@ -92,7 +77,7 @@ function routeView(route, withExternal) {
   const cols = Array.from({ length: r.steps + 1 }, () => []);
   for (const [id, step] of r.nodes) cols[step].push(id);
   const links = r.links.map((x) => x.link);
-  const pos = grid(orderByNeighbours(cols, links));
+  const pos = grid(orderByNeighbours(cols, links).map((c) => c.map(item)));
   const nodes = [...r.nodes.keys()].map((id) => featureNode(id, pos[id], { focus: id === route.from || id === route.to }));
   // drawn in route order (left to right)
   const edges = r.links.map(({ link, prev, next }) => edge(link, prev, next));
@@ -106,7 +91,7 @@ function caseView(id) {
   const ids = [...new Set(links.flatMap((l) => [l.source, l.target]))];
   const cols = dagreColumns(ids, links);
   const colOf = new Map(cols.flatMap((c, i) => c.map((x) => [x, i])));
-  const pos = grid(cols);
+  const pos = grid(cols.map((c) => c.map(item)));
   const nodes = ids.map((x) => featureNode(x, pos[x]));
   // always drawn left to right; the arrow shows which way the ID is stored
   const edges = links.map((l) =>

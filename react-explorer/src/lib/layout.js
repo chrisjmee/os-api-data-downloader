@@ -1,19 +1,30 @@
-// Neat column layout: every box the same size, columns evenly spaced, rows evenly spaced and centred.
+// Neat column layout: boxes sized to their names, left edges lined up in each column, rows evenly spaced and centred.
 import dagre from "@dagrejs/dagre";
 
-export const NODE_W = 250;
-export const NODE_H = 64;
-export const ROW = NODE_H + 22; // vertical pitch between boxes
-export const COL = NODE_W + 190; // horizontal pitch between columns
+export const NODE_H = 52;
+export const ROW = NODE_H + 18; // vertical pitch between boxes
+export const GAP = 150; // space between columns, for the lines
 
-/** Place columns of ids: column i at x = i * COL, each column centred on y = 0. Returns {id: {x, y}}. */
+// Boxes are sized to their names, like the original OS explorer
+const ctx = typeof document !== "undefined" ? document.createElement("canvas").getContext("2d") : null;
+export function nodeWidth(title) {
+  if (!ctx) return 180;
+  ctx.font = "600 14px system-ui, -apple-system, 'Segoe UI', sans-serif";
+  return Math.max(140, Math.ceil(ctx.measureText(title).width) + 32);
+}
+
+/** Place columns of {id, title}: every box in a column starts at the same left edge, columns are spaced by
+ *  their widest box, rows are evenly spaced and each column is centred on y = 0. Returns {id: {x, y, width}}. */
 export function grid(cols) {
   const pos = {};
-  cols.forEach((col, i) => {
-    col.forEach((id, j) => {
-      pos[id] = { x: i * COL, y: (j - (col.length - 1) / 2) * ROW - NODE_H / 2 };
+  let x = 0;
+  for (const col of cols) {
+    const widths = col.map((n) => nodeWidth(n.title));
+    col.forEach((n, j) => {
+      pos[n.id] = { x, y: (j - (col.length - 1) / 2) * ROW - NODE_H / 2, width: widths[j] };
     });
-  });
+    x += (widths.length ? Math.max(...widths) : 0) + GAP;
+  }
   return pos;
 }
 
@@ -22,7 +33,7 @@ export function dagreColumns(ids, links) {
   const g = new dagre.graphlib.Graph({ multigraph: true });
   g.setGraph({ rankdir: "LR", nodesep: 20, ranksep: 100 });
   g.setDefaultEdgeLabel(() => ({}));
-  ids.forEach((id) => g.setNode(id, { width: NODE_W, height: NODE_H }));
+  ids.forEach((id) => g.setNode(id, { width: 200, height: NODE_H }));
   links.forEach((l, i) => g.setEdge(l.source, l.target, {}, `e${i}`));
   dagre.layout(g);
   const xs = [...new Set(ids.map((id) => Math.round(g.node(id).x)))].sort((a, b) => a - b);
