@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OS NGD Relationship Explorer</title>
   <!--
-    OS NGD Relationship Explorer v4.0
+    OS NGD Relationship Explorer v4.1
     How OS NGD themes link together, through five linking keys (OSID, UPRN, USRN, GSS code, postcode).
 
     Files, all in one folder (open this page with Live Server, or any local web server):
@@ -100,16 +100,15 @@
     .n-feature:hover { box-shadow: var(--shadow-hover); }
     .n-feature .t { font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; }
     .n-feature .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .n-feature.focus { background: var(--fg); color: var(--white); border-color: var(--fg); border-left-color: var(--theme); }
-    .n-feature.focus .s { color: inherit; opacity: 0.7; }
+    /* the feature being looked at (and both ends of a route): white like the rest, with a dark outline */
+    .n-feature.focus { outline: 2px solid var(--fg); outline-offset: 3px; }
     .n-feature.external { border-style: dashed; border-color: #a8a4a0; border-left: 6px solid var(--theme); }
     .n-theme { background: var(--white); border: 1px solid var(--white); border-left: 10px solid var(--theme); box-shadow: var(--shadow);
                padding: 12px 18px; cursor: pointer; min-width: 200px; transition: box-shadow 0.2s ease; }
     .n-theme:hover { box-shadow: var(--shadow-hover); }
     .n-theme .t { font-weight: 700; font-size: 16px; white-space: nowrap; }
     .n-theme .s { font-size: 12px; color: var(--muted); }
-    .n-theme.focus { background: var(--fg); color: var(--white); border-color: var(--fg); border-left-color: var(--theme); }
-    .n-theme.focus .s { color: inherit; opacity: 0.75; }
+    .n-theme.focus { outline: 2px solid var(--fg); outline-offset: 3px; }
     .n-key { border-radius: 999px; color: #fff; padding: 12px 22px; text-align: center; cursor: pointer; box-shadow: var(--shadow); min-width: 150px;
              transition: transform 0.15s ease; }
     .n-key:hover { transform: scale(1.04); }
@@ -406,7 +405,7 @@
         const [k, oid] = k2.split("|");
         edges.push(lineEdge(`tk:${k}:${oid}`, `key:${k}`, `theme:${oid}`, k, { width: 1.5 + Math.min(6, links.length), data: { kind: "keyTheme", theme: themeId, other: oid, links: links.map(l => l.id) } }));
       }
-      return { nodes: toNodes(cols, pos, { [`theme:${themeId}`]: { focus: true } }), edges };
+      return { nodes: toNodes(cols, pos), edges };
     }
 
     /* A key: what stores it on the left, whose identifier it is on the right, grouped by theme */
