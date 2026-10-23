@@ -1,0 +1,363 @@
+{
+ "version": "2.0.0",
+ "built": "2026-10-23",
+ "source": "OS relationship model (UK Geospatial Entity Relationships)",
+ "keys": [
+  {
+   "id": "osid",
+   "name": "OSID",
+   "full": "OS identifier",
+   "what": "The primary identifier of every OS NGD feature: a 36-character GUID. It stays with the feature while the feature is updated and is retired if the feature is removed. Older OS MasterMap products used the TOID for the same job."
+  },
+  {
+   "id": "uprn",
+   "name": "UPRN",
+   "full": "Unique Property Reference Number",
+   "what": "Up to 12 digits, one for every addressable thing - houses, flats, shops, schools, but also things without a postal address, planned properties and ones since demolished. A UPRN never changes and is never reused."
+  },
+  {
+   "id": "usrn",
+   "name": "USRN",
+   "full": "Unique Street Reference Number",
+   "what": "Up to 8 digits, one for every street, including private roads, footpaths and alleys. Street works, maintenance and traffic orders are all recorded against it."
+  },
+  {
+   "id": "postcode",
+   "name": "Postcode",
+   "full": "Royal Mail postcode",
+   "what": "A delivery grouping of around 15 addresses on average. Postcodes are created, split and retired, so they are a grouping to report by, not a property key."
+  },
+  {
+   "id": "udprn",
+   "name": "UDPRN",
+   "full": "Unique Delivery Point Reference Number",
+   "what": "An 8-digit number for each Royal Mail delivery point. One UPRN can have several UDPRNs, but not the other way round."
+  },
+  {
+   "id": "gsscode",
+   "name": "GSS code",
+   "full": "Government Statistical Service code",
+   "what": "A 9-character code for every statistical and administrative area - countries, councils, wards, parishes, health areas. A new code is issued when a boundary changes."
+  },
+  {
+   "id": "uarn",
+   "name": "UARN",
+   "full": "Unique Address Reference Number",
+   "what": "The Valuation Office Agency's reference for each property it values for council tax or business rates."
+  },
+  {
+   "id": "atcocode",
+   "name": "ATCO code",
+   "full": "NaPTAN stop code",
+   "what": "The identifier of each public transport access point in NaPTAN - bus stops, stations, ferry terminals."
+  },
+  {
+   "id": "waterbodyid",
+   "name": "Water body ID",
+   "full": "Water Framework Directive water body identifier",
+   "what": "The identifier of each river basin district or water body catchment used in water management."
+  },
+  {
+   "id": "grid",
+   "name": "Grid square",
+   "full": "British National Grid square reference",
+   "what": "The reference of a 1 km, 100 m or 25 m square of the National Grid."
+  },
+  {
+   "id": "featureid",
+   "name": "Feature ID",
+   "full": "Retail area identifier",
+   "what": "The identifier of an aggregated retail area."
+  },
+  {
+   "id": "other",
+   "name": "Other identifiers",
+   "full": "Island, Northern Ireland and partner identifiers",
+   "what": "Street and property identifiers used in the Channel Islands, Isle of Man and Northern Ireland, and composite keys agreed with partners such as the Canal and River Trust."
+  }
+ ],
+ "useCases": [
+  {
+   "id": "everything",
+   "title": "Tell me everything about this property",
+   "who": "Councils, emergency services, housing, revenues, insurers, property and asset managers",
+   "summary": "Start from one UPRN and pull together everything OS data and its partners hold about the property: its building and site, its street and who maintains it, its postcode and areas, its Royal Mail address, council tax or business rates, Land Registry title and any parent address.",
+   "answers": [
+    "What is the full address, its classification (house, flat, shop, school…) and its Royal Mail postal address?",
+    "Which building is it in - use, age, height, floors, footprint, roof, construction - and how many other addresses share it?",
+    "Which site does it belong to and what is the land used for?",
+    "Is it a flat in a block (parent UPRN), and which other flats share the parent?",
+    "Which street is it on, which road link gives access, and is the street maintained at public expense?",
+    "Which postcode, council, ward and parish is it in?",
+    "Does it have a council tax or business rates record, and which Land Registry title covers it?"
+   ],
+   "watch": "This combines OS NGD (API and Select+Build), GB Address (Select+Build only) and partner data with their own licences - the address, VOA and Land Registry joins need GB Address from Select+Build.",
+   "relationships": [
+    "building--gb-built-address",
+    "building--building-part",
+    "building--site",
+    "gb-built-address--gb-built-address",
+    "gb-built-address--gb-royal-mail-address",
+    "gb-built-address--street",
+    "maintenance-area--street",
+    "gb-built-address--road-link",
+    "gb-built-address--postcode-unit-area",
+    "gb-built-address--lower-tier-local-authority",
+    "gb-built-address--ward",
+    "gb-built-address--parish-or-community",
+    "gb-built-address--council-tax",
+    "gb-built-address--non-domestic-rates",
+    "title-number-and-uprn-look-up--gb-built-address"
+   ]
+  },
+  {
+   "id": "property",
+   "title": "What is at this address?",
+   "who": "Councils, housing, emergency planning, insurers, property analysts",
+   "summary": "Start from a UPRN and build a full picture of the property: the building it is in, the building's parts and the site it belongs to.",
+   "answers": [
+    "Which building is this address in, and what is it - use, age, height, floors, footprint?",
+    "How many other addresses share the building (flats, offices)?",
+    "Which site is it on - a school, hospital, industrial estate - and what is the site used for?",
+    "Is this the main building on the site?"
+   ],
+   "watch": "A building can have many UPRNs and a UPRN can sit in a building with many parts - count distinct UPRNs, not rows.",
+   "relationships": [
+    "building--gb-built-address",
+    "building--building-part",
+    "building--site",
+    "site--building"
+   ]
+  },
+  {
+   "id": "areas",
+   "title": "Which council, ward and parish is it in?",
+   "who": "Anyone reporting by area: councils, central government, NHS, police, statisticians",
+   "summary": "Every address carries the codes of the administrative areas it lies in, so counts and service areas need no spatial query.",
+   "answers": [
+    "How many addresses, homes or businesses are in each council, ward or parish?",
+    "Which ward and councillor covers a property?",
+    "Which upper-tier (county) authority is responsible for a property?"
+   ],
+   "watch": "GSS codes change when boundaries change - join on the codes for the date you're reporting.",
+   "relationships": [
+    "gb-built-address--lower-tier-local-authority",
+    "gb-built-address--ward",
+    "gb-built-address--parish-or-community",
+    "lower-tier-local-authority--upper-tier-local-authority"
+   ]
+  },
+  {
+   "id": "ownership",
+   "title": "Who owns it, and what tax applies?",
+   "who": "Revenues and benefits, fraud, estates, HM Land Registry users, valuation",
+   "summary": "UPRNs join addresses to Land Registry titles and to the Valuation Office Agency's council tax and business rates records.",
+   "answers": [
+    "Which registered title (or titles) covers this property?",
+    "What is its council tax band or business rates record?",
+    "Which properties have an address but no council tax or rates record - potential missing revenue?",
+    "Which land parcels go with which addresses?"
+   ],
+   "watch": "Land Registry and VOA data have their own licences; the links are only as current as the last supply of each.",
+   "relationships": [
+    "title-number-and-uprn-look-up--gb-built-address",
+    "national-polygon-dataset--gb-built-address",
+    "gb-built-address--council-tax",
+    "gb-built-address--non-domestic-rates"
+   ]
+  },
+  {
+   "id": "street",
+   "title": "Which street is it on, and who looks after it?",
+   "who": "Highway authorities, street works, utilities, waste and road maintenance teams",
+   "summary": "The USRN joins an address to its street, and the street to the highway records (RAMI) and to the road links that carry it.",
+   "answers": [
+    "Which street is each address on, and how many addresses does each street serve?",
+    "Is the street maintained at public expense, and by which authority?",
+    "What reinstatement type applies if it is dug up?",
+    "Is it traffic sensitive or otherwise designated?",
+    "Which road links make up the street, for routing and network analysis?"
+   ],
+   "watch": "A long street can have many road links, and a road link can carry more than one street.",
+   "relationships": [
+    "gb-built-address--street",
+    "maintenance-area--street",
+    "reinstatement-line--street",
+    "special-designation-line--street",
+    "street--road-link"
+   ]
+  },
+  {
+   "id": "access",
+   "title": "How do emergency services reach a site?",
+   "who": "Fire, ambulance and police control rooms, resilience teams, logistics",
+   "summary": "Site access locations mark the real entrances to a site and the road node each one joins, so routing can aim for the right gate.",
+   "answers": [
+    "Where are the entrances to a hospital, school or industrial site, and which are for emergency or public use?",
+    "Which road node does each entrance join, for routing to the right gate?",
+    "Are there height, weight or width limits, barriers or hazards on the approach?"
+   ],
+   "watch": "Older Site Access Location versions used roadnodeid and siteid; the current version uses accessednetworknodeid and accessedsiteid.",
+   "relationships": [
+    "site-access-location--site",
+    "site-access-location--road-node",
+    "road-link--road-node",
+    "restriction--road-link",
+    "routing-hazard--road-link",
+    "routing-structure--road-link"
+   ]
+  },
+  {
+   "id": "postcode",
+   "title": "What is each postcode like?",
+   "who": "Health, marketing, statistics, service planning",
+   "summary": "Addresses group into postcode units, and each postcode unit point carries the council, ward and NHS areas it falls in.",
+   "answers": [
+    "How many addresses, homes and businesses are in each postcode?",
+    "Which ward, council and NHS area does each postcode belong to?",
+    "What is the shape and size of each postcode area?"
+   ],
+   "watch": "Postcodes change - a postcode is a grouping to report by, not a stable property key.",
+   "relationships": [
+    "gb-built-address--postcode-unit-area",
+    "postcode-unit-area--postcode-unit-point",
+    "postcode-unit-point--ward",
+    "postcode-unit-point--nhs-health-authority",
+    "postcode-unit-point--upper-tier-local-authority"
+   ]
+  },
+  {
+   "id": "site",
+   "title": "What is a site made of?",
+   "who": "Estates, planning, environmental and green-space teams",
+   "summary": "Every piece of land, building part, water, structure, rail and road surface records the site it lies in, giving a complete picture of each site.",
+   "answers": [
+    "How much of a site is built on, grass, trees, paved or water?",
+    "Which buildings, structures and roads belong to a school, hospital or utility site?",
+    "Which addresses belong to each site?"
+   ],
+   "watch": "Features record both the smallest and the largest site they lie in - choose which one you mean, or count both deliberately.",
+   "relationships": [
+    "land--site",
+    "building-part--site",
+    "water--site",
+    "road-track-path--site",
+    "structure--site",
+    "site--gb-built-address"
+   ]
+  },
+  {
+   "id": "pipeline",
+   "title": "Which planned homes have been built?",
+   "who": "Housing delivery, planning monitoring, council tax and electoral registration",
+   "summary": "Parent and child UPRNs link a planned development to the addresses built on it, and blocks of flats to their flats.",
+   "answers": [
+    "How far through building is each development - how many of its planned addresses now exist?",
+    "Which flats belong to which block?",
+    "Which addresses have been demolished or replaced?"
+   ],
+   "watch": "A parent shell (the block) and its flats are all UPRNs - leave the parent out when counting homes.",
+   "relationships": [
+    "gb-built-address--gb-pre-build-address",
+    "gb-pre-build-address--gb-pre-build-address",
+    "gb-built-address--gb-built-address",
+    "gb-historic-address--gb-historic-address"
+   ]
+  },
+  {
+   "id": "transport",
+   "title": "How is a place served by transport?",
+   "who": "Transport planners, councils, accessibility and active-travel teams",
+   "summary": "Ferry terminals, bus and cycle lanes, traffic orders and public transport stops all join to the OS road and path networks.",
+   "answers": [
+    "Which roads have bus or cycle lanes, and how much of each?",
+    "Which stops and terminals connect to which part of the network?",
+    "Which traffic orders apply to a road?"
+   ],
+   "watch": "NaPTAN and traffic orders join by USRN to the nearest road link - check where a street has several links.",
+   "relationships": [
+    "ferry-terminal--naptan",
+    "ferry-terminal--road-node",
+    "national-public-transport-access-nodes-naptan--road-link",
+    "digital-traffic-regulation-orders--road-link",
+    "bus-lane--road-link",
+    "cycle-lane--road-link"
+   ]
+  },
+  {
+   "id": "walking",
+   "title": "Can you walk or cycle there?",
+   "who": "Active travel, public health, accessibility and rights of way teams",
+   "summary": "The path network joins to the road network through connecting links and nodes, and pavement links run alongside road links.",
+   "answers": [
+    "Is there a continuous walking route between two places, on and off road?",
+    "Which roads have a pavement?",
+    "Which streets are footpaths or alleys?"
+   ],
+   "watch": "Paths and roads are separate networks - routes across both need the connecting links.",
+   "relationships": [
+    "path-link--path-node",
+    "path--path-link",
+    "connecting-link--path-node",
+    "connecting-node--road-link",
+    "pavement-link--road-link",
+    "street--path-link"
+   ]
+  },
+  {
+   "id": "retail",
+   "title": "How healthy is a town centre?",
+   "who": "Economic development, planning, retail and property analysts",
+   "summary": "Retail areas list the addresses inside them and the sites and streets that divide them, and roll up into aggregated retail areas and built-up areas.",
+   "answers": [
+    "How many addresses are in each retail area, and of what type?",
+    "Which retail areas make up a town's aggregated retail area?",
+    "How do retail areas compare by 1 km square?"
+   ],
+   "watch": "Retail area cross-references are text, while UPRNs in GB Address are numbers - convert before joining. Retail areas update twice a year.",
+   "relationships": [
+    "retail-area-major--gb-built-address",
+    "retail-area-minor--retail-area-aggregated",
+    "retail-area-aggregated--built-up-area",
+    "retail-area-major--site",
+    "retail-area-major--1-km-grid"
+   ]
+  },
+  {
+   "id": "water",
+   "title": "Which catchment does it drain to?",
+   "who": "Flood risk, water companies, environmental regulators",
+   "summary": "The water network carries its catchment, and catchments join to river basin districts used in water management.",
+   "answers": [
+    "Which catchment and river basin district is a watercourse in?",
+    "Which named rivers are made of which water links?",
+    "Which addresses relate to water features (moorings, boats, waterside property)?"
+   ],
+   "watch": "Catchments are in Select+Build and Tiles, not the Features API.",
+   "relationships": [
+    "water-link--water-catchment",
+    "waterbody-catchment--river-basin-district",
+    "water-link-set--water-link",
+    "water-link--water-node",
+    "gb-built-address--water"
+   ]
+  },
+  {
+   "id": "names",
+   "title": "What do local people call it?",
+   "who": "Emergency call handlers, search, gazetteers",
+   "summary": "Crowd-sourced names are matched to the address, street or feature they describe, so local names can be found and resolved.",
+   "answers": [
+    "Which property, street or site does a local name refer to?",
+    "Can a caller's description ('the old mill', 'the rec') be resolved to a location?"
+   ],
+   "watch": "Crowd-sourced names are matched by OS but come from the public - treat them as aliases.",
+   "relationships": [
+    "crowd-sourced-name-point--gb-built-address",
+    "crowd-sourced-name-point--street",
+    "crowd-sourced-name-point--site",
+    "crowd-sourced-name-point--road"
+   ]
+  }
+ ]
+}

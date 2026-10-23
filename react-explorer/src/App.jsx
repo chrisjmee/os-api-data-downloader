@@ -11,7 +11,7 @@ import { dagreColumns, grid, NODE_H, orderByNeighbours } from "./lib/layout";
 
 const nodeTypes = { feature: FeatureNode };
 const edgeTypes = { key: KeyEdge };
-const START = "Building";
+const START = "building";
 
 // What's on screen: one feature, a route between two, or a use case. It's kept in the address bar
 // (#Building, #route=Building,Ward, #case=property) so a view can be bookmarked or shared.
@@ -211,7 +211,9 @@ function Explorer() {
   return (
     <div className="app">
       <header className="header">
-        <h1>OS NGD Links</h1>
+        {/* The OS logo shows when "OS logo mono-dark_rgb.svg" sits next to the page (the OS team's copy) */}
+        <img className="header__logo" src="./OS logo mono-dark_rgb.svg" alt="Ordnance Survey" onError={(e) => e.currentTarget.remove()} />
+        <h1>OS NGD Relationship Explorer</h1>
         <p>How OS NGD feature types join: which key, which attribute, and the route between any two.</p>
       </header>
       <Sidebar

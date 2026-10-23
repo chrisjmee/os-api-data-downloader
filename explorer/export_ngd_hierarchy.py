@@ -15,8 +15,8 @@ What is carried across, in the app's own format:
 * only current schema versions (relationships from superseded versions are left out);
 * links to other organisations' datasets, under an extra "Other organisations' datasets" theme.
 
-Left out, because the app has nowhere to show them: joins worked out from location (not supplied by OS)
-and the use cases. Extra detail the app doesn't read yet is still written into each record (``joins``,
+It also writes ngdreference.json alongside: the linking keys explained and the use cases, which the
+React app (react-explorer/) reads with the hierarchy. Joins worked out from location are left out. Extra detail the app doesn't read yet is still written into each record (``joins``,
 ``availability``, ``organisation``, ``description``, ``selfRelationships``) so a later version of the app
 can use it; the current app ignores those fields.
 """
@@ -31,10 +31,13 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 sys.path.insert(0, ROOT)
 import build_explorer as B  # noqa: E402
+import content as C  # noqa: E402
 
-EXPORT_VERSION = "1.0.0"
+EXPORT_VERSION = "2.0.0"
 BASE = os.path.join(HERE, "data", "ngdhierarchy_base.json")
-OUTS = [os.path.join(HERE, "dist", "ngdhierarchy.json"), os.path.join(ROOT, "docs", "ngd-links", "ngdhierarchy.json")]
+# written next to each other in every place they're used: the React app (react-explorer/public) reads both
+OUT_DIRS = [os.path.join(HERE, "dist"), os.path.join(ROOT, "docs", "ngd-links"),
+            os.path.join(ROOT, "react-explorer", "public")]
 
 OS = "Ordnance Survey"
 # OS model theme -> the app's theme id
@@ -164,6 +167,16 @@ def describe(src, tgt, joins, feats):
     return text
 
 
+def sentence(src, tgt, j):
+    """One join in plain English, e.g. 'Building stores the Site OSID in primarysiteid.'"""
+    key = KEY_NAMES.get(j["key"], j["key"])
+    if j["storage"] == "attribute":
+        return f"{src} stores the {tgt} {key} in {j['sourceField']}."
+    if j["storage"] == "standaloneCrossReference":
+        return f"{src} lists every {tgt} {key} in the separate Related Entity table, OS Select+Build ({j['sourceField']})."
+    return f"{src} lists every {tgt} {key} in its {table_title(j['sourceField'].split('.')[0])} table ({j['sourceField']})."
+
+
 def direction(types, os_types):
     if os_types == {"Same As"}:
         return "one-to-one"
@@ -196,6 +209,7 @@ def export():
             continue
         ft = by_id[ids[name]]
         ft["organisation"] = f["org"]
+        ft["delivery"] = f["route"]             # api / sb / external
         ft["availability"] = {"api": "OS NGD API - Features", "sb": "OS Select+Build only"}.get(
             f["route"], "Another organisation's dataset")
         if f.get("api"):
@@ -211,7 +225,10 @@ def export():
         sft, tft = by_id[ids[s]], by_id[ids[t]]
         joins = [{"sourceField": e["sf"], "targetField": e["tf"], "key": e["key"], "storage": storage(e["sf"]),
                   "osRelationshipType": e["type"], "joinType": e["join"], "sourceVersion": e["sv"],
-                  "owners": e["owners"], "updateFrequency": e["freq"], "purpose": e["purpose"]} for e in es]
+                  "owners": e["owners"], "updateFrequency": e["freq"], "purpose": e["purpose"],
+                  "meaning": C.FAMILIES.get(e["family"], ("", ""))[0]} for e in es]
+        for j in joins:
+            j["sentence"] = sentence(sft["label"], tft["label"], j)
         types = {j["storage"] for j in joins}
         rtype = ("attributeAndCrossReference" if "attribute" in types and len(types) > 1 else
                  "standaloneCrossReference" if types == {"standaloneCrossReference"} else
@@ -232,15 +249,36 @@ def export():
             sft.setdefault("relationships", []).append(rel)
             n_rel += 1
 
-    text = json.dumps(hier, indent=2, ensure_ascii=False) + "\n"
-    for out in OUTS:
-        os.makedirs(os.path.dirname(out), exist_ok=True)
-        with open(out, "w", encoding="utf-8") as fh:
-            fh.write(text)
+    # ngdreference.json: the linking keys and the use cases, which have no place in the hierarchy itself
+    by_edge = {e["id"]: e for e in data["edges"]}
+    rel_ids = {r["id"] for ft in by_id.values() for r in ft.get("relationships", []) + ft.get("selfRelationships", [])}
+    cases = []
+    for c in data["cases"]:
+        links = list(dict.fromkeys(f"{ids[by_edge[x]['s']]}--{ids[by_edge[x]['t']]}" for x in c["steps"]))
+        missing = [x for x in links if x not in rel_ids]
+        if missing:
+            raise SystemExit(f"Use case '{c['id']}': relationships not in the hierarchy: {missing}")
+        cases.append({"id": c["id"], "title": c["title"], "who": c.get("who", ""), "summary": c.get("summary", ""),
+                      "answers": c.get("answers", []), "watch": c.get("watch", ""), "relationships": links})
+    reference = {"version": EXPORT_VERSION, "built": data["built"],
+                 "source": "OS relationship model (UK Geospatial Entity Relationships)",
+                 "keys": [{"id": k["id"], "name": k["name"], "full": k["full"], "what": k["what"]}
+                          for k in data["keys"] if k["id"] != "location"],
+                 "useCases": cases}
+
+    for d in OUT_DIRS:
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "ngdhierarchy.json"), "w", encoding="utf-8") as fh:
+            json.dump(hier, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        with open(os.path.join(d, "ngdreference.json"), "w", encoding="utf-8") as fh:
+            json.dump(reference, fh, indent=1, ensure_ascii=False)
+            fh.write("\n")
     n_ft = sum(len(c["featureTypes"]) for t in hier.values() for c in t["collections"].values())
     print(f"ngdhierarchy.json v{EXPORT_VERSION}: {len(hier)} themes, {n_ft} feature types "
           f"({len(added)} added), {n_rel} relationships, {n_self} self-references kept aside, "
-          f"from {len(edges)} OS relationships")
+          f"from {len(edges)} OS relationships; ngdreference.json: {len(reference['keys'])} keys, "
+          f"{len(cases)} use cases")
     if added:
         print("Added:", ", ".join(added))
     return hier

@@ -9,6 +9,7 @@
             "id": "building",
             "label": "Building",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "bld-fts-building-4",
             "description": "A whole building: the building parts that make up one structure, with its use, age, height, floors, roof and the UPRNs of the addresses inside it.",
@@ -38,7 +39,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building stores the Building OSID in mainbuildingid."
                   }
                 ]
               }
@@ -69,7 +72,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building lists every Building Part OSID in its Building Part Reference table (buildingpartreference.buildingpartid)."
                   }
                 ]
               },
@@ -98,7 +103,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building lists every Built Address UPRN in its UPRN Reference table (uprnreference.uprn)."
                   }
                 ]
               },
@@ -127,7 +134,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building stores the Site OSID in primarysiteid."
                   },
                   {
                     "sourceField": "sitereference.siteid",
@@ -141,7 +150,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   }
                 ]
               }
@@ -151,6 +162,7 @@
             "id": "building-access-location",
             "label": "Building Access Location",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "bld-fts-buildingaccesslocation-1",
             "description": "The entrances to a building - where people get in.",
@@ -180,7 +192,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building Access Location stores the Building OSID in accessedbuildingid."
                   }
                 ]
               }
@@ -194,6 +208,7 @@
             "id": "building-part",
             "label": "Building Part",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "bld-fts-buildingpart-2",
             "description": "Each separately constructed part of a building, as drawn on the map, with its height and land use.",
@@ -223,7 +238,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building Part stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -252,7 +269,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building Part lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   },
                   {
                     "sourceField": "smallestsite_siteid",
@@ -266,7 +285,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Building Part stores the Site OSID in smallestsite_siteid."
                   }
                 ]
               }
@@ -286,6 +307,7 @@
             "id": "land",
             "label": "Land",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lnd-fts-land-3",
             "description": "Every piece of land that isn't a building, road or water - grass, woodland, gardens, paved areas - with what it is and the site it lies in.",
@@ -315,7 +337,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Land stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -344,7 +368,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Land stores the Site OSID in smallestsite_siteid."
                   },
                   {
                     "sourceField": "sitereference.siteid",
@@ -358,7 +384,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Land lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   }
                 ]
               }
@@ -368,6 +396,7 @@
             "id": "land-point",
             "label": "Land Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lnd-fts-landpoint-1",
             "description": "Small land features shown as points, such as individual trees or springs."
@@ -376,6 +405,7 @@
             "id": "landform",
             "label": "Landform",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lnd-fts-landform-1",
             "description": "The shape of the land: cliffs, slopes, embankments, cuttings."
@@ -388,6 +418,7 @@
             "id": "landform-point",
             "label": "Landform Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lnd-fts-landformpoint-1",
             "description": "Landform features shown as points, such as spot heights."
@@ -406,6 +437,7 @@
             "id": "gb-built-address",
             "label": "Built Address",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Every current address that physically exists - homes, businesses, schools, flats - with its UPRN, position, classification and links to its street, postcode and areas.",
             "relationships": [
@@ -434,7 +466,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Building Part OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -463,7 +497,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Weekly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address lists every Channel Islands Street Identifier identifier in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -492,7 +528,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Weekly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Built Address lists every Channel Islands Unique Identifier identifier in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -521,7 +559,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Compound Structure OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -550,7 +590,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Built Address lists every Council Tax UARN in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -579,7 +621,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": "Identify when a child address is built and the associated parent address is prebuild. This may be used to understand the parent address development progress."
+                    "purpose": "Identify when a child address is built and the associated parent address is prebuild. This may be used to understand the parent address development progress.",
+                    "meaning": "Parent and child",
+                    "sentence": "Built Address stores the Pre-Build Address UPRN in parentuprn."
                   }
                 ]
               },
@@ -608,7 +652,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Built Address stores the Royal Mail Address UDPRN in udprn."
                   }
                 ]
               },
@@ -637,7 +683,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address stores the Street Address USRN in usrn."
                   }
                 ]
               },
@@ -666,7 +714,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Weekly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address lists every Isle of Man Street Identifier identifier in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -695,7 +745,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Land OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -724,7 +776,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address stores the Lower Tier Local Authority GSS code in lowertierlocalauthoritygsscode."
                   },
                   {
                     "sourceField": "relatedentity.crossreferenceid",
@@ -738,7 +792,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Lower Tier Local Authority GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -767,7 +823,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Built Address lists every Non Domestic Rates UARN in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -796,7 +854,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Weekly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address lists every Northern Ireland Street Identifier identifier in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -825,7 +885,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Parish Or Community GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -854,7 +916,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address stores the Postcode Unit Area postcode in postcode."
                   }
                 ]
               },
@@ -883,7 +947,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address stores the Postcode Unit Point postcode in postcode."
                   }
                 ]
               },
@@ -912,7 +978,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address lists every Road Link OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -941,7 +1009,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Road Track Path OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -970,7 +1040,9 @@
                       "Local Authority"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Built Address stores the Street USRN in usrn."
                   }
                 ]
               },
@@ -999,7 +1071,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Structure OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -1028,7 +1102,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Ward GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -1057,7 +1133,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Built Address lists every Water OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               }
@@ -1088,7 +1166,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Parent and child",
+                    "sentence": "Built Address stores the Built Address UPRN in parentuprn."
                   }
                 ]
               }
@@ -1098,6 +1178,7 @@
             "id": "gb-historic-address",
             "label": "Historic Address",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Addresses that no longer exist - demolished, merged or otherwise retired - kept with their UPRN for history.",
             "selfRelationships": [
@@ -1126,7 +1207,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Parent and child",
+                    "sentence": "Historic Address stores the Historic Address UPRN in parentuprn."
                   }
                 ]
               }
@@ -1136,6 +1219,7 @@
             "id": "gb-non-addressable-object",
             "label": "Non-Addressable Object",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Things with a UPRN but no postal address: bus shelters, telephone boxes, car parks, electricity substations, monuments.",
             "selfRelationships": [
@@ -1164,7 +1248,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Parent and child",
+                    "sentence": "Non-Addressable Object stores the Non-Addressable Object UPRN in parentuprn."
                   }
                 ]
               }
@@ -1174,6 +1260,7 @@
             "id": "gb-pre-build-address",
             "label": "Pre-Build Address",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Addresses for properties that are planned or under construction, before they are built.",
             "selfRelationships": [
@@ -1202,7 +1289,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Parent and child",
+                    "sentence": "Pre-Build Address stores the Pre-Build Address UPRN in parentuprn."
                   }
                 ]
               }
@@ -1212,6 +1301,7 @@
             "id": "gb-royal-mail-address",
             "label": "Royal Mail Address",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Royal Mail's postal address (from the Postcode Address File) for each delivery point, keyed by UDPRN.",
             "relationships": [
@@ -1240,7 +1330,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Royal Mail Address stores the Postcode Unit Area postcode in postcode."
                   }
                 ]
               }
@@ -1250,6 +1342,7 @@
             "id": "gb-street-address",
             "label": "Street Address",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The street-level address record: street name, locality and town for each USRN.",
             "relationships": [
@@ -1278,7 +1371,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Street Address stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -1368,6 +1463,7 @@
             "id": "country",
             "label": "Country",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "England, Scotland and Wales."
           },
@@ -1375,6 +1471,7 @@
             "id": "devolved-parliament-constituency",
             "label": "Devolved Parliament Constituency",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Constituencies for the Scottish Parliament and the Senedd.",
             "relationships": [
@@ -1403,7 +1500,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Devolved Parliament Constituency stores the Devolved Parliament Electoral Region OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1413,6 +1512,7 @@
             "id": "devolved-parliament-electoral-region",
             "label": "Devolved Parliament Electoral Region",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The regions that elect additional members to the Scottish Parliament and the Senedd."
           },
@@ -1420,6 +1520,7 @@
             "id": "electoral-division",
             "label": "Electoral Division",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The areas that elect county councillors.",
             "relationships": [
@@ -1448,7 +1549,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Electoral Division stores the Lower Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1477,7 +1580,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Electoral Division stores the Upper Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1487,6 +1592,7 @@
             "id": "gla-assembly-constituency",
             "label": "GLA Assembly Constituency",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The constituencies that elect London Assembly members.",
             "relationships": [
@@ -1515,7 +1621,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "GLA Assembly Constituency stores the Upper Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1533,6 +1641,7 @@
             "id": "lower-tier-local-authority",
             "label": "Lower Tier Local Authority",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "District, borough, city and unitary councils - the lower tier of local government.",
             "relationships": [
@@ -1561,7 +1670,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Lower Tier Local Authority stores the Upper Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1571,6 +1682,7 @@
             "id": "parish-or-community",
             "label": "Parish Or Community",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Civil parishes in England and communities in Wales - the most local tier of government.",
             "relationships": [
@@ -1599,7 +1711,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Parish Or Community stores the Lower Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1628,7 +1742,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Parish Or Community stores the Regional Authority OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1657,7 +1773,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Parish Or Community stores the Upper Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1667,6 +1785,7 @@
             "id": "polling-district",
             "label": "Polling District",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The areas each polling station serves at elections.",
             "relationships": [
@@ -1695,7 +1814,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Polling District stores the Electoral Division OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1724,7 +1845,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Polling District stores the Lower Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1753,7 +1876,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Polling District stores the Parish Or Community OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1782,7 +1907,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Polling District stores the Upper Tier Local Authority OSID in boundaryparentreference_id."
                   }
                 ]
               },
@@ -1811,7 +1938,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Polling District stores the Ward OSID in boundaryparentreference_id."
                   }
                 ]
               }
@@ -1821,6 +1950,7 @@
             "id": "region",
             "label": "Region",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The English regions (formerly government office regions)."
           },
@@ -1828,6 +1958,7 @@
             "id": "regional-authority",
             "label": "Regional Authority",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Combined and regional authorities, such as the Greater London Authority.",
             "relationships": [
@@ -1856,7 +1987,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Regional Authority lists every Parish Or Community OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -1885,7 +2018,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Regional Authority lists every Polling District OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               }
@@ -1895,6 +2030,7 @@
             "id": "upper-tier-local-authority",
             "label": "Upper Tier Local Authority",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "County councils and unitary authorities - the upper tier of local government."
           },
@@ -1902,6 +2038,7 @@
             "id": "ward",
             "label": "Ward",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The areas that elect district, borough and unitary councillors.",
             "relationships": [
@@ -1930,7 +2067,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Ward lists every Lower Tier Local Authority OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -1959,7 +2098,9 @@
                       "Office for National Statistics"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Ward stores the Output Area (Dec 2021, BFE) GSS code in gsscode."
                   }
                 ]
               },
@@ -1988,7 +2129,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Ward lists every Parish Or Community OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2017,7 +2160,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Ward lists every Upper Tier Local Authority OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               }
@@ -2036,6 +2181,7 @@
             "id": "retail-area-aggregated",
             "label": "Retail Area Aggregated",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Retail areas grouped into a single town or city retail centre.",
             "relationships": [
@@ -2064,7 +2210,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Aggregated lists every 1 km Grid grid square in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2093,7 +2241,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Aggregated stores the Built Up Area GSS code in builtupareaid."
                   }
                 ]
               },
@@ -2122,7 +2272,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Aggregated lists every Built Address UPRN in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               }
@@ -2132,6 +2284,7 @@
             "id": "retail-area-major",
             "label": "Retail Area Major",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Larger retail areas - town centres, high streets and shopping centres.",
             "relationships": [
@@ -2160,7 +2313,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major lists every 1 km Grid grid square in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2189,7 +2344,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major lists every 100 m Grid grid square in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2218,7 +2375,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major lists every Built Address UPRN in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2247,7 +2406,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major stores the Retail Area Aggregated feature ID in retailareaaggregatedid."
                   }
                 ]
               },
@@ -2276,7 +2437,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major stores the Site OSID in dividingfeature_siteid."
                   }
                 ]
               },
@@ -2305,7 +2468,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Major stores the Street OSID in dividingfeature_usrn."
                   }
                 ]
               }
@@ -2315,6 +2480,7 @@
             "id": "retail-area-minor",
             "label": "Retail Area Minor",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Small clusters of shops and retail addresses.",
             "relationships": [
@@ -2343,7 +2509,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor lists every 1 km Grid grid square in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2372,7 +2540,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor lists every 100 m Grid grid square in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2401,7 +2571,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor lists every Built Address UPRN in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2430,7 +2602,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor stores the Retail Area Aggregated feature ID in retailareaaggregatedid."
                   }
                 ]
               },
@@ -2459,7 +2633,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor stores the Site OSID in dividingfeature_siteid."
                   }
                 ]
               },
@@ -2488,7 +2664,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Bi-Annually",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Retail Area Minor stores the Street USRN in dividingfeature_usrn."
                   }
                 ]
               }
@@ -2503,6 +2681,7 @@
             "id": "postcode-unit-area",
             "label": "Postcode Unit Area",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "asu-gbpcd-postcodeunitarea-1",
             "description": "The area covered by each postcode, drawn from the addresses in it.",
@@ -2532,7 +2711,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Area stores the Postcode Unit Point postcode in postcode."
                   },
                   {
                     "sourceField": "postcode",
@@ -2546,7 +2727,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Postcode Unit Area stores the Postcode Unit Point postcode in postcode."
                   }
                 ]
               }
@@ -2556,6 +2739,7 @@
             "id": "postcode-unit-point",
             "label": "Postcode Unit Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "asu-gbpcd-postcodeunitpoint-1",
             "description": "A single point for each postcode, with the codes of the areas it falls in.",
@@ -2586,7 +2770,9 @@
                       "Land and Property Service Northern Ireland"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Point lists every Lower Tier Local Authority OSID in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2615,7 +2801,9 @@
                       "Office for National Statistics"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Point lists every NHS Health Authority GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2645,7 +2833,9 @@
                       "Land and Property Service Northern Ireland"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Point lists every NHS Regional Health Authority GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2674,7 +2864,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Point lists every Upper Tier Local Authority GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               },
@@ -2704,7 +2896,9 @@
                       "Land and Property Service Northern Ireland"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Postcode Unit Point lists every Ward GSS code in the separate Related Entity table, OS Select+Build (relatedentity.crossreferenceid)."
                   }
                 ]
               }
@@ -2733,6 +2927,7 @@
             "id": "crowd-sourced-name-point",
             "label": "Crowd Sourced Name Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "gnm-fts-crowdsourcednamepoint-1",
             "description": "Local and informal names suggested by the public and matched by OS to the feature, address or street they describe.",
@@ -2762,7 +2957,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Building Part OSID in matchedosid."
                   }
                 ]
               },
@@ -2791,7 +2988,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Compound Structure OSID in matchedosid."
                   }
                 ]
               },
@@ -2820,7 +3019,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Built Address UPRN in matcheduprn."
                   }
                 ]
               },
@@ -2849,7 +3050,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Inter Tidal Line OSID in matchedosid."
                   }
                 ]
               },
@@ -2878,7 +3081,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Land OSID in matchedosid."
                   }
                 ]
               },
@@ -2907,7 +3112,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Land Point OSID in matchedosid."
                   }
                 ]
               },
@@ -2936,7 +3143,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Landform OSID in matchedosid."
                   }
                 ]
               },
@@ -2965,7 +3174,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Landform Point OSID in matchedosid."
                   }
                 ]
               },
@@ -2994,7 +3205,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Named Area OSID in matchedosid."
                   }
                 ]
               },
@@ -3023,7 +3236,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Named Road Junction OSID in matchedosid."
                   }
                 ]
               },
@@ -3052,7 +3267,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Road OSID in matchedosid."
                   }
                 ]
               },
@@ -3081,7 +3298,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Road Node OSID in matchedosid."
                   }
                 ]
               },
@@ -3110,7 +3329,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Road Track Path OSID in matchedosid."
                   }
                 ]
               },
@@ -3139,7 +3360,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Site OSID in matchedosid."
                   }
                 ]
               },
@@ -3168,7 +3391,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Street USRN in matchedusrn."
                   }
                 ]
               },
@@ -3197,7 +3422,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Structure OSID in matchedosid."
                   }
                 ]
               },
@@ -3226,7 +3453,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Structure Line OSID in matchedosid."
                   }
                 ]
               },
@@ -3255,7 +3484,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Structure Point OSID in matchedosid."
                   }
                 ]
               },
@@ -3284,7 +3515,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Water OSID in matchedosid."
                   }
                 ]
               },
@@ -3313,7 +3546,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Water Link Set OSID in matchedosid."
                   }
                 ]
               },
@@ -3342,7 +3577,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Crowd Sourced Name Point stores the Water Point OSID in matchedosid."
                   }
                 ]
               }
@@ -3352,6 +3589,7 @@
             "id": "named-area",
             "label": "Named Area",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "gnm-fts-namedarea-1",
             "description": "Named places shown as areas: woods, estates, bays."
@@ -3360,6 +3598,7 @@
             "id": "named-point",
             "label": "Named Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "gnm-fts-namedpoint-1",
             "description": "Named places shown as points: towns, villages, hills, landmarks.",
@@ -3389,7 +3628,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Named Point stores the Country GSS code in countrygsscode."
                   }
                 ]
               },
@@ -3418,7 +3659,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Named Point stores the Lower Tier Local Authority GSS code in lowertierlocalauthoritygsscode."
                   }
                 ]
               },
@@ -3447,7 +3690,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Named Point stores the Region GSS code in regiongsscode."
                   }
                 ]
               },
@@ -3476,7 +3721,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Named Point stores the Regional Authority GSS code in regionalauthoritygsscode."
                   }
                 ]
               },
@@ -3505,7 +3752,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Named Point stores the Upper Tier Local Authority GSS code in uppertierlocalauthoritygsscode."
                   }
                 ]
               }
@@ -3515,6 +3764,7 @@
             "id": "named-road-junction",
             "label": "Named Road Junction",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "gnm-fts-namedroadjunction-1",
             "description": "Named road junctions, such as motorway junctions and roundabouts."
@@ -3533,6 +3783,7 @@
             "id": "site",
             "label": "Site",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lus-fts-site-2",
             "description": "A site with one purpose - a school, hospital, farm, industrial estate, park - with its land use and the buildings, land and addresses that belong to it.",
@@ -3562,7 +3813,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Site stores the Building OSID in mainbuildingid."
                   }
                 ]
               },
@@ -3591,7 +3844,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Site stores the Built Address UPRN in matcheduprn."
                   },
                   {
                     "sourceField": "sitetoaddressreference.uprn",
@@ -3605,7 +3860,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Site lists every Built Address UPRN in its Site to Address Reference table (sitetoaddressreference.uprn)."
                   }
                 ]
               }
@@ -3615,6 +3872,7 @@
             "id": "site-access-location",
             "label": "Site Access Location",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lus-fts-siteaccesslocation-2",
             "description": "The entrances to a site and the road or path node each one joins - where you actually get in.",
@@ -3644,7 +3902,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Site Access Location stores the Road Node OSID in accessednetworknodeid."
                   }
                 ]
               },
@@ -3673,7 +3933,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Site Access Location stores the Site OSID in accessedsiteid."
                   }
                 ]
               }
@@ -3683,6 +3945,7 @@
             "id": "site-routing-point",
             "label": "Site Routing Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "lus-fts-siteroutingpoint-1",
             "description": "An earlier way of giving a site's routing point; replaced by Site Access Location.",
@@ -3712,7 +3975,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Site Routing Point stores the Road Link OSID in roadlinkid."
                   }
                 ]
               }
@@ -3732,6 +3997,7 @@
             "id": "compound-structure",
             "label": "Compound Structure",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "str-fts-compoundstructure-3",
             "description": "Structures made of several parts, such as bridges, piers and dams, treated as one.",
@@ -3761,7 +4027,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Ad Hoc",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Compound Structure stores the Canal Bridges identifier in composite."
                   }
                 ]
               }
@@ -3771,6 +4039,7 @@
             "id": "field-boundary",
             "label": "Field Boundary",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "str-fts-fieldboundary-1",
             "description": "The hedges, walls and fences that divide fields.",
@@ -3800,7 +4069,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Field Boundary stores the Structure Line OSID in structureline_osid."
                   }
                 ]
               }
@@ -3810,6 +4081,7 @@
             "id": "structure",
             "label": "Structure",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "str-fts-structure-3",
             "description": "Built structures that aren't buildings: bridges, walls, towers, pylons, tanks.",
@@ -3839,7 +4111,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Structure stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -3868,7 +4142,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Structure lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   },
                   {
                     "sourceField": "smallestsite_siteid",
@@ -3882,7 +4158,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Structure stores the Site OSID in smallestsite_siteid."
                   }
                 ]
               }
@@ -3892,6 +4170,7 @@
             "id": "structure-line",
             "label": "Structure Line",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "str-fts-structureline-1",
             "description": "Linear structures: walls, fences, hedges, retaining walls."
@@ -3900,6 +4179,7 @@
             "id": "structure-point",
             "label": "Structure Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "str-fts-structurepoint-1",
             "description": "Small structures shown as points: posts, masts, monuments."
@@ -3922,6 +4202,7 @@
             "id": "highway-dedication",
             "label": "Highway Dedication",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-highwaydedication-1",
             "description": "Whether a road is a public highway, and for whom (all vehicles, pedestrians, cyclists…).",
@@ -3951,7 +4232,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Highway Dedication stores the Road Link OSID in networkreferenceid."
                   }
                 ]
               }
@@ -3961,6 +4244,7 @@
             "id": "maintenance-area",
             "label": "Maintenance Area",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-maintenancearea-1",
             "description": "Who maintains a street, as an area - for example maintained at public expense.",
@@ -3990,7 +4274,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Maintenance Area stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4000,6 +4286,7 @@
             "id": "maintenance-line",
             "label": "Maintenance Line",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-maintenanceline-1",
             "description": "Who maintains a street, as a line.",
@@ -4029,7 +4316,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Maintenance Line stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4039,6 +4328,7 @@
             "id": "maintenance-point",
             "label": "Maintenance Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-maintenancepoint-1",
             "description": "Who maintains a street, as a point.",
@@ -4068,7 +4358,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Maintenance Point stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4078,6 +4370,7 @@
             "id": "reinstatement-area",
             "label": "Reinstatement Area",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-reinstatementarea-1",
             "description": "The reinstatement standard for street works (how a road must be reinstated after digging), as an area.",
@@ -4107,7 +4400,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Reinstatement Area stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4117,6 +4412,7 @@
             "id": "reinstatement-line",
             "label": "Reinstatement Line",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-reinstatementline-1",
             "description": "The reinstatement standard for street works, as a line.",
@@ -4146,7 +4442,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Reinstatement Line stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4156,6 +4454,7 @@
             "id": "reinstatement-point",
             "label": "Reinstatement Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-reinstatementpoint-1",
             "description": "The reinstatement standard for street works, as a point.",
@@ -4185,7 +4484,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Reinstatement Point stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4195,6 +4496,7 @@
             "id": "restriction",
             "label": "Restriction",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-restriction-1",
             "description": "Legal and physical restrictions on roads: one way, no turn, height, width and weight limits.",
@@ -4224,7 +4526,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Restriction stores the Road Link OSID in networkreferenceid."
                   }
                 ]
               }
@@ -4234,6 +4538,7 @@
             "id": "routing-hazard",
             "label": "Routing Hazard",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-routinghazard-1",
             "description": "Hazards for routing such as fords and level crossings.",
@@ -4263,7 +4568,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Routing Hazard stores the Road Link OSID in networkreferenceid."
                   }
                 ]
               }
@@ -4273,6 +4580,7 @@
             "id": "routing-structure",
             "label": "Routing Structure",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-routingstructure-1",
             "description": "Structures that affect routing: bridges, tunnels, barriers, gates.",
@@ -4302,7 +4610,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Routing Structure stores the Road Link OSID in networkreferenceid."
                   }
                 ]
               }
@@ -4312,6 +4622,7 @@
             "id": "special-designation-area",
             "label": "Special Designation Area",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-specialdesignationarea-1",
             "description": "Special designations on streets - traffic sensitive, protected, special engineering difficulty - as an area.",
@@ -4341,7 +4652,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Special Designation Area stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4351,6 +4664,7 @@
             "id": "special-designation-line",
             "label": "Special Designation Line",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-specialdesignationline-1",
             "description": "Special designations on streets, as a line.",
@@ -4380,7 +4694,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Special Designation Line stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4390,6 +4706,7 @@
             "id": "special-designation-point",
             "label": "Special Designation Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-rami-specialdesignationpoint-1",
             "description": "Special designations on streets, as a point.",
@@ -4419,7 +4736,9 @@
                       "GeoPlace"
                     ],
                     "updateFrequency": "Monthly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Special Designation Point stores the Street USRN in usrn."
                   }
                 ]
               }
@@ -4434,6 +4753,7 @@
             "id": "road-track-path",
             "label": "Road Track Path",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-fts-roadtrackorpath-3",
             "description": "The surface area of roads, tracks and paths, as drawn on the map.",
@@ -4463,7 +4783,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Road Track Path stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -4492,7 +4814,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Road Track Path lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   },
                   {
                     "sourceField": "smallestsite_siteid",
@@ -4506,7 +4830,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Road Track Path stores the Site OSID in smallestsite_siteid."
                   }
                 ]
               }
@@ -4516,6 +4842,7 @@
             "id": "rail",
             "label": "Rail",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-fts-rail-3",
             "description": "The surface area of railway land and track, as drawn on the map.",
@@ -4545,7 +4872,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Rail stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -4574,7 +4903,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Rail lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   },
                   {
                     "sourceField": "smallestsite_siteid",
@@ -4588,7 +4919,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Rail stores the Site OSID in smallestsite_siteid."
                   }
                 ]
               }
@@ -4606,6 +4939,7 @@
             "id": "street-light",
             "label": "Street Light",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-fts-streetlight-1",
             "description": "Street lighting along road links.",
@@ -4635,7 +4969,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Street Light stores the Road Link OSID in linkid."
                   },
                   {
                     "sourceField": "linkid",
@@ -4649,7 +4985,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Street Light stores the Road Link OSID in linkid."
                   }
                 ]
               }
@@ -4664,6 +5002,7 @@
             "id": "bus-lane",
             "label": "Bus Lane",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-buslane-1",
             "description": "Bus lanes, with the road link they are on and when they apply.",
@@ -4693,7 +5032,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Bus Lane stores the Road Link OSID in linkid."
                   }
                 ]
               }
@@ -4703,6 +5044,7 @@
             "id": "connecting-link",
             "label": "Connecting Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-connectinglink-1",
             "description": "The short links that join the path network to the road network.",
@@ -4732,7 +5074,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Connecting Link stores the Path Node OSID in pathnodeid."
                   }
                 ]
               }
@@ -4742,6 +5086,7 @@
             "id": "connecting-node",
             "label": "Connecting Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-connectingnode-1",
             "description": "Points on road links where the path network connects.",
@@ -4771,7 +5116,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Connecting Node stores the Road Link OSID in roadlinkid."
                   }
                 ]
               }
@@ -4781,6 +5128,7 @@
             "id": "cycle-lane",
             "label": "Cycle Lane",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-cyclelane-1",
             "description": "Cycle lanes, with the road link they are on.",
@@ -4810,7 +5158,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Cycle Lane stores the Cycle Lane OSID in parentid."
                   }
                 ]
               }
@@ -4841,7 +5191,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Cycle Lane stores the Road Link OSID in roadlinkid."
                   }
                 ]
               }
@@ -4851,6 +5203,7 @@
             "id": "ferry-link",
             "label": "Ferry Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-ferrylink-1",
             "description": "Ferry routes between terminals.",
@@ -4880,7 +5233,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Ferry Link stores the Ferry Node OSID in startnode."
                   },
                   {
                     "sourceField": "endnode",
@@ -4894,7 +5249,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Ferry Link stores the Ferry Node OSID in endnode."
                   }
                 ]
               }
@@ -4904,6 +5261,7 @@
             "id": "ferry-node",
             "label": "Ferry Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-ferrynode-1",
             "description": "The ends of ferry routes."
@@ -4912,6 +5270,7 @@
             "id": "ferry-terminal",
             "label": "Ferry Terminal",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-ferryterminal-1",
             "description": "Ferry terminals, linked to the road and path networks and to NaPTAN.",
@@ -4941,7 +5300,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Ferry Terminal stores the NaPTAN ATCO code in ferryterminalcode."
                   }
                 ]
               },
@@ -4970,7 +5331,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Ferry Terminal stores the Path Node OSID in pathnodeid."
                   }
                 ]
               },
@@ -4999,7 +5362,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Ferry Terminal stores the Road Node OSID in roadnodeid."
                   }
                 ]
               },
@@ -5028,7 +5393,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Ferry Terminal stores the Site OSID in siteid."
                   }
                 ]
               }
@@ -5038,6 +5405,7 @@
             "id": "path",
             "label": "Path",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-path-1",
             "description": "A named path made up of path links, such as a long-distance trail.",
@@ -5067,7 +5435,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Path lists every Path Link OSID in its Path Link Reference table (pathlinkreference.pathlinkid)."
                   }
                 ]
               }
@@ -5077,6 +5447,7 @@
             "id": "path-link",
             "label": "Path Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-pathlink-3",
             "description": "A stretch of footpath, cycle path or track between two nodes - the building block of the path network.",
@@ -5106,7 +5477,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Path Link stores the Path Node OSID in startnode."
                   },
                   {
                     "sourceField": "endnode",
@@ -5120,7 +5493,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Path Link stores the Path Node OSID in endnode."
                   }
                 ]
               }
@@ -5130,6 +5505,7 @@
             "id": "path-node",
             "label": "Path Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-pathnode-1",
             "description": "Where path links meet or end."
@@ -5138,6 +5514,7 @@
             "id": "pavement-link",
             "label": "Pavement Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-pavementlink-1",
             "description": "Pavements alongside road links.",
@@ -5167,7 +5544,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Pavement Link stores the Road Link OSID in roadlinkid."
                   }
                 ]
               }
@@ -5177,6 +5556,7 @@
             "id": "railway-link",
             "label": "Railway Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-railwaylink-1",
             "description": "A stretch of railway between two nodes - the building block of the rail network.",
@@ -5206,7 +5586,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Railway Link stores the Railway Node OSID in startnode."
                   },
                   {
                     "sourceField": "endnode",
@@ -5220,7 +5602,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Railway Link stores the Railway Node OSID in endnode."
                   }
                 ]
               }
@@ -5230,6 +5614,7 @@
             "id": "railway-link-set",
             "label": "Railway Link Set",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-railwaylinkset-1",
             "description": "A named railway line made up of railway links.",
@@ -5259,7 +5644,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Railway Link Set lists every Railway Link OSID in its Railway Link Reference table (railwaylinkreference.railwaylinkid)."
                   }
                 ]
               }
@@ -5269,6 +5656,7 @@
             "id": "railway-node",
             "label": "Railway Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-railwaynode-1",
             "description": "Where railway links meet or end, including stations."
@@ -5277,6 +5665,7 @@
             "id": "road",
             "label": "Road",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-road-1",
             "description": "A named or numbered road made up of many road links, such as the A6.",
@@ -5306,7 +5695,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Road lists every Road Link OSID in its Road Link Reference table (roadlinkreference.roadlinkid)."
                   }
                 ]
               }
@@ -5316,6 +5707,7 @@
             "id": "road-junction",
             "label": "Road Junction",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-roadjunction-1",
             "description": "A junction made up of several road nodes, such as a large roundabout.",
@@ -5345,7 +5737,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Road Junction lists every Road Link OSID in its Road Link Reference table (roadlinkreference.roadlinkid)."
                   }
                 ]
               }
@@ -5355,6 +5749,7 @@
             "id": "road-link",
             "label": "Road Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-roadlink-5",
             "description": "A stretch of road between two junctions or ends - the building block of the road network, with its name, class, width, speed and direction.",
@@ -5384,7 +5779,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Road Link stores the Road Node OSID in startnode."
                   },
                   {
                     "sourceField": "endnode",
@@ -5398,7 +5795,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Road Link stores the Road Node OSID in endnode."
                   }
                 ]
               },
@@ -5427,7 +5826,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Road Link lists every Road Track Path OSID in its Road Track or Path Reference table (roadtrackorpathreference.roadtrackorpathid)."
                   }
                 ]
               }
@@ -5437,6 +5838,7 @@
             "id": "road-node",
             "label": "Road Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-roadnode-1",
             "description": "Where road links meet or end - junctions and dead ends.",
@@ -5466,7 +5868,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Road Node lists every Road Track Path OSID in its Road Track or Path Reference table (roadtrackorpathreference.roadtrackorpathid)."
                   }
                 ]
               }
@@ -5476,6 +5880,7 @@
             "id": "street",
             "label": "Street",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-street-1",
             "description": "A street as recorded in the National Street Gazetteer, with its USRN, name and the authority responsible for it.",
@@ -5505,7 +5910,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Street stores the Lower Tier Local Authority GSS code in gsscode1."
                   }
                 ]
               },
@@ -5534,7 +5941,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Street lists every Path Link OSID in its Path Link Reference table (pathlinkreference.pathlinkid)."
                   }
                 ]
               },
@@ -5563,7 +5972,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Street stores the Road Link OSID in roadlinkid."
                   },
                   {
                     "sourceField": "roadlinkreference.roadlinkid",
@@ -5577,7 +5988,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Street lists every Road Link OSID in its Road Link Reference table (roadlinkreference.roadlinkid)."
                   }
                 ]
               },
@@ -5606,7 +6019,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Street stores the Upper Tier Local Authority GSS code in gsscode2."
                   }
                 ]
               }
@@ -5616,6 +6031,7 @@
             "id": "tram-on-road",
             "label": "Tram On Road",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "trn-ntwk-tramonroad-1",
             "description": "Where trams run on roads shared with traffic.",
@@ -5645,7 +6061,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Tram On Road stores the Road Link OSID in roadlinkid."
                   }
                 ]
               }
@@ -5665,6 +6083,7 @@
             "id": "inter-tidal-line",
             "label": "Inter Tidal Line",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-fts-intertidalline-1",
             "description": "The lines of mean high and low water."
@@ -5673,6 +6092,7 @@
             "id": "river-basin-district-catchment",
             "label": "River Basin District Catchment",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Catchments grouped into river basin districts.",
             "relationships": [
@@ -5701,7 +6121,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "River Basin District Catchment stores the River Basin District water body ID in riverbasindistrictid."
                   }
                 ]
               }
@@ -5723,6 +6145,7 @@
             "id": "water",
             "label": "Water",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-fts-water-3",
             "description": "The surface area of water: rivers, lakes, reservoirs, the sea, with the site it lies in.",
@@ -5752,7 +6175,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Water stores the Lower Tier Local Authority GSS code in lowertierlocalauthority_gsscode."
                   }
                 ]
               },
@@ -5781,7 +6206,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Water stores the Site OSID in smallestsite_siteid."
                   },
                   {
                     "sourceField": "sitereference.siteid",
@@ -5795,7 +6222,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Water lists every Site OSID in its Site Reference table (sitereference.siteid)."
                   }
                 ]
               }
@@ -5805,6 +6234,7 @@
             "id": "water-point",
             "label": "Water Point",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-fts-waterpoint-1",
             "description": "Small water features shown as points, such as springs and wells."
@@ -5813,6 +6243,7 @@
             "id": "waterbody-catchment",
             "label": "Waterbody Catchment",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Catchments of the water bodies used in water management.",
             "relationships": [
@@ -5841,7 +6272,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Waterbody Catchment stores the River Basin District water body ID in riverbasindistrictid."
                   }
                 ]
               }
@@ -5851,6 +6284,7 @@
             "id": "water-catchment",
             "label": "Water Catchment",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The land area that drains to a stretch of watercourse."
           }
@@ -5863,6 +6297,7 @@
             "id": "water-link",
             "label": "Water Link",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-ntwk-waterlink-2",
             "description": "A stretch of watercourse between two nodes - the building block of the water network.",
@@ -5892,7 +6327,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "Water Link stores the Water Catchment water body ID in catchmentid."
                   }
                 ]
               },
@@ -5921,7 +6358,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Water Link stores the Water Node OSID in startnode."
                   },
                   {
                     "sourceField": "endnode",
@@ -5935,7 +6374,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Water Link stores the Water Node OSID in endnode."
                   }
                 ]
               }
@@ -5945,6 +6386,7 @@
             "id": "water-link-set",
             "label": "Water Link Set",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-ntwk-waterlinkset-1",
             "description": "A named watercourse made up of water links, such as a river.",
@@ -5974,7 +6416,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Network connection",
+                    "sentence": "Water Link Set lists every Water Link OSID in its Water Link Reference table (waterlinkreference.waterlinkid)."
                   }
                 ]
               }
@@ -5984,6 +6428,7 @@
             "id": "water-node",
             "label": "Water Node",
             "organisation": "Ordnance Survey",
+            "delivery": "api",
             "availability": "OS NGD API - Features",
             "apiCollection": "wtr-ntwk-waternode-1",
             "description": "Where watercourses meet, start or end."
@@ -6002,6 +6447,7 @@
             "id": "indicative-atlas-of-radon-gb",
             "label": "Indicative Atlas of Radon (GB)",
             "organisation": "British Geological Survey",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The British Geological Survey and UK Health Security Agency map of radon potential.",
             "relationships": [
@@ -6030,7 +6476,9 @@
                       "Not defined"
                     ],
                     "updateFrequency": "Ad Hoc",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Indicative Atlas of Radon (GB) stores the Retail Area Major grid square in tile."
                   }
                 ]
               },
@@ -6059,7 +6507,9 @@
                       "Not defined"
                     ],
                     "updateFrequency": "Ad Hoc",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Indicative Atlas of Radon (GB) stores the Retail Area Minor grid square in tile."
                   }
                 ]
               }
@@ -6074,6 +6524,7 @@
             "id": "canal-bridges",
             "label": "Canal Bridges",
             "organisation": "Canal and Rivers Trust",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The Canal and River Trust's record of bridges over its waterways."
           }
@@ -6086,6 +6537,7 @@
             "id": "channel-islands-street-identifier",
             "label": "Channel Islands Street Identifier",
             "organisation": "Channel Islands Local Authorities",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The street identifier used in the Channel Islands' gazetteers."
           },
@@ -6093,6 +6545,7 @@
             "id": "channel-islands-unique-identifier",
             "label": "Channel Islands Unique Identifier",
             "organisation": "Channel Islands Local Authorities",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The property identifier used by the Channel Islands' own address gazetteers."
           }
@@ -6105,6 +6558,7 @@
             "id": "council-tax",
             "label": "Council Tax",
             "organisation": "Valuation Office Agency",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The Valuation Office Agency's council tax record for each home, keyed by UARN."
           },
@@ -6112,6 +6566,7 @@
             "id": "non-domestic-rates",
             "label": "Non Domestic Rates",
             "organisation": "Valuation Office Agency",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The Valuation Office Agency's business rates (rateable value) record for each non-domestic property, keyed by UARN."
           }
@@ -6124,6 +6579,7 @@
             "id": "digital-traffic-regulation-orders",
             "label": "Digital Traffic Regulation Orders",
             "organisation": "Department for Transport",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "Traffic regulation orders (speed limits, parking, restrictions) published in digital form.",
             "relationships": [
@@ -6152,7 +6608,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Ad Hoc",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "Digital Traffic Regulation Orders stores the Road Link USRN in usrn."
                   }
                 ]
               }
@@ -6162,6 +6620,7 @@
             "id": "naptan",
             "label": "NaPTAN",
             "organisation": "Department for Transport",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The national list of public transport access points - bus stops, stations, ferry terminals."
           },
@@ -6169,6 +6628,7 @@
             "id": "national-public-transport-access-nodes-naptan",
             "label": "National Public Transport Access Nodes (NaPTAN)",
             "organisation": "Department for Transport",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "NaPTAN stops, joined to the street they're on.",
             "relationships": [
@@ -6197,7 +6657,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Ad Hoc",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Access",
+                    "sentence": "National Public Transport Access Nodes (NaPTAN) stores the Road Link USRN in usrn."
                   }
                 ]
               }
@@ -6212,6 +6674,7 @@
             "id": "isle-of-man-street-identifier",
             "label": "Isle of Man Street Identifier",
             "organisation": "Isle of Man Local Authorities",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The street identifier used in the Isle of Man's gazetteer."
           }
@@ -6224,6 +6687,7 @@
             "id": "local-authority-districts",
             "label": "Local Authority Districts",
             "organisation": "Office for National Statistics",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "ONS's local authority district boundaries and codes, used for official statistics.",
             "relationships": [
@@ -6252,7 +6716,9 @@
                       "Ordnance Survey"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Local Authority Districts stores the Lower Tier Local Authority GSS code in gsscode."
                   }
                 ]
               }
@@ -6262,6 +6728,7 @@
             "id": "national-postcode-directory",
             "label": "National Postcode Directory",
             "organisation": "Office for National Statistics",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "ONS's directory linking every postcode to the statistical and administrative areas it falls in.",
             "relationships": [
@@ -6290,7 +6757,9 @@
                       "Office for National Statistics"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "National Postcode Directory stores the Output Area (Dec 2021, BFE) GSS code in gsscode."
                   }
                 ]
               }
@@ -6300,6 +6769,7 @@
             "id": "national-postcode-lookup",
             "label": "National Postcode Lookup",
             "organisation": "Office for National Statistics",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "ONS's best-fit lookup from postcodes to statistical areas.",
             "relationships": [
@@ -6328,7 +6798,9 @@
                       "Office for National Statistics"
                     ],
                     "updateFrequency": "Quarterly",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Same thing",
+                    "sentence": "National Postcode Lookup stores the Output Area (Dec 2021, BFE) GSS code in gsscode."
                   }
                 ]
               }
@@ -6338,6 +6810,7 @@
             "id": "output-area-dec-2021-bfe",
             "label": "Output Area (Dec 2021, BFE)",
             "organisation": "Office for National Statistics",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "ONS's 2021 Census Output Areas - the smallest areas census statistics are published for (around 125 households). Full-resolution boundaries."
           }
@@ -6350,6 +6823,7 @@
             "id": "nhs-health-authority",
             "label": "NHS Health Authority",
             "organisation": "National Health Service",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "NHS health areas (such as Integrated Care Boards) that a postcode falls in."
           },
@@ -6357,6 +6831,7 @@
             "id": "nhs-regional-health-authority",
             "label": "NHS Regional Health Authority",
             "organisation": "National Health Service",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "NHS regions that a postcode falls in."
           }
@@ -6369,6 +6844,7 @@
             "id": "national-polygon-dataset",
             "label": "National Polygon Dataset",
             "organisation": "HM Land Registry",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "HM Land Registry's index polygons showing the extent of registered titles.",
             "relationships": [
@@ -6397,7 +6873,9 @@
                       "HM Land Registry"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "National Polygon Dataset stores the Built Address UPRN in uprn."
                   }
                 ]
               }
@@ -6407,6 +6885,7 @@
             "id": "title-number-and-uprn-look-up",
             "label": "Title Number and UPRN Look Up",
             "organisation": "HM Land Registry",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "HM Land Registry's lookup from title numbers to the UPRNs of the properties they cover.",
             "relationships": [
@@ -6435,7 +6914,9 @@
                       "HM Land Registry"
                     ],
                     "updateFrequency": "Daily",
-                    "purpose": ""
+                    "purpose": "",
+                    "meaning": "Lies within",
+                    "sentence": "Title Number and UPRN Look Up stores the Built Address UPRN in uprn."
                   }
                 ]
               }
@@ -6450,6 +6931,7 @@
             "id": "northern-ireland-street-identifier",
             "label": "Northern Ireland Street Identifier",
             "organisation": "Northern Ireland Local Authorities",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The street identifier used in Northern Ireland's gazetteer."
           }
@@ -6462,6 +6944,7 @@
             "id": "river-basin-district",
             "label": "River Basin District",
             "organisation": "Water Authorities",
+            "delivery": "external",
             "availability": "Another organisation's dataset",
             "description": "The river basin districts used to manage water across Great Britain."
           }
@@ -6479,6 +6962,7 @@
             "id": "built-up-area",
             "label": "Built Up Area",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "Built-up areas - the extent of towns and villages - as defined for statistics."
           }
@@ -6491,6 +6975,7 @@
             "id": "100-m-grid",
             "label": "100 m Grid",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The 100 m squares of the British National Grid."
           },
@@ -6498,6 +6983,7 @@
             "id": "1-km-grid",
             "label": "1 km Grid",
             "organisation": "Ordnance Survey",
+            "delivery": "sb",
             "availability": "OS Select+Build only",
             "description": "The 1 km squares of the British National Grid."
           }
