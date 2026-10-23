@@ -1,9 +1,11 @@
 import { DELIVERY, FEATURES, KEYS, keyStyle, LINKS, linksOf, STORAGE } from "../lib/data";
 
+/** A linking key shown the same way as in the key: a short line in its colour and its name. */
 function KeyChip({ id }) {
   const k = keyStyle(id);
   return (
-    <span className="chip" style={{ background: k.color }}>
+    <span className="keytag">
+      <i style={{ background: k.color }} />
       {k.label}
     </span>
   );

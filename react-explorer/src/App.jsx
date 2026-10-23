@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Background, Controls, MarkerType, ReactFlow, ReactFlowProvider } from "@xyflow/react";
+import { Background, Controls, ReactFlow, ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import Sidebar from "./components/Sidebar";
 import Details from "./components/Details";
 import FeatureNode from "./components/FeatureNode";
 import KeyEdge from "./components/KeyEdge";
-import { CASES, FEATURES, isExternal, KEY_STYLE, LINKS, linksOf, shortestRoutes } from "./lib/data";
-import { columns, layout } from "./lib/layout";
+import { CASES, FEATURES, isExternal, KEY_STYLE, LINKS, linksOf, OTHER_KEY, shortestRoutes, STORAGE } from "./lib/data";
+import { COL, dagreColumns, grid, NODE_H, NODE_W, orderByNeighbours, ROW } from "./lib/layout";
 
 const nodeTypes = { feature: FeatureNode };
 const edgeTypes = { key: KeyEdge };
@@ -32,100 +32,113 @@ function featureNode(id, pos, extra = {}) {
     id,
     type: "feature",
     position: { x: pos.x, y: pos.y },
-    data: { title: f.title, sub: f.delivery === "external" ? f.org : f.group, about: f.about, width: pos.width,
-            external: f.delivery === "external", ...extra },
+    data: { title: f.title, sub: f.delivery === "external" ? f.org : f.group, about: f.about, width: NODE_W,
+            height: NODE_H, external: f.delivery === "external", ...extra },
   };
 }
 
-/** One feature type in the middle, what it stores the IDs of on the right, what stores its ID on the left. */
+// lines of the same key sit together: keys in legend order, then alphabetical
+const KEY_ORDER = Object.keys(KEY_STYLE);
+const keyRank = (l) => {
+  const i = KEY_ORDER.indexOf(l.keys[0]);
+  return i < 0 ? KEY_ORDER.length : i;
+};
+const byKeyThenTitle = (linkOf) => (a, b) =>
+  keyRank(linkOf(a)) - keyRank(linkOf(b)) || FEATURES.get(a).title.localeCompare(FEATURES.get(b).title);
+
+function edge(link, source, target, { sourceHandle = "out", targetHandle = "in" } = {}) {
+  // no arrows: a join works both ways; which side holds the ID is in the details panel
+  return { id: link.id, source, target, sourceHandle, targetHandle, type: "key", data: { link } };
+}
+
+/** One feature type in the middle, what stores its ID on the left, what it stores the IDs of on the right.
+ *  The middle box spans both columns with one connection point per row, so every line runs straight across. */
 function featureView(focus, withExternal) {
   const { out, in: inn } = linksOf(focus, withExternal);
-  const ids = [...new Set([focus, ...out.map((l) => l.target), ...inn.map((l) => l.source)])];
-  const items = ids.map((id) => ({ id, title: FEATURES.get(id).title }));
-  // a feature linked both ways is laid out on the right only, so the picture stays left-to-right
-  const right = new Set(out.map((l) => l.target));
-  const order = [...out, ...inn.filter((l) => !right.has(l.source))];
-  const pos = layout(items, order);
-  const nodes = ids.map((id) => featureNode(id, pos[id], { focus: id === focus }));
-  const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "#6a6664" };
+  const outOf = new Map(out.map((l) => [l.target, l]));
+  const inOf = new Map(inn.map((l) => [l.source, l]));
+  // a feature linked both ways goes on the right only
+  const right = [...outOf.keys()].sort(byKeyThenTitle((id) => outOf.get(id)));
+  const left = [...inOf.keys()].filter((id) => !outOf.has(id)).sort(byKeyThenTitle((id) => inOf.get(id)));
+  const pos = grid([left, [], right]);
+  const rows = Math.max(left.length, right.length, 1);
+  const height = (rows - 1) * ROW + NODE_H;
+  const top = -height / 2;
+  pos[focus] = { x: COL, y: top };
+  const portTop = (id) => pos[id].y + NODE_H / 2 - top;
+  const ports = {
+    in: left.length ? left.map((id) => ({ id: `in-${id}`, top: portTop(id) })) : [{ id: "in" }],
+    out: right.length ? right.map((id) => ({ id: `out-${id}`, top: portTop(id) })) : [{ id: "out" }],
+  };
+  const nodes = [
+    featureNode(focus, pos[focus], { focus: true, height, ports }),
+    ...[...left, ...right].map((id) => featureNode(id, pos[id])),
+  ];
   const edges = [
-    ...out.map((l) => ({ id: l.id, source: l.source, target: l.target, type: "key", data: { link: l }, markerEnd: arrow })),
-    // linked both ways: drawn along the same line, with the arrow at the other end
+    ...out.map((l) => edge(l, focus, l.target, { sourceHandle: `out-${l.target}` })),
     ...inn.map((l) =>
-      right.has(l.source)
-        ? { id: l.id, source: focus, target: l.source, type: "key", data: { link: l }, markerStart: arrow }
-        : { id: l.id, source: l.source, target: l.target, type: "key", data: { link: l }, markerEnd: arrow }
+      outOf.has(l.source)
+        ? edge(l, focus, l.source, { sourceHandle: `out-${l.source}` })
+        : edge(l, l.source, focus, { targetHandle: `in-${l.source}` })
     ),
   ];
-  return { nodes, edges: spreadBadges(edges) };
+  return { nodes, edges };
 }
 
 /** Every shortest chain of links between two feature types, one column per step. */
 function routeView(route, withExternal) {
   const r = shortestRoutes(route.from, route.to, withExternal);
   if (!r?.found) return { nodes: [], edges: [], result: r };
-  const items = [...r.nodes.keys()].map((id) => ({ id, title: FEATURES.get(id).title }));
-  const pos = columns(items, Object.fromEntries(r.nodes));
-  const nodes = items.map(({ id }) => featureNode(id, pos[id], { focus: id === route.from || id === route.to }));
-  const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "#6a6664" };
-  // drawn in route order (left to right); the arrow still points at the feature whose ID is stored
-  const edges = r.links.map(({ link, prev, next }) => ({
-    id: link.id,
-    source: prev,
-    target: next,
-    type: "key",
-    data: { link },
-    ...(link.target === next ? { markerEnd: arrow } : { markerStart: arrow }),
-  }));
-  return { nodes, edges: spreadBadges(edges), result: r };
+  const cols = Array.from({ length: r.steps + 1 }, () => []);
+  for (const [id, step] of r.nodes) cols[step].push(id);
+  const links = r.links.map((x) => x.link);
+  const pos = grid(orderByNeighbours(cols, links));
+  const nodes = [...r.nodes.keys()].map((id) => featureNode(id, pos[id], { focus: id === route.from || id === route.to }));
+  // drawn in route order (left to right)
+  const edges = r.links.map(({ link, prev, next }) => edge(link, prev, next));
+  return { nodes, edges, result: r };
 }
 
-/** A use case: the feature types and links it follows, laid out left to right. */
+/** A use case: the feature types and links it follows, in tidy columns. */
 function caseView(id) {
   const uc = CASES.get(id);
   const links = uc.links.map((l) => LINKS.get(l)).filter((l) => l.source !== l.target);
   const ids = [...new Set(links.flatMap((l) => [l.source, l.target]))];
-  const items = ids.map((x) => ({ id: x, title: FEATURES.get(x).title }));
-  const pos = layout(items, links);
+  const cols = dagreColumns(ids, links);
+  const colOf = new Map(cols.flatMap((c, i) => c.map((x) => [x, i])));
+  const pos = grid(cols);
   const nodes = ids.map((x) => featureNode(x, pos[x]));
-  const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "#6a6664" };
-  const seen = new Set();
-  const edges = links.map((l) => {
-    const back = seen.has(`${l.target}|${l.source}`); // the reverse link is already drawn: share its line
-    seen.add(`${l.source}|${l.target}`);
-    return back
-      ? { id: l.id, source: l.target, target: l.source, type: "key", data: { link: l }, markerStart: arrow }
-      : { id: l.id, source: l.source, target: l.target, type: "key", data: { link: l }, markerEnd: arrow };
-  });
-  return { nodes, edges: spreadBadges(edges) };
+  // always drawn left to right; the arrow shows which way the ID is stored
+  const edges = links.map((l) =>
+    colOf.get(l.source) <= colOf.get(l.target) ? edge(l, l.source, l.target) : edge(l, l.target, l.source)
+  );
+  return { nodes, edges };
 }
 
-/** Two links drawn between the same pair of boxes would hide each other's badge: stack the badges instead. */
-function spreadBadges(edges) {
-  const groups = new Map();
-  for (const e of edges) {
-    const k = [e.source, e.target].sort().join("|");
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(e);
-  }
-  for (const g of groups.values()) g.forEach((e, i) => (e.data.offset = (i - (g.length - 1) / 2) * 22));
-  return edges;
+function LineSample({ color = "currentColor", dash }) {
+  return (
+    <svg width="36" height="10" aria-hidden="true">
+      <line x1="1" y1="5" x2="35" y2="5" stroke={color} strokeWidth="3" strokeDasharray={dash} />
+    </svg>
+  );
 }
 
 function Legend() {
   return (
     <div className="legend">
       <div className="legend__row">
+        <strong>Linking key</strong>
         {Object.entries(KEY_STYLE).map(([id, k]) => (
-          <span key={id} className="chip" style={{ background: k.color }}>{k.label}</span>
+          <span key={id}><LineSample color={k.color} /> {k.label}</span>
         ))}
-        <span className="chip" style={{ background: "#6a6664" }}>Other keys</span>
+        <span><LineSample color={OTHER_KEY} /> Other</span>
       </div>
-      <div className="legend__row small">
-        <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" strokeWidth="2" /></svg> ID stored on the feature</span>
-        <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" strokeWidth="2" strokeDasharray="7 5" /></svg> in a reference table ▤</span>
-        <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" strokeWidth="2" strokeDasharray="2 5" /></svg> Related Entity table (Select+Build)</span>
-        <span>→ points to the feature whose ID is stored</span>
+      <div className="legend__row">
+        <strong>Stored</strong>
+        <span><LineSample /> on the feature</span>
+        <span><LineSample dash={STORAGE.table.dash} /> in a reference table</span>
+        <span><LineSample dash={STORAGE.related.dash} /> Related Entity table</span>
+        <span className="muted">Click a line for the attributes to join on.</span>
       </div>
     </div>
   );
@@ -261,7 +274,7 @@ function Explorer() {
           onPaneClick={() => setSelectedId(null)}
           nodesConnectable={false}
           fitView
-          fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }}
+          fitViewOptions={{ padding: { top: "90px", bottom: "120px", left: "30px", right: "30px" }, maxZoom: 1 }}
           minZoom={0.15}
           colorMode="system"
           proOptions={{ hideAttribution: true }}

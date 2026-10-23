@@ -8,10 +8,12 @@ as the OS NGD Data Linkages Explorer page in this repository: OS's relationship 
   answer it, who it's for, and what to watch out for.
 - **Pick a feature type** on the left. It sits in the middle; what it stores the IDs of is on the right,
   and what stores its ID is on the left.
-- **Each line is coloured by its linking key** (OSID, UPRN, USRN, GSS code, postcode, others grey). A solid
-  line means the ID is stored on the feature, dashed means it is listed in a reference table, dotted means the
-  separate Related Entity table (Select+Build). The arrow points to the feature whose ID is stored.
-- **Click a badge or line** for the attributes to join on, in plain English.
+- **Each line is coloured by its linking key** (OSID, UPRN, USRN, GSS code, postcode, others grey), as shown
+  in the key at the bottom. A solid line means the ID is stored on the feature, dashed means it is listed in a
+  reference table, dotted means the separate Related Entity table (Select+Build).
+- Boxes sit in neat columns. On a feature, what stores its ID is on the left and what it stores the IDs of is
+  on the right.
+- **Click a line** for the attributes to join on, in plain English.
 - **How are two connected?** shows every shortest chain of links between two feature types.
 - The address bar follows what you look at (`#Street`, `#route=Building,Ward`, `#case=property`), so views can be bookmarked
   and shared.
@@ -55,7 +57,8 @@ npm run build
 
 writes a finished site to `dist/`. It works from any folder: open it with Live Server, copy it to a shared
 drive or host it anywhere. GitHub publishes it at
-https://chrisjmee.github.io/os-api-data-downloader/ngd-links-app/ whenever the data or app changes.
+https://chrisjmee.github.io/os-api-data-downloader/ngd-links-app/ whenever the data or app changes, so
+anyone can open it from that link with nothing installed.
 
 ## Where things are
 

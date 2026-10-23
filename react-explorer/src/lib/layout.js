@@ -1,51 +1,48 @@
-// Left-to-right layout with dagre. Node widths follow their titles so long names never overflow.
+// Neat column layout: every box the same size, columns evenly spaced, rows evenly spaced and centred.
 import dagre from "@dagrejs/dagre";
 
-const ctx = typeof document !== "undefined" ? document.createElement("canvas").getContext("2d") : null;
-export const NODE_HEIGHT = 58;
+export const NODE_W = 250;
+export const NODE_H = 64;
+export const ROW = NODE_H + 22; // vertical pitch between boxes
+export const COL = NODE_W + 190; // horizontal pitch between columns
 
-export function nodeWidth(title) {
-  if (!ctx) return 200;
-  ctx.font = "600 14px system-ui, -apple-system, 'Segoe UI', sans-serif";
-  return Math.max(150, Math.min(300, Math.ceil(ctx.measureText(title).width) + 40));
-}
-
-/**
- * @param {{id: string, title: string}[]} items  nodes to place
- * @param {{source: string, target: string}[]} order  edges in the left-to-right order to lay out by
- * @param {object} [opts]  rank: fixed column per node id (used for routes)
- */
-export function layout(items, order) {
-  const g = new dagre.graphlib.Graph({ multigraph: true });
-  g.setGraph({ rankdir: "LR", nodesep: 18, ranksep: 150, marginx: 20, marginy: 20 });
-  g.setDefaultEdgeLabel(() => ({}));
-  for (const n of items) g.setNode(n.id, { width: nodeWidth(n.title), height: NODE_HEIGHT });
-  order.forEach((e, i) => g.setEdge(e.source, e.target, { minlen: 1 }, `e${i}`));
-  dagre.layout(g);
+/** Place columns of ids: column i at x = i * COL, each column centred on y = 0. Returns {id: {x, y}}. */
+export function grid(cols) {
   const pos = {};
-  for (const n of items) {
-    const p = g.node(n.id);
-    pos[n.id] = { x: p.x - p.width / 2, y: p.y - p.height / 2, width: p.width };
-  }
-  return pos;
-}
-
-/** Routes: one column per step from the start, each column centred vertically. */
-export function columns(items, stepOf) {
-  const cols = new Map();
-  for (const n of items) {
-    const s = stepOf[n.id];
-    if (!cols.has(s)) cols.set(s, []);
-    cols.get(s).push(n);
-  }
-  const pos = {};
-  for (const [s, col] of cols) {
-    col.sort((a, b) => a.title.localeCompare(b.title));
-    const top = -((col.length - 1) * (NODE_HEIGHT + 28)) / 2;
-    col.forEach((n, i) => {
-      const w = nodeWidth(n.title);
-      pos[n.id] = { x: s * 340 + (300 - w) / 2, y: top + i * (NODE_HEIGHT + 28), width: w };
+  cols.forEach((col, i) => {
+    col.forEach((id, j) => {
+      pos[id] = { x: i * COL, y: (j - (col.length - 1) / 2) * ROW - NODE_H / 2 };
     });
-  }
+  });
   return pos;
+}
+
+/** Use dagre only to choose each box's column and order (fewest crossings), then snap to the grid. */
+export function dagreColumns(ids, links) {
+  const g = new dagre.graphlib.Graph({ multigraph: true });
+  g.setGraph({ rankdir: "LR", nodesep: 20, ranksep: 100 });
+  g.setDefaultEdgeLabel(() => ({}));
+  ids.forEach((id) => g.setNode(id, { width: NODE_W, height: NODE_H }));
+  links.forEach((l, i) => g.setEdge(l.source, l.target, {}, `e${i}`));
+  dagre.layout(g);
+  const xs = [...new Set(ids.map((id) => Math.round(g.node(id).x)))].sort((a, b) => a - b);
+  const cols = xs.map(() => []);
+  ids.forEach((id) => cols[xs.indexOf(Math.round(g.node(id).x))].push(id));
+  cols.forEach((c) => c.sort((a, b) => g.node(a).y - g.node(b).y));
+  return cols;
+}
+
+/** Order each column by the average row of the boxes it links to in the column before (fewer crossings). */
+export function orderByNeighbours(cols, links) {
+  for (let i = 1; i < cols.length; i++) {
+    const prevRow = new Map(cols[i - 1].map((id, j) => [id, j]));
+    const score = (id) => {
+      const rows = links
+        .filter((l) => (l.source === id && prevRow.has(l.target)) || (l.target === id && prevRow.has(l.source)))
+        .map((l) => prevRow.get(l.source === id ? l.target : l.source));
+      return rows.length ? rows.reduce((a, b) => a + b, 0) / rows.length : 0;
+    };
+    cols[i].sort((a, b) => score(a) - score(b));
+  }
+  return cols;
 }

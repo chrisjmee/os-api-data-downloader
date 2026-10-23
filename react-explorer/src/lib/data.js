@@ -16,8 +16,9 @@ export const KEY_STYLE = {
   gsscode: { label: "GSS code", color: "#7a3e9d" },
   postcode: { label: "Postcode", color: "#0e7c86" },
 };
+export const OTHER_KEY = "#8a8580";
 export function keyStyle(id) {
-  return KEY_STYLE[id] ?? { label: KEYS.get(id)?.name ?? id, color: "#6a6664" };
+  return KEY_STYLE[id] ?? { label: KEYS.get(id)?.name ?? id, color: OTHER_KEY };
 }
 
 export const STORAGE = {
