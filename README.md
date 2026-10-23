@@ -214,6 +214,17 @@ the written content is in `explorer/content.py`. `explorer/build_explorer.py` bu
 rebuilds and republishes it whenever either changes. The built page, `docs/ngd-links/index.html`, is one
 self-contained file that can also be emailed or opened offline.
 
+### Export for the OS NGD Relationship Explorer (React Flow app)
+
+`python explorer/export_ngd_hierarchy.py` writes the same relationships as `ngdhierarchy.json`, in the format of
+OS's React Flow "OS NGD Relationship Explorer". It keeps that app's own themes, collections and ids
+(`explorer/data/ngdhierarchy_base.json`), regenerates every relationship from OS's relationship model (current
+schema versions only), and adds the feature types the model links to that the app didn't have, including other
+organisations' datasets. Each relationship gets the app's badge type (attribute, cross-reference table, both, or
+the standalone Related Entity table), the linking key (OSID, UPRN, USRN, GSS code...), a plain-English
+description naming the attribute, and a direction. Joins worked out from location aren't included. The file is
+also published next to the Explorer page as `ngd-links/ngdhierarchy.json`.
+
 ## Find an NGD Feature Type tab
 
 OS NGD has around 100 feature types with technical names (`str-fts-structure`, `trn-ntwk-pathlink`...) that

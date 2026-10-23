@@ -1,0 +1,700 @@
+{
+  "buildings": {
+    "label": "OS NGD Buildings",
+    "collections": {
+      "building-features": {
+        "label": "Building Features",
+        "featureTypes": [
+          {
+            "id": "building",
+            "label": "Building",
+            "relationships": [
+              {
+                "id": "building-buildingpart",
+                "targetFeature": "building-part",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Building to Building Part via the documented Building Part Reference table.",
+                  "direction": "one-to-many"
+                }
+              },
+              {
+                "id": "building-sitecrt",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Building to Site via the documented Site Reference table.",
+                  "direction": "one-to-many"
+                }
+              },
+              {
+                "id": "building-address",
+                "targetFeature": "gb-built-address",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Building to Address UPRNs via the documented UPRN Reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "building-access-location",
+            "label": "Building Access Location"
+          },
+          {
+            "id": "building-line",
+            "label": "Building Line"
+          },
+          {
+            "id": "building-part",
+            "label": "Building Part",
+            "relationships": [
+              {
+                "id": "building-part-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Building Part to Site via the documented Site Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "land": {
+    "label": "OS NGD Land",
+    "collections": {
+      "land-features": {
+        "label": "Land Features",
+        "featureTypes": [
+          {
+            "id": "land",
+            "label": "Land",
+            "relationships": [
+              {
+                "id": "land-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Land to Site via the documented Site Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "land-point",
+            "label": "Land Point"
+          },
+          {
+            "id": "landform",
+            "label": "Landform"
+          },
+          {
+            "id": "landform-line",
+            "label": "Landform Line"
+          },
+          {
+            "id": "landform-point",
+            "label": "Landform Point"
+          }
+        ]
+      }
+    }
+  },
+  "address": {
+    "label": "OS NGD Address",
+    "collections": {
+      "gb-address": {
+        "label": "GB Address",
+        "featureTypes": [
+          {
+            "id": "gb-built-address",
+            "label": "Built Address"
+          },
+          {
+            "id": "gb-historic-address",
+            "label": "Historic Address"
+          },
+          {
+            "id": "gb-non-addressable-object",
+            "label": "Non-Addressable Object"
+          },
+          {
+            "id": "gb-pre-build-address",
+            "label": "Pre-Build Address"
+          },
+          {
+            "id": "gb-royal-mail-address",
+            "label": "Royal Mail Address"
+          },
+          {
+            "id": "gb-street-address",
+            "label": "Street Address"
+          }
+        ]
+      },
+      "islands-address": {
+        "label": "Islands Address",
+        "featureTypes": [
+          {
+            "id": "is-built-address",
+            "label": "Built Address"
+          },
+          {
+            "id": "is-historic-address",
+            "label": "Historic Address"
+          },
+          {
+            "id": "is-non-addressable-object",
+            "label": "Non-Addressable Object"
+          },
+          {
+            "id": "is-pre-build-address",
+            "label": "Pre-Build Address"
+          },
+          {
+            "id": "is-royal-mail-address",
+            "label": "Royal Mail Address"
+          },
+          {
+            "id": "is-street-address",
+            "label": "Street Address"
+          }
+        ]
+      },
+      "related-components-address": {
+        "label": "Address Related Components",
+        "featureTypes": [
+          {
+            "id": "alternate-address",
+            "label": "Alternate Address"
+          },
+          {
+            "id": "postal-address",
+            "label": "Postal Address"
+          },
+          {
+            "id": "other-classification",
+            "label": "Other Classification"
+          },
+          {
+            "id": "related-entity",
+            "label": "Related Entity"
+          },
+          {
+            "id": "multiple-residence",
+            "label": "Multiple Residence"
+          },
+          {
+            "id": "delivery-point-alias",
+            "label": "Delivery Point Alias"
+          },
+          {
+            "id": "other-alias",
+            "label": "Other Alias"
+          }
+        ]
+      }
+    }
+  },
+  "administrative": {
+    "label": "OS NGD Administrative and Statistical Units",
+    "collections": {
+      "boundaries": {
+        "label": "Boundaries",
+        "featureTypes": [
+          {
+            "id": "boundary-high-water-mark",
+            "label": "Boundary High Water Mark"
+          },
+          {
+            "id": "ceremonial-county",
+            "label": "Ceremonial County"
+          },
+          {
+            "id": "country",
+            "label": "Country"
+          },
+          {
+            "id": "devolved-parliament-constituency",
+            "label": "Devolved Parliament Constituency"
+          },
+          {
+            "id": "devolved-parliament-electoral-region",
+            "label": "Devolved Parliament Electoral Region"
+          },
+          {
+            "id": "electoral-division",
+            "label": "Electoral Division"
+          },
+          {
+            "id": "gla-assembly-constituency",
+            "label": "GLA Assembly Constituency"
+          },
+          {
+            "id": "historic-county",
+            "label": "Historic County"
+          },
+          {
+            "id": "historic-european-region",
+            "label": "Historic European Region"
+          },
+          {
+            "id": "lower-tier-local-authority",
+            "label": "Lower Tier Local Authority"
+          },
+          {
+            "id": "parish-or-community",
+            "label": "Parish Or Community"
+          },
+          {
+            "id": "polling-district",
+            "label": "Polling District"
+          },
+          {
+            "id": "region",
+            "label": "Region"
+          },
+          {
+            "id": "regional-authority",
+            "label": "Regional Authority"
+          },
+          {
+            "id": "upper-tier-local-authority",
+            "label": "Upper Tier Local Authority"
+          },
+          {
+            "id": "ward",
+            "label": "Ward"
+          },
+          {
+            "id": "westminster-constituency",
+            "label": "Westminster Constituency"
+          }
+        ]
+      },
+      "functional-areas": {
+        "label": "Functional Areas",
+        "featureTypes": [
+          {
+            "id": "retail-area-aggregated",
+            "label": "Retail Area Aggregated"
+          },
+          {
+            "id": "retail-area-major",
+            "label": "Retail Area Major"
+          },
+          {
+            "id": "retail-area-minor",
+            "label": "Retail Area Minor"
+          }
+        ]
+      },
+      "gb-postcodes": {
+        "label": "GB Postcodes",
+        "featureTypes": [
+          {
+            "id": "postcode-unit-area",
+            "label": "Postcode Unit Area"
+          },
+          {
+            "id": "postcode-unit-point",
+            "label": "Postcode Unit Point"
+          }
+        ]
+      },
+      "ni-postcodes": {
+        "label": "NI Postcodes",
+        "featureTypes": [
+          {
+            "id": "ni-postcode-unit-point",
+            "label": "Postcode Unit Point"
+          }
+        ]
+      }
+    }
+  },
+  "geographicalnames": {
+    "label": "OS NGD Geographical Names",
+    "collections": {
+      "named-features": {
+        "label": "Named Features",
+        "featureTypes": [
+          {
+            "id": "crowd-sourced-name-point",
+            "label": "Crowd Sourced Name Point"
+          },
+          {
+            "id": "named-area",
+            "label": "Named Area"
+          },
+          {
+            "id": "named-point",
+            "label": "Named Point"
+          },
+          {
+            "id": "named-road-junction",
+            "label": "Named Road Junction"
+          }
+        ]
+      }
+    }
+  },
+  "landuse": {
+    "label": "OS NGD Land Use",
+    "collections": {
+      "land-use-features": {
+        "label": "Land Use Features",
+        "featureTypes": [
+          {
+            "id": "site",
+            "label": "Site",
+            "relationships": [
+              {
+                "id": "site-address",
+                "targetFeature": "gb-built-address",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Site to Address UPRNs via the documented Site to Address Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "site-access-location",
+            "label": "Site Access Location",
+            "relationships": [
+              {
+                "id": "siteaccessloc-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "attributeLink",
+                  "label": "Attribute Link",
+                  "description": "Links site access point to site osid",
+                  "direction": "one-to-one"
+                }
+              }
+            ]
+          },
+          {
+            "id": "site-routing-point",
+            "label": "Site Routing Point"
+          }
+        ]
+      }
+    }
+  },
+  "structures": {
+    "label": "OS NGD Structures",
+    "collections": {
+      "structure-features": {
+        "label": "Structure Features",
+        "featureTypes": [
+          {
+            "id": "compound-structure",
+            "label": "Compound Structure"
+          },
+          {
+            "id": "field-boundary",
+            "label": "Field Boundary"
+          },
+          {
+            "id": "structure",
+            "label": "Structure",
+            "relationships": [
+              {
+                "id": "structure-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Structure to Site via the documented Site Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "structure-line",
+            "label": "Structure Line"
+          },
+          {
+            "id": "structure-point",
+            "label": "Structure Point"
+          }
+        ]
+      }
+    }
+  },
+  "transport": {
+    "label": "OS NGD Transport",
+    "collections": {
+      "routing-and-asset-management": {
+        "label": "Routing and Asset Management Information (RAMI)",
+        "featureTypes": [
+          {
+            "id": "average-and-indicative-speed",
+            "label": "Average And Indicative Speed"
+          },
+          {
+            "id": "highway-dedication",
+            "label": "Highway Dedication"
+          },
+          {
+            "id": "maintenance-area",
+            "label": "Maintenance Area"
+          },
+          {
+            "id": "maintenance-line",
+            "label": "Maintenance Line"
+          },
+          {
+            "id": "maintenance-point",
+            "label": "Maintenance Point"
+          },
+          {
+            "id": "reinstatement-area",
+            "label": "Reinstatement Area"
+          },
+          {
+            "id": "reinstatement-line",
+            "label": "Reinstatement Line"
+          },
+          {
+            "id": "reinstatement-point",
+            "label": "Reinstatement Point"
+          },
+          {
+            "id": "restriction",
+            "label": "Restriction"
+          },
+          {
+            "id": "routing-hazard",
+            "label": "Routing Hazard"
+          },
+          {
+            "id": "routing-structure",
+            "label": "Routing Structure"
+          },
+          {
+            "id": "special-designation-area",
+            "label": "Special Designation Area"
+          },
+          {
+            "id": "special-designation-line",
+            "label": "Special Designation Line"
+          },
+          {
+            "id": "special-designation-point",
+            "label": "Special Designation Point"
+          }
+        ]
+      },
+      "transport-features": {
+        "label": "Transport Features",
+        "featureTypes": [
+          {
+            "id": "road-track-path",
+            "label": "Road Track Path",
+            "relationships": [
+              {
+                "id": "road-track-path-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Road Track Or Path to Site via the documented Site Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "rail",
+            "label": "Rail",
+            "relationships": [
+              {
+                "id": "rail-site",
+                "targetFeature": "site",
+                "relationshipType": {
+                  "type": "crossReference",
+                  "label": "Cross Reference Table",
+                  "description": "Links Rail to Site via the documented Site Reference cross-reference table.",
+                  "direction": "one-to-many"
+                }
+              }
+            ]
+          },
+          {
+            "id": "cartographic-rail-detail",
+            "label": "Cartographic Rail Detail"
+          },
+          {
+            "id": "road-line",
+            "label": "Road Line"
+          },
+          {
+            "id": "street-light",
+            "label": "Street Light"
+          }
+        ]
+      },
+      "transport-network": {
+        "label": "Transport Network",
+        "featureTypes": [
+          {
+            "id": "bus-lane",
+            "label": "Bus Lane"
+          },
+          {
+            "id": "connecting-link",
+            "label": "Connecting Link"
+          },
+          {
+            "id": "connecting-node",
+            "label": "Connecting Node"
+          },
+          {
+            "id": "cycle-lane",
+            "label": "Cycle Lane"
+          },
+          {
+            "id": "ferry-link",
+            "label": "Ferry Link"
+          },
+          {
+            "id": "ferry-node",
+            "label": "Ferry Node"
+          },
+          {
+            "id": "ferry-terminal",
+            "label": "Ferry Terminal"
+          },
+          {
+            "id": "path",
+            "label": "Path"
+          },
+          {
+            "id": "path-link",
+            "label": "Path Link"
+          },
+          {
+            "id": "path-node",
+            "label": "Path Node"
+          },
+          {
+            "id": "pavement-link",
+            "label": "Pavement Link"
+          },
+          {
+            "id": "railway-link",
+            "label": "Railway Link"
+          },
+          {
+            "id": "railway-link-set",
+            "label": "Railway Link Set"
+          },
+          {
+            "id": "railway-node",
+            "label": "Railway Node"
+          },
+          {
+            "id": "road",
+            "label": "Road"
+          },
+          {
+            "id": "road-junction",
+            "label": "Road Junction"
+          },
+          {
+            "id": "road-link",
+            "label": "Road Link"
+          },
+          {
+            "id": "road-node",
+            "label": "Road Node"
+          },
+          {
+            "id": "street",
+            "label": "Street"
+          },
+          {
+            "id": "tram-on-road",
+            "label": "Tram On Road"
+          }
+        ]
+      }
+    }
+  },
+  "water": {
+    "label": "OS NGD Water",
+    "collections": {
+      "water-features": {
+        "label": "Water Features",
+        "featureTypes": [
+          {
+            "id": "inter-tidal-line",
+            "label": "Inter Tidal Line"
+          },
+          {
+            "id": "river-basin-district-catchment",
+            "label": "River Basin District Catchment"
+          },
+          {
+            "id": "tidal-boundary",
+            "label": "Tidal Boundary"
+          },
+          {
+            "id": "tidal-boundary-continuous-high",
+            "label": "Tidal Boundary Continuous High"
+          },
+          {
+            "id": "tidal-boundary-continuous-low",
+            "label": "Tidal Boundary Continuous Low"
+          },
+          {
+            "id": "water",
+            "label": "Water"
+          },
+          {
+            "id": "water-point",
+            "label": "Water Point"
+          },
+          {
+            "id": "waterbody-catchment",
+            "label": "Waterbody Catchment"
+          }
+        ]
+      },
+      "water-network": {
+        "label": "Water Network",
+        "featureTypes": [
+          {
+            "id": "water-link",
+            "label": "Water Link"
+          },
+          {
+            "id": "water-link-set",
+            "label": "Water Link Set"
+          },
+          {
+            "id": "water-node",
+            "label": "Water Node"
+          }
+        ]
+      }
+    }
+  }
+}

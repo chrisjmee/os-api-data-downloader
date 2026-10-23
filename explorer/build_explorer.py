@@ -59,7 +59,8 @@ def key_id(field):
     return C.KEY_OF.get(last, "other")
 
 
-def build():
+def collect():
+    """Read OS's relationship model and return the explorer's data (features, relationships, keys, use cases)."""
     with open(REL_CSV, encoding="utf-8-sig") as fh:
         rows = list(csv.DictReader(fh))
     api = api_collections()
@@ -159,6 +160,13 @@ def build():
     data = {"built": dt.date.today().isoformat(), "features": feats, "edges": edges, "keys": keys,
             "families": C.FAMILIES, "delivery": C.DELIVERY, "cases": cases,
             "source": {"file": "UK Geospatial Entity Relationships (OS)", "rows": len(rows)}}
+    return data, fixes
+
+
+def build():
+    data, fixes = collect()
+    feats, edges, keys, cases = data["features"], data["edges"], data["keys"], data["cases"]
+    rows = range(data["source"]["rows"])
     with open(TEMPLATE, encoding="utf-8") as fh:
         page = fh.read()
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
