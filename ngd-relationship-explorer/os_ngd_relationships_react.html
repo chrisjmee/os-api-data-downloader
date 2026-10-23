@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OS NGD Relationship Explorer</title>
   <!--
-    OS NGD Relationship Explorer v4.1
+    OS NGD Relationship Explorer v4.2
     How OS NGD themes link together, through five linking keys (OSID, UPRN, USRN, GSS code, postcode).
 
     Files, all in one folder (open this page with Live Server, or any local web server):
@@ -83,9 +83,9 @@
     #canvas { grid-area: canvas; position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column;
               background-image: linear-gradient(rgba(106,102,100,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(106,102,100,0.05) 1px, transparent 1px);
               background-size: 60px 60px; }
-    #view-title { position: absolute; top: 14px; left: 16px; right: 16px; z-index: 5; display: flex; align-items: baseline; gap: 12px;
-                  pointer-events: none; }
-    #view-title h2 { font-size: 18px; font-weight: 700; background: var(--white); padding: 6px 12px; box-shadow: var(--shadow); pointer-events: auto; }
+    #view-title { flex: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; padding: 12px 16px;
+                  background: var(--white); border-bottom: 1px solid var(--line); }
+    #view-title h2 { font-size: 18px; font-weight: 700; }
     #view-title p { color: var(--muted); font-size: 13px; }
     .react-flow__node { font-family: var(--font); }
     .react-flow__handle { opacity: 0 !important; width: 1px !important; height: 1px !important; min-width: 0 !important; min-height: 0 !important; border: 0 !important; }
@@ -277,9 +277,9 @@
     const ctx = document.createElement("canvas").getContext("2d");
     function textWidth(text, font) { ctx.font = font; return ctx.measureText(text).width; }
     const SIZE = {
-      feature: f => ({ w: Math.max(150, Math.ceil(textWidth(f.title, "600 14px 'Hanken Grotesk', sans-serif")) + 52), h: 50 }),
-      theme: t => ({ w: Math.max(200, Math.ceil(textWidth(t.label, "700 16px 'Hanken Grotesk', sans-serif")) + 62), h: 62 }),
-      key: k => ({ w: Math.max(170, Math.ceil(textWidth(keyInfo(k)?.full ?? "", "400 11px 'Hanken Grotesk', sans-serif")) + 52), h: 64 }),
+      feature: f => ({ w: Math.max(150, Math.ceil(textWidth(f.title, "600 14px 'Hanken Grotesk', sans-serif")) + 60), h: 50 }),
+      theme: (t, label = t.label) => ({ w: Math.max(200, Math.ceil(textWidth(label, "700 16px 'Hanken Grotesk', sans-serif")) + 72), h: 62 }),
+      key: k => ({ w: Math.max(170, Math.ceil(textWidth(keyInfo(k)?.full ?? "", "400 11px 'Hanken Grotesk', sans-serif")) + 76), h: 64 }),
       heading: t => ({ w: Math.ceil(textWidth(t.label.toUpperCase(), "700 11px 'Hanken Grotesk', sans-serif") * 1.12) + 30, h: 22 })
     };
     const GAP_Y = 16, GAP_X = 170;
@@ -396,7 +396,10 @@
       const cols = [
         feats.map(id => ({ id, kind: "feature", size: SIZE.feature(F(id)) })),
         keys.map(k => ({ id: `key:${k}`, kind: "key", key: k, size: SIZE.key(k), extraGap: 12 })),
-        otherThemes.map(o => ({ id: `theme:${o.id}`, kind: "theme", theme: o, label: o.id === themeId ? `Other ${o.label}` : undefined, size: SIZE.theme(o) }))
+        otherThemes.map(o => {
+          const label = o.id === themeId ? `Other ${o.label}` : o.label;
+          return { id: `theme:${o.id}`, kind: "theme", theme: o, label, size: SIZE.theme(o, label) };
+        })
       ];
       const pos = placeColumns(cols);
       const edges = [];
@@ -818,7 +821,7 @@
         h("aside", { id: "sidebar" }, h(Sidebar, { view, go })),
         h("main", { id: "canvas" },
           h("div", { id: "view-title" }, h("h2", null, title), h("p", null, sub)),
-          view.v === "route" && !shown.found ? h("div", { id: "view-title", style: { top: 64 } }, h("p", null, "No chain of links joins these two.")) : null,
+          view.v === "route" && !shown.found ? h("p", { style: { padding: "12px 16px" } }, "No chain of links joins these two.") : null,
           h("div", { id: "flow" }, h(ReactFlow, {
             key: hashOf(view), nodes: shown.nodes, edges, nodeTypes,
             onNodeClick, onEdgeClick, onPaneClick: () => setSel(null),
@@ -834,7 +837,8 @@
        ================================================================ */
 
     const root = createRoot(document.getElementById("root"));
-    loadData()
+    const fontsReady = Promise.race([document.fonts?.ready ?? Promise.resolve(), new Promise(r => setTimeout(r, 2500))]);
+    Promise.all([loadData(), fontsReady])
       .then(() => root.render(h(ReactFlowProvider, null, h(App))))
       .catch(err => root.render(h("div", { className: "load-error" },
         h("h1", null, "The relationship data didn't load"),
