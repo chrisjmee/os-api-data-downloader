@@ -214,6 +214,16 @@ the written content is in `explorer/content.py`. `explorer/build_explorer.py` bu
 rebuilds and republishes it whenever either changes. The built page, `docs/ngd-links/index.html`, is one
 self-contained file that can also be emailed or opened offline.
 
+### OS NGD Relationship Explorer (`ngd-relationship-explorer/`)
+
+How the OS NGD themes link together, in the format of OS's React Flow explorer: one HTML page plus
+`ngdhierarchy.json` and `ngdreference.json` in the same folder, no build step. The front page puts the themes
+either side and the five linking keys (OSID, UPRN, USRN, GSS code, postcode) in the middle; from there you can
+open a theme, a key, a feature type, any of the 14 use cases, or the shortest route between two feature types.
+Lines are coloured by key, boxes carry their theme colour, and clicking a line gives the attributes to join on.
+Open it with VS Code's Live Server. `python explorer/export_ngd_hierarchy.py` refreshes both data files.
+Published at https://chrisjmee.github.io/os-api-data-downloader/ngd-relationship-explorer/
+
 ### OS NGD Links - React app (`react-explorer/`)
 
 A simpler, React version of the Explorer built from the same data: pick a feature type to see what it links

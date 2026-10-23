@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OS NGD Relationship Explorer</title>
+  <!--
+    OS NGD Relationship Explorer v4.0
+    How OS NGD themes link together, through five linking keys (OSID, UPRN, USRN, GSS code, postcode).
+
+    Files, all in one folder (open this page with Live Server, or any local web server):
+      os_ngd_relationships_react.html   this page
+      ngdhierarchy.json                 themes, collections, feature types and their relationships
+      ngdreference.json                 the linking keys explained, and the use cases
+      OS logo mono-dark_rgb.svg         optional: shown in the header when present
+
+    Views: Overview (themes and the keys that join them), a theme, a key, a feature type, a use case, and the
+    shortest route between two feature types. Lines are coloured by linking key; boxes carry their theme colour.
+    The data files are generated from the OS relationship model by explorer/export_ngd_hierarchy.py in
+    github.com/chrisjmee/os-api-data-downloader.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://esm.sh/reactflow@11.11.4/dist/style.css">
+
+  <style>
+    :root {
+      --shadow: 4px 4px 0 rgba(106,102,100,0.25);
+      --shadow-hover: 6px 6px 0 rgba(106,102,100,0.3);
+      --bg: #f3f2f2;
+      --fg: #131312;
+      --muted: #6a6664;
+      --line: #e0dfde;
+      --hover: #eae9e8;
+      --white: #ffffff;
+      --link: #005eb8;
+      --font: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.45; overflow: hidden; }
+    button, input, select { font: inherit; color: inherit; }
+    code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+
+    /* ── Layout: header, sidebar, canvas, details panel ── */
+    #app { height: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr) 360px; grid-template-rows: 72px minmax(0, 1fr);
+           grid-template-areas: "header header header" "sidebar canvas details"; }
+    #header-bar { grid-area: header; display: flex; align-items: center; gap: 16px; padding: 0 24px;
+                  background: var(--white); border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,0.06); z-index: 10; }
+    #header-bar img { height: 24px; width: auto; }
+    #header-bar h1 { font-size: 20px; font-weight: 700; white-space: nowrap; }
+    #header-bar p { color: var(--muted); font-size: 14px; }
+
+    /* ── Sidebar ── */
+    #sidebar { grid-area: sidebar; min-height: 0; background: var(--white); border-right: 1px solid var(--line); overflow-y: auto; padding: 18px 12px 24px; }
+    .sb-section { margin-bottom: 18px; }
+    .sb-title { padding: 0 8px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .sb-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin-bottom: 4px;
+               background: var(--bg); border: 1px solid transparent; text-align: left; font-weight: 600; cursor: pointer;
+               transition: background 0.15s ease, border-color 0.15s ease; }
+    .sb-item:hover { background: var(--hover); border-color: #d0cfce; }
+    .sb-item.selected { background: var(--fg); color: var(--white); border-color: var(--fg); }
+    .sb-item .count { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--muted); }
+    .sb-item.selected .count { color: inherit; opacity: 0.75; }
+    .sb-item.plain { background: none; font-weight: 500; padding: 6px 12px; margin-bottom: 1px; }
+    .sb-item.plain:hover { background: var(--hover); }
+    .sb-item.plain.selected { background: var(--fg); }
+    .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; flex: none; }
+    .keyline { display: inline-block; width: 22px; height: 4px; border-radius: 2px; flex: none; }
+    .sb-input { width: 100%; padding: 9px 12px; margin-bottom: 6px; border: 1px solid #d0cfce; background: var(--bg); outline: none; }
+    .sb-input:focus { border-color: var(--fg); }
+    .sb-results { display: flex; flex-direction: column; margin-bottom: 6px; }
+    .sb-result { text-align: left; padding: 6px 12px; background: none; border: 0; cursor: pointer; }
+    .sb-result:hover { background: var(--hover); }
+    .sb-result small { display: block; color: var(--muted); font-size: 11px; }
+    .sb-button { width: 100%; padding: 10px; background: var(--fg); color: var(--white); border: 1px solid var(--fg); font-weight: 600; cursor: pointer; }
+    .sb-button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .sb-collapse { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 8px 8px; background: none; border: 0;
+                   font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); cursor: pointer; }
+
+    /* ── Canvas ── */
+    #canvas { grid-area: canvas; position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column;
+              background-image: linear-gradient(rgba(106,102,100,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(106,102,100,0.05) 1px, transparent 1px);
+              background-size: 60px 60px; }
+    #view-title { position: absolute; top: 14px; left: 16px; right: 16px; z-index: 5; display: flex; align-items: baseline; gap: 12px;
+                  pointer-events: none; }
+    #view-title h2 { font-size: 18px; font-weight: 700; background: var(--white); padding: 6px 12px; box-shadow: var(--shadow); pointer-events: auto; }
+    #view-title p { color: var(--muted); font-size: 13px; }
+    .react-flow__node { font-family: var(--font); }
+    .react-flow__handle { opacity: 0 !important; width: 1px !important; height: 1px !important; min-width: 0 !important; min-height: 0 !important; border: 0 !important; }
+    .react-flow__edge-path { stroke-linecap: round; }
+    .react-flow__edge { cursor: pointer; }
+    .react-flow__edge:hover .react-flow__edge-path { stroke-width: 4.5px !important; }
+    .react-flow__controls { bottom: 16px !important; right: 16px !important; left: auto !important; }
+
+    /* boxes */
+    .n-feature { background: var(--white); border: 1px solid var(--white); border-left: 6px solid var(--theme); box-shadow: var(--shadow);
+                 padding: 8px 14px; cursor: pointer; transition: box-shadow 0.2s ease; }
+    .n-feature:hover { box-shadow: var(--shadow-hover); }
+    .n-feature .t { font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; }
+    .n-feature .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .n-feature.focus { background: var(--fg); color: var(--white); border-color: var(--fg); border-left-color: var(--theme); }
+    .n-feature.focus .s { color: inherit; opacity: 0.7; }
+    .n-feature.external { border-style: dashed; border-color: #a8a4a0; border-left: 6px solid var(--theme); }
+    .n-theme { background: var(--white); border: 1px solid var(--white); border-left: 10px solid var(--theme); box-shadow: var(--shadow);
+               padding: 12px 18px; cursor: pointer; min-width: 200px; transition: box-shadow 0.2s ease; }
+    .n-theme:hover { box-shadow: var(--shadow-hover); }
+    .n-theme .t { font-weight: 700; font-size: 16px; white-space: nowrap; }
+    .n-theme .s { font-size: 12px; color: var(--muted); }
+    .n-theme.focus { background: var(--fg); color: var(--white); border-color: var(--fg); border-left-color: var(--theme); }
+    .n-theme.focus .s { color: inherit; opacity: 0.75; }
+    .n-key { border-radius: 999px; color: #fff; padding: 12px 22px; text-align: center; cursor: pointer; box-shadow: var(--shadow); min-width: 150px;
+             transition: transform 0.15s ease; }
+    .n-key:hover { transform: scale(1.04); }
+    .n-key .t { font-weight: 700; font-size: 17px; letter-spacing: 0.02em; }
+    .n-key .s { font-size: 11px; opacity: 0.9; white-space: nowrap; }
+    .react-flow__node-heading { cursor: default; }
+    .n-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+               display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .n-group .swatch { width: 14px; height: 14px; }
+
+    /* key at the bottom */
+    #flow { flex: 1; min-height: 0; position: relative; }
+    #legend { flex: none; background: var(--white); border-top: 1px solid var(--line); padding: 10px 16px; display: grid; gap: 6px; font-size: 12px; }
+    #legend .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+    #legend .row > span { display: inline-flex; align-items: center; gap: 6px; }
+    #legend .lt { width: 64px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+    /* ── Details panel ── */
+    #details { grid-area: details; min-height: 0; background: var(--white); border-left: 1px solid var(--line); overflow-y: auto; padding: 20px 20px 32px; }
+    #details h2 { font-size: 20px; line-height: 1.25; margin-bottom: 6px; }
+    #details h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 20px 0 8px; }
+    #details p { margin-bottom: 10px; }
+    .eyebrow { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); margin-bottom: 10px; }
+    .tag.api { border-color: #007a33; color: #007a33; }
+    .tag.sb { border-color: #c45200; color: #c45200; }
+    .list { list-style: none; }
+    .list li { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+    .list button { flex: 1; text-align: left; background: none; border: 0; padding: 7px 0; cursor: pointer; }
+    .list button:hover { color: var(--link); }
+    .list .k { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .back { background: none; border: 0; color: var(--link); cursor: pointer; margin-bottom: 12px; }
+    .linkbtn { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+    .linkbtn:hover { color: var(--link); text-decoration: underline; }
+    .joins { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+    .joins th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 4px 6px 4px 0; }
+    .joins td { vertical-align: top; border-bottom: 1px solid var(--line); padding: 6px 6px 6px 0; }
+    .answers, .steps { padding-left: 20px; }
+    .answers li, .steps li { margin-bottom: 6px; }
+    .watch { margin-top: 16px; padding: 10px 12px; border-left: 3px solid #c45200; background: var(--bg); font-size: 13px; }
+    .open-btn { margin-top: 6px; padding: 8px 12px; background: var(--fg); color: var(--white); border: 0; font-weight: 600; cursor: pointer; }
+    .load-error { max-width: 640px; margin: 80px auto; padding: 0 20px; }
+    .load-error h1 { font-size: 22px; margin-bottom: 10px; }
+    .load-error p { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Libraries, the same way the original explorer loads them -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom": "https://esm.sh/react-dom@18.3.1?deps=react@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1",
+      "reactflow": "https://esm.sh/reactflow@11.11.4?deps=react@18.3.1,react-dom@18.3.1&external=react,react-dom"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import React from "react";
+    import { createRoot } from "react-dom/client";
+    import ReactFlow, { ReactFlowProvider, Controls, Handle, Position } from "reactflow";
+
+    const { useState, useEffect, useMemo, useCallback, createElement: h, Fragment } = React;
+
+    /* ================================================================
+       COLOURS
+       ================================================================ */
+
+    /* Linking keys: the five that carry almost every link get their own colour; the rest share grey */
+    const KEY_ORDER = ["osid", "uprn", "usrn", "gsscode", "postcode", "other"];
+    const KEY_COLORS = { osid: "#005eb8", uprn: "#007a33", usrn: "#c45200", gsscode: "#7a3e9d", postcode: "#0e7c86", other: "#8a8580" };
+    const KEY_LABELS = { osid: "OSID", uprn: "UPRN", usrn: "USRN", gsscode: "GSS code", postcode: "Postcode", other: "Other IDs" };
+    const keyGroup = k => (KEY_COLORS[k] && k !== "other" ? k : "other");
+
+    /* Themes, after OS map conventions; lighter than the key colours so a box never reads as a key */
+    const THEME_COLORS = {
+      buildings: "#d98b74", landuse: "#d6b56d", land: "#8fc165", address: "#e07a8a", structures: "#a39a8e",
+      transport: "#f2b134", water: "#6cb4e0", administrative: "#b4a0d8", geographicalnames: "#5d5955",
+      osreference: "#c9c5bf", external: "#e3dccf"
+    };
+    const themeColor = id => THEME_COLORS[id] ?? "#c9c5bf";
+
+    /* Where the ID is kept: on the feature (solid), a reference table (dashed), the Related Entity table (dotted) */
+    const STORAGE = {
+      attribute: { label: "on the feature", dash: undefined },
+      crossReference: { label: "in a reference table", dash: "7 5" },
+      standaloneCrossReference: { label: "in the Related Entity table (Select+Build)", dash: "2 5" },
+      attributeAndCrossReference: { label: "on the feature and in a table", dash: undefined }
+    };
+    const JOIN_STORAGE = { attribute: "attribute", crossReference: "crossReference", standaloneCrossReference: "standaloneCrossReference" };
+    const DELIVERY = { api: "OS NGD API - Features", sb: "OS Select+Build only", external: "Another organisation's data" };
+
+    /* ================================================================
+       DATA: ngdhierarchy.json + ngdreference.json
+       ================================================================ */
+
+    const D = { themes: [], themeById: new Map(), features: new Map(), links: [], linkById: new Map(),
+                out: new Map(), inn: new Map(), keys: new Map(), cases: [], caseById: new Map(), version: "", built: "" };
+
+    async function getJson(name) {
+      const res = await fetch(`./${name}`);
+      if (!res.ok) throw new Error(`${name} could not be loaded (${res.status}). Keep it in the same folder as this page.`);
+      return res.json();
+    }
+
+    async function loadData() {
+      const [hier, ref] = await Promise.all([getJson("ngdhierarchy.json"), getJson("ngdreference.json")]);
+      const all = [];
+      for (const [themeId, theme] of Object.entries(hier)) {
+        const t = { id: themeId, label: theme.label.replace(/^OS NGD /, ""), full: theme.label, color: themeColor(themeId), features: [] };
+        D.themes.push(t); D.themeById.set(themeId, t);
+        for (const col of Object.values(theme.collections)) {
+          for (const ft of col.featureTypes) all.push({ ft, theme: t, group: col.label });
+        }
+      }
+      for (const { ft } of all) {
+        for (const rel of [...(ft.relationships ?? []), ...(ft.selfRelationships ?? [])]) {
+          const joins = (rel.joins ?? []).map(j => ({ ...j, keyGroup: keyGroup(j.key) }));
+          const link = {
+            id: rel.id, source: ft.id, target: rel.targetFeature,
+            keys: rel.relationshipType?.keys ?? [...new Set(joins.map(j => j.key))],
+            type: rel.relationshipType?.type ?? "crossReference",
+            sentences: joins.length ? joins.map(j => j.sentence) : [rel.relationshipType?.description ?? ""],
+            meaning: [...new Set(joins.map(j => j.meaning).filter(Boolean))],
+            osTypes: [...new Set(joins.map(j => j.osRelationshipType).filter(Boolean))],
+            joins
+          };
+          link.key = keyGroup(link.keys[0]);
+          D.links.push(link); D.linkById.set(link.id, link);
+          if (link.source === link.target) continue;
+          (D.out.get(link.source) ?? D.out.set(link.source, []).get(link.source)).push(link);
+          (D.inn.get(link.target) ?? D.inn.set(link.target, []).get(link.target)).push(link);
+        }
+      }
+      const linked = new Set(D.links.flatMap(l => [l.source, l.target]));
+      for (const { ft, theme, group } of all) {
+        if (!linked.has(ft.id)) continue;
+        const f = { id: ft.id, title: ft.label, theme, group, org: ft.organisation ?? "Ordnance Survey",
+                    delivery: ft.delivery ?? "api", api: ft.apiCollection ?? "", about: ft.description ?? "" };
+        D.features.set(f.id, f); theme.features.push(f);
+      }
+      D.themes = D.themes.filter(t => t.features.length);
+      D.themes.forEach(t => t.features.sort((a, b) => a.title.localeCompare(b.title)));
+      ref.keys.forEach(k => D.keys.set(k.id, k));
+      D.cases = ref.useCases.map(c => ({ ...c, links: c.relationships.filter(id => D.linkById.has(id)) }));
+      D.cases.forEach(c => D.caseById.set(c.id, c));
+      D.version = ref.version; D.built = ref.built;
+    }
+
+    const F = id => D.features.get(id);
+    const themeOf = id => F(id)?.theme;
+    const keyInfo = k => k === "other"
+      ? { name: "Other IDs", full: "Other identifiers", what: "UDPRN, UARN, ATCO code, water body ID, grid square, retail area and partner identifiers: each joins only a few feature types." }
+      : D.keys.get(k);
+
+    /* ================================================================
+       LAYOUT: tidy columns, boxes sized to their names, every column centred
+       ================================================================ */
+
+    const ctx = document.createElement("canvas").getContext("2d");
+    function textWidth(text, font) { ctx.font = font; return ctx.measureText(text).width; }
+    const SIZE = {
+      feature: f => ({ w: Math.max(150, Math.ceil(textWidth(f.title, "600 14px 'Hanken Grotesk', sans-serif")) + 52), h: 50 }),
+      theme: t => ({ w: Math.max(200, Math.ceil(textWidth(t.label, "700 16px 'Hanken Grotesk', sans-serif")) + 62), h: 62 }),
+      key: k => ({ w: Math.max(170, Math.ceil(textWidth(keyInfo(k)?.full ?? "", "400 11px 'Hanken Grotesk', sans-serif")) + 52), h: 64 }),
+      heading: t => ({ w: Math.ceil(textWidth(t.label.toUpperCase(), "700 11px 'Hanken Grotesk', sans-serif") * 1.12) + 30, h: 22 })
+    };
+    const GAP_Y = 16, GAP_X = 170;
+
+    /* cols: array of columns, each an array of {id, kind, size:{w,h}, extraGap?}. Returns positions keyed by id. */
+    function placeColumns(cols, gapX = GAP_X) {
+      const pos = {};
+      let x = 0;
+      cols.forEach(col => {
+        const height = col.reduce((s, n, i) => s + n.size.h + (i ? (n.extraGap ?? 0) + GAP_Y : 0), 0);
+        let y = -height / 2;
+        const width = Math.max(0, ...col.map(n => n.size.w));
+        col.forEach((n, i) => {
+          if (i) y += GAP_Y + (n.extraGap ?? 0);
+          pos[n.id] = { x: n.kind === "key" ? x + (width - n.size.w) / 2 : x, y, w: n.size.w, h: n.size.h };
+          y += n.size.h;
+        });
+        x += width + gapX;
+      });
+      return pos;
+    }
+
+    let headingCount = 0;
+    /* Features of one column, grouped under their theme with a small heading */
+    function groupedByTheme(ids, keyFor) {
+      const byTheme = new Map();
+      ids.forEach(id => { const t = themeOf(id); (byTheme.get(t) ?? byTheme.set(t, []).get(t)).push(id); });
+      const out = [];
+      [...byTheme.entries()].sort((a, b) => D.themes.indexOf(a[0]) - D.themes.indexOf(b[0])).forEach(([t, list], gi) => {
+        out.push({ id: `heading:${t.id}:${headingCount++}`, kind: "heading", theme: t, size: SIZE.heading(t), extraGap: gi ? 18 : 0 });
+        list.sort((a, b) => (keyFor ? KEY_ORDER.indexOf(keyFor(a)) - KEY_ORDER.indexOf(keyFor(b)) : 0) || F(a).title.localeCompare(F(b).title))
+            .forEach(id => out.push({ id, kind: "feature", size: SIZE.feature(F(id)) }));
+      });
+      return out;
+    }
+
+    function toNodes(cols, pos, extra = {}) {
+      return cols.flat().map(n => ({
+        id: n.id, type: n.kind, position: { x: pos[n.id].x, y: pos[n.id].y }, draggable: n.kind !== "heading", selectable: n.kind !== "heading",
+        data: { ...n, width: pos[n.id].w, height: pos[n.id].h, ...(extra[n.id] ?? {}) }
+      }));
+    }
+
+    function lineEdge(id, source, target, key, { type = "attribute", width = 2.4, sourceHandle = "r-out", targetHandle = "l-in", data = {} } = {}) {
+      return {
+        id, source, target, sourceHandle, targetHandle, type: "default",
+        style: { stroke: KEY_COLORS[key] ?? KEY_COLORS.other, strokeWidth: width, strokeDasharray: STORAGE[type]?.dash },
+        interactionWidth: 18, data: { key, ...data }
+      };
+    }
+
+    /* ================================================================
+       VIEWS
+       ================================================================ */
+
+    /* Overview: every theme, and the linking keys in the middle that join them */
+    function overviewView() {
+      const counts = new Map();   /* themeId|key -> number of links */
+      D.links.forEach(l => {
+        if (l.source === l.target) return;
+        new Set([themeOf(l.source).id, themeOf(l.target).id]).forEach(tid => {
+          const k = `${tid}|${l.key}`; counts.set(k, (counts.get(k) ?? 0) + 1);
+        });
+      });
+      const keys = KEY_ORDER.filter(k => D.themes.some(t => counts.has(`${t.id}|${k}`)));
+      const avgKey = t => {
+        let s = 0, n = 0;
+        keys.forEach((k, i) => { const c = counts.get(`${t.id}|${k}`) ?? 0; s += i * c; n += c; });
+        return n ? s / n : 0;
+      };
+      const sorted = [...D.themes].sort((a, b) => avgKey(a) - avgKey(b));
+      const left = sorted.filter((_, i) => i % 2 === 0), right = sorted.filter((_, i) => i % 2 === 1);
+      const themeNode = t => ({ id: `theme:${t.id}`, kind: "theme", theme: t, size: SIZE.theme(t) });
+      const cols = [left.map(themeNode), keys.map(k => ({ id: `key:${k}`, kind: "key", key: k, size: SIZE.key(k), extraGap: 22 })), right.map(themeNode)];
+      const pos = placeColumns(cols, 230);
+      const max = Math.max(...counts.values());
+      const edges = [];
+      for (const [side, list] of [["left", left], ["right", right]]) {
+        list.forEach(t => keys.forEach(k => {
+          const n = counts.get(`${t.id}|${k}`);
+          if (!n) return;
+          const width = 1.5 + 7 * Math.sqrt(n / max);
+          edges.push(side === "left"
+            ? lineEdge(`ov:${t.id}:${k}`, `theme:${t.id}`, `key:${k}`, k, { width, data: { kind: "themeKey", theme: t.id, count: n } })
+            : lineEdge(`ov:${t.id}:${k}`, `key:${k}`, `theme:${t.id}`, k, { width, data: { kind: "themeKey", theme: t.id, count: n } }));
+        }));
+      }
+      return { nodes: toNodes(cols, pos), edges };
+    }
+
+    /* A theme: its feature types, the keys they use, and the other themes those keys reach */
+    function themeView(themeId) {
+      const t = D.themeById.get(themeId);
+      const mine = new Set(t.features.map(f => f.id));
+      const featureKeys = new Map(), keyThemes = new Map(), featureKey = new Map();
+      D.links.forEach(l => {
+        if (l.source === l.target) return;
+        const inS = mine.has(l.source), inT = mine.has(l.target);
+        if (!inS && !inT) return;
+        [l.source, l.target].filter(id => mine.has(id)).forEach(id => {
+          (featureKeys.get(id) ?? featureKeys.set(id, new Set()).get(id)).add(l.key);
+          if (!featureKey.has(id)) featureKey.set(id, l.key);
+        });
+        const others = [l.source, l.target].filter(id => !mine.has(id));
+        const reach = others.length ? others.map(id => themeOf(id).id) : [themeId];
+        reach.forEach(oid => {
+          const k = `${l.key}|${oid}`;
+          keyThemes.set(k, [...(keyThemes.get(k) ?? []), l]);
+        });
+      });
+      const keys = KEY_ORDER.filter(k => [...featureKeys.values()].some(s => s.has(k)));
+      const feats = [...featureKeys.keys()].sort((a, b) => KEY_ORDER.indexOf(featureKey.get(a)) - KEY_ORDER.indexOf(featureKey.get(b)) || F(a).title.localeCompare(F(b).title));
+      const otherThemes = D.themes.filter(o => keys.some(k => keyThemes.has(`${k}|${o.id}`)));
+      const cols = [
+        feats.map(id => ({ id, kind: "feature", size: SIZE.feature(F(id)) })),
+        keys.map(k => ({ id: `key:${k}`, kind: "key", key: k, size: SIZE.key(k), extraGap: 12 })),
+        otherThemes.map(o => ({ id: `theme:${o.id}`, kind: "theme", theme: o, label: o.id === themeId ? `Other ${o.label}` : undefined, size: SIZE.theme(o) }))
+      ];
+      const pos = placeColumns(cols);
+      const edges = [];
+      feats.forEach(id => featureKeys.get(id).forEach(k => edges.push(lineEdge(`tf:${id}:${k}`, id, `key:${k}`, k, { data: { kind: "featureKey", feature: id } }))));
+      for (const [k2, links] of keyThemes) {
+        const [k, oid] = k2.split("|");
+        edges.push(lineEdge(`tk:${k}:${oid}`, `key:${k}`, `theme:${oid}`, k, { width: 1.5 + Math.min(6, links.length), data: { kind: "keyTheme", theme: themeId, other: oid, links: links.map(l => l.id) } }));
+      }
+      return { nodes: toNodes(cols, pos, { [`theme:${themeId}`]: { focus: true } }), edges };
+    }
+
+    /* A key: what stores it on the left, whose identifier it is on the right, grouped by theme */
+    function keyView(k) {
+      const holders = new Set(), owners = new Set(), types = new Map();
+      D.links.forEach(l => {
+        if (l.key !== k || l.source === l.target) return;
+        holders.add(l.source); owners.add(l.target);
+        types.set(`h:${l.source}`, l.type); types.set(`o:${l.target}`, l.type);
+      });
+      [...owners].forEach(id => holders.delete(id) && null);
+      const left = groupedByTheme([...holders].filter(id => !owners.has(id)));
+      const right = groupedByTheme([...owners]);
+      const cols = [left, [{ id: `key:${k}`, kind: "key", key: k, size: SIZE.key(k) }], right];
+      const pos = placeColumns(cols);
+      const edges = [
+        ...left.filter(n => n.kind === "feature").map(n => lineEdge(`kh:${n.id}`, n.id, `key:${k}`, k, { type: types.get(`h:${n.id}`), data: { kind: "featureKey", feature: n.id } })),
+        ...right.filter(n => n.kind === "feature").map(n => lineEdge(`ko:${n.id}`, `key:${k}`, n.id, k, { data: { kind: "featureKey", feature: n.id } }))
+      ];
+      return { nodes: toNodes(cols, pos), edges };
+    }
+
+    /* A feature type: what stores its ID on the left, what it stores the IDs of on the right */
+    function featureView(id) {
+      const out = D.out.get(id) ?? [], inn = D.inn.get(id) ?? [];
+      const right = new Set(out.map(l => l.target));
+      const keyOfOut = new Map(out.map(l => [l.target, l.key])), keyOfIn = new Map(inn.map(l => [l.source, l.key]));
+      const leftIds = [...new Set(inn.map(l => l.source))].filter(x => !right.has(x));
+      const cols = [groupedByTheme(leftIds, x => keyOfIn.get(x)), [{ id, kind: "feature", size: SIZE.feature(F(id)) }], groupedByTheme([...right], x => keyOfOut.get(x))];
+      const pos = placeColumns(cols);
+      const edges = [
+        ...out.map(l => lineEdge(`l:${l.id}`, id, l.target, l.key, { type: l.type, data: { kind: "link", link: l.id } })),
+        ...inn.map(l => right.has(l.source)
+          ? lineEdge(`l:${l.id}`, id, l.source, l.key, { type: l.type, data: { kind: "link", link: l.id } })
+          : lineEdge(`l:${l.id}`, l.source, id, l.key, { type: l.type, data: { kind: "link", link: l.id } }))
+      ];
+      return { nodes: toNodes(cols, pos, { [id]: { focus: true } }), edges };
+    }
+
+    /* Columns by number of steps from a start feature, following links either way */
+    function stepColumns(start, links) {
+      const adj = new Map();
+      links.forEach(l => {
+        (adj.get(l.source) ?? adj.set(l.source, []).get(l.source)).push(l.target);
+        (adj.get(l.target) ?? adj.set(l.target, []).get(l.target)).push(l.source);
+      });
+      const step = new Map([[start, 0]]), queue = [start];
+      while (queue.length) {
+        const n = queue.shift();
+        (adj.get(n) ?? []).forEach(m => { if (!step.has(m)) { step.set(m, step.get(n) + 1); queue.push(m); } });
+      }
+      return step;
+    }
+    function columnsFromSteps(step, focusIds = []) {
+      const cols = [];
+      for (const [id, s] of step) (cols[s] ??= []).push(id);
+      /* order each column by its neighbours in the column before, to keep lines from crossing */
+      return cols.map(c => groupedByTheme(c));
+    }
+    function directedEdges(links, step) {
+      return links.map(l => {
+        const forward = (step.get(l.source) ?? 0) <= (step.get(l.target) ?? 0);
+        return forward
+          ? lineEdge(`l:${l.id}`, l.source, l.target, l.key, { type: l.type, data: { kind: "link", link: l.id } })
+          : lineEdge(`l:${l.id}`, l.target, l.source, l.key, { type: l.type, data: { kind: "link", link: l.id } });
+      });
+    }
+
+    /* A use case: the feature types and links it follows */
+    function caseView(cid) {
+      const uc = D.caseById.get(cid);
+      const links = uc.links.map(id => D.linkById.get(id)).filter(l => l.source !== l.target);
+      if (!links.length) return { nodes: [], edges: [] };
+      const step = stepColumns(links[0].source, links);
+      const cols = columnsFromSteps(step);
+      const pos = placeColumns(cols);
+      return { nodes: toNodes(cols, pos), edges: directedEdges(links, step) };
+    }
+
+    /* Every shortest chain of links between two feature types */
+    function routeView(from, to) {
+      const adj = new Map();
+      D.links.forEach(l => {
+        if (l.source === l.target) return;
+        (adj.get(l.source) ?? adj.set(l.source, []).get(l.source)).push([l.target, l]);
+        (adj.get(l.target) ?? adj.set(l.target, []).get(l.target)).push([l.source, l]);
+      });
+      const dist = new Map([[from, 0]]), parents = new Map(), queue = [from];
+      while (queue.length) {
+        const n = queue.shift();
+        if (n === to) continue;
+        for (const [m, l] of adj.get(n) ?? []) {
+          if (!dist.has(m)) { dist.set(m, dist.get(n) + 1); parents.set(m, [[n, l]]); queue.push(m); }
+          else if (dist.get(m) === dist.get(n) + 1) parents.get(m).push([n, l]);
+        }
+      }
+      if (!dist.has(to)) return { nodes: [], edges: [], found: false };
+      const step = new Map([[to, dist.get(to)]]), used = new Map(), stack = [to];
+      while (stack.length) {
+        const n = stack.pop();
+        for (const [p, l] of parents.get(n) ?? []) {
+          used.set(l.id, l);
+          if (!step.has(p)) { step.set(p, dist.get(p)); stack.push(p); }
+        }
+      }
+      const cols = columnsFromSteps(step);
+      const pos = placeColumns(cols);
+      return { nodes: toNodes(cols, pos, { [from]: { focus: true }, [to]: { focus: true } }), edges: directedEdges([...used.values()], step), found: true, steps: dist.get(to) };
+    }
+
+    /* ================================================================
+       BOXES
+       ================================================================ */
+
+    const sideHandles = () => [
+      h(Handle, { key: "l-in", id: "l-in", type: "target", position: Position.Left, isConnectable: false }),
+      h(Handle, { key: "l-out", id: "l-out", type: "source", position: Position.Left, isConnectable: false }),
+      h(Handle, { key: "r-in", id: "r-in", type: "target", position: Position.Right, isConnectable: false }),
+      h(Handle, { key: "r-out", id: "r-out", type: "source", position: Position.Right, isConnectable: false })
+    ];
+
+    function FeatureBox({ data }) {
+      const f = F(data.id);
+      const cls = `n-feature${data.focus ? " focus" : ""}${f.delivery === "external" ? " external" : ""}`;
+      return h("div", { className: cls, style: { width: data.width, height: data.height, "--theme": f.theme.color }, title: f.about || f.title },
+        ...sideHandles(),
+        h("div", { className: "t" }, f.title),
+        h("div", { className: "s" }, f.delivery === "external" ? f.org : f.group));
+    }
+    function ThemeBox({ data }) {
+      const t = data.theme;
+      return h("div", { className: `n-theme${data.focus ? " focus" : ""}`, style: { width: data.width, "--theme": t.color } },
+        ...sideHandles(),
+        h("div", { className: "t" }, data.label ?? t.label),
+        h("div", { className: "s" }, `${t.features.length} feature type${t.features.length === 1 ? "" : "s"}`));
+    }
+    function KeyHub({ data }) {
+      const info = keyInfo(data.key);
+      return h("div", { className: "n-key", style: { width: data.width, background: KEY_COLORS[data.key] } },
+        ...sideHandles(),
+        h("div", { className: "t" }, KEY_LABELS[data.key]),
+        h("div", { className: "s" }, info?.full ?? ""));
+    }
+    function GroupHeading({ data }) {
+      return h("div", { className: "n-group", style: { width: data.width } },
+        h("span", { className: "swatch", style: { background: data.theme.color } }), data.theme.label);
+    }
+    const nodeTypes = { feature: FeatureBox, theme: ThemeBox, key: KeyHub, heading: GroupHeading };
+
+    /* ================================================================
+       DETAILS PANEL
+       ================================================================ */
+
+    const KeyTag = ({ k }) => h("span", { className: "k" }, h("span", { className: "keyline", style: { background: KEY_COLORS[k] } }), KEY_LABELS[k]);
+    const ThemeTag = ({ t }) => h("span", { className: "eyebrow" }, h("span", { className: "swatch", style: { background: t.color } }), t.label);
+
+    function LinkList({ links, other, go, show }) {
+      return h("ul", { className: "list" }, links.map(l => h("li", { key: l.id },
+        h("button", { onClick: () => go({ v: "feature", id: other(l) }) }, F(other(l)).title, " ", h("span", { className: "muted small" }, "· ", themeOf(other(l)).label)),
+        h(KeyTag, { k: l.key }),
+        h("button", { className: "linkbtn small", style: { flex: "none" }, onClick: () => show({ kind: "link", link: l.id }), title: "How to join" }, "›"))));
+    }
+
+    function Details({ view, sel, go, show, clearSel }) {
+      const back = sel ? h("button", { className: "back", onClick: clearSel }, "‹ Back") : null;
+
+      if (sel?.kind === "link") {
+        const l = D.linkById.get(sel.link), s = F(l.source), t = F(l.target);
+        return h(Fragment, null, back,
+          h("div", { className: "eyebrow" }, "Link"),
+          h("h2", null, h("button", { className: "linkbtn", onClick: () => go({ v: "feature", id: s.id }) }, s.title), " → ",
+            h("button", { className: "linkbtn", onClick: () => go({ v: "feature", id: t.id }) }, t.title)),
+          h("p", null, h(KeyTag, { k: l.key }), " ", l.meaning.length ? h("span", { className: "muted" }, "· ", l.meaning.join(", ")) : null),
+          l.sentences.map(x => h("p", { key: x }, x)),
+          h("h3", null, "How to join"),
+          h("table", { className: "joins" },
+            h("thead", null, h("tr", null, h("th", null, `${s.title} attribute`), h("th", null, `${t.title} attribute`))),
+            h("tbody", null, l.joins.map(j => h("tr", { key: j.sourceField + j.targetField },
+              h("td", null, h("code", null, j.sourceField), h("br"), h("span", { className: "muted small" }, STORAGE[JOIN_STORAGE[j.storage]]?.label ?? "")),
+              h("td", null, h("code", null, j.targetField)))))),
+          h("p", { className: "muted small" }, "OS relationship type: ", l.osTypes.join(", ")),
+          h("p", { className: "muted small" }, `${s.title}: ${DELIVERY[s.delivery]}. ${t.title}: ${DELIVERY[t.delivery]}.`));
+      }
+
+      if (sel?.kind === "themeKey" || sel?.kind === "keyTheme") {
+        const k = sel.key, t = D.themeById.get(sel.theme), o = sel.other ? D.themeById.get(sel.other) : null;
+        const links = sel.links
+          ? sel.links.map(id => D.linkById.get(id))
+          : D.links.filter(l => l.key === k && l.source !== l.target && (themeOf(l.source).id === t.id || themeOf(l.target).id === t.id));
+        return h(Fragment, null, back,
+          h("div", { className: "eyebrow" }, "Links"),
+          h("h2", null, o ? `${t.label} to ${o.label}` : t.label, " by ", KEY_LABELS[k]),
+          h("p", { className: "muted" }, `${links.length} link${links.length === 1 ? "" : "s"}. Click one to see how to join.`),
+          h("ul", { className: "list" }, links.map(l => h("li", { key: l.id },
+            h("button", { onClick: () => show({ kind: "link", link: l.id }) }, `${F(l.source).title} → ${F(l.target).title}`)))));
+      }
+
+      if (view.v === "overview") {
+        return h(Fragment, null,
+          h("div", { className: "eyebrow" }, "Overview"),
+          h("h2", null, "How the NGD themes link together"),
+          h("p", null, "Almost every link between OS NGD themes runs through one of five keys. The themes are on either side, the keys in the middle; a thicker line means more links."),
+          h("p", null, "Click a theme to see its feature types and where they lead, a key to see everything it joins, or a line for the links behind it."),
+          h("h3", null, "The linking keys"),
+          h("ul", { className: "list" }, KEY_ORDER.map(k => h("li", { key: k },
+            h("button", { onClick: () => go({ v: "key", id: k }) }, h(KeyTag, { k }), " ", h("span", { className: "muted small" }, keyInfo(k)?.full ?? ""))))),
+          h("h3", null, "Use cases"),
+          h("ul", { className: "list" }, D.cases.map(c => h("li", { key: c.id }, h("button", { onClick: () => go({ v: "case", id: c.id }) }, c.title)))),
+          h("p", { className: "muted small", style: { marginTop: 16 } }, `${D.features.size} feature types, ${D.links.length} relationships from the OS relationship model. Data v${D.version}, ${D.built}.`));
+      }
+
+      if (view.v === "theme") {
+        const t = D.themeById.get(view.id);
+        return h(Fragment, null,
+          h(ThemeTag, { t }),
+          h("h2", null, t.full),
+          h("p", null, "Its feature types on the left, the keys they join by in the middle, and the themes those keys lead to on the right."),
+          h("h3", null, `Feature types (${t.features.length})`),
+          h("ul", { className: "list" }, t.features.map(f => h("li", { key: f.id }, h("button", { onClick: () => go({ v: "feature", id: f.id }) }, f.title, " ", h("span", { className: "muted small" }, "· ", f.group))))));
+      }
+
+      if (view.v === "key") {
+        const k = view.id, info = keyInfo(k);
+        const n = D.links.filter(l => l.key === k && l.source !== l.target).length;
+        return h(Fragment, null,
+          h("div", { className: "eyebrow" }, h("span", { className: "keyline", style: { background: KEY_COLORS[k] } }), "Linking key"),
+          h("h2", null, KEY_LABELS[k], " ", h("span", { className: "muted", style: { fontWeight: 400, fontSize: 15 } }, info?.full ?? "")),
+          info?.what ? h("p", null, info.what) : null,
+          info?.use ? h("p", null, info.use) : null,
+          h("p", { className: "muted" }, `${n} links. Left: feature types that store it. Right: feature types it identifies.`));
+      }
+
+      if (view.v === "case") {
+        const uc = D.caseById.get(view.id);
+        return h(Fragment, null,
+          h("div", { className: "eyebrow" }, "Use case"),
+          h("h2", null, uc.title),
+          uc.who ? h("p", { className: "muted small" }, "For: ", uc.who) : null,
+          h("p", null, uc.summary),
+          uc.answers?.length ? h(Fragment, null, h("h3", null, "Questions it answers"), h("ul", { className: "answers" }, uc.answers.map(a => h("li", { key: a }, a)))) : null,
+          h("h3", null, `Links it follows (${uc.links.length})`),
+          h("ol", { className: "steps" }, uc.links.map(id => {
+            const l = D.linkById.get(id);
+            return h("li", { key: id },
+              h("button", { className: "linkbtn", onClick: () => show({ kind: "link", link: id }) }, `${F(l.source).title} → ${F(l.target).title}`), " ",
+              h(KeyTag, { k: l.key }),
+              l.source === l.target ? h("span", { className: "muted small" }, " (between records of the same type)") : null);
+          })),
+          uc.watch ? h("p", { className: "watch" }, h("strong", null, "Watch out: "), uc.watch) : null);
+      }
+
+      if (view.v === "route") {
+        return h(Fragment, null,
+          h("div", { className: "eyebrow" }, "Route"),
+          h("h2", null, `${F(view.from).title} to ${F(view.to).title}`),
+          h("p", null, "Every shortest chain of links between the two. Click a line for how to join each step, or a box for that feature type."));
+      }
+
+      /* feature */
+      const f = F(view.id);
+      const out = D.out.get(f.id) ?? [], inn = D.inn.get(f.id) ?? [];
+      const self = D.links.filter(l => l.source === f.id && l.target === f.id);
+      return h(Fragment, null,
+        h(ThemeTag, { t: f.theme }),
+        h("h2", null, f.title),
+        h("span", { className: `tag ${f.delivery}` }, f.delivery === "external" ? f.org : DELIVERY[f.delivery]),
+        f.about ? h("p", null, f.about) : null,
+        f.api ? h("p", { className: "muted small" }, "API collection: ", h("code", null, f.api)) : null,
+        out.length ? h(Fragment, null, h("h3", null, `Stores the IDs of (${out.length})`), h(LinkList, { links: out, other: l => l.target, go, show })) : null,
+        inn.length ? h(Fragment, null, h("h3", null, `Its ID is stored by (${inn.length})`), h(LinkList, { links: inn, other: l => l.source, go, show })) : null,
+        self.length ? h(Fragment, null, h("h3", null, `Links to other ${f.title} records`), self.map(l => h("p", { key: l.id, className: "small" }, l.sentences.join(" ")))) : null);
+    }
+
+    /* ================================================================
+       SIDEBAR
+       ================================================================ */
+
+    function FeaturePicker({ placeholder, value, onPick }) {
+      const [q, setQ] = useState("");
+      const matches = useMemo(() => {
+        const s = q.trim().toLowerCase();
+        if (s.length < 2) return [];
+        return [...D.features.values()].filter(f => f.title.toLowerCase().includes(s) || f.group.toLowerCase().includes(s)).slice(0, 10);
+      }, [q]);
+      return h(Fragment, null,
+        h("input", { className: "sb-input", placeholder, value: value ? F(value).title : q, onChange: e => { onPick(null); setQ(e.target.value); } }),
+        matches.length && !value ? h("div", { className: "sb-results" }, matches.map(f => h("button", { key: f.id, className: "sb-result", onClick: () => { onPick(f.id); setQ(""); } },
+          f.title, h("small", null, `${f.theme.label} · ${f.group}`)))) : null);
+    }
+
+    function Sidebar({ view, go }) {
+      const [casesOpen, setCasesOpen] = useState(view.v === "case");
+      const [from, setFrom] = useState(null), [to, setTo] = useState(null);
+      const is = (v, id) => view.v === v && (id === undefined || view.id === id);
+      return h(Fragment, null,
+        h("div", { className: "sb-section" },
+          h("button", { className: `sb-item${is("overview") ? " selected" : ""}`, onClick: () => go({ v: "overview" }) }, "How the themes link")),
+
+        h("div", { className: "sb-section" },
+          h("button", { className: "sb-collapse", onClick: () => setCasesOpen(!casesOpen) }, h("span", null, `Use cases (${D.cases.length})`), h("span", null, casesOpen ? "−" : "+")),
+          casesOpen ? D.cases.map(c => h("button", { key: c.id, className: `sb-item plain${is("case", c.id) ? " selected" : ""}`, onClick: () => go({ v: "case", id: c.id }) }, c.title)) : null),
+
+        h("div", { className: "sb-section" },
+          h("div", { className: "sb-title" }, "Themes"),
+          D.themes.map(t => h("button", { key: t.id, className: `sb-item${is("theme", t.id) ? " selected" : ""}`, onClick: () => go({ v: "theme", id: t.id }) },
+            h("span", { className: "swatch", style: { background: t.color } }), t.label, h("span", { className: "count" }, t.features.length)))),
+
+        h("div", { className: "sb-section" },
+          h("div", { className: "sb-title" }, "Linking keys"),
+          KEY_ORDER.map(k => h("button", { key: k, className: `sb-item plain${is("key", k) ? " selected" : ""}`, onClick: () => go({ v: "key", id: k }) },
+            h("span", { className: "keyline", style: { background: KEY_COLORS[k] } }), KEY_LABELS[k]))),
+
+        h("div", { className: "sb-section" },
+          h("div", { className: "sb-title" }, "Find a feature type"),
+          h(FeaturePicker, { placeholder: "e.g. building, street, ward", value: null, onPick: id => id && go({ v: "feature", id }) })),
+
+        h("div", { className: "sb-section" },
+          h("div", { className: "sb-title" }, "How are two connected?"),
+          h(FeaturePicker, { placeholder: "From…", value: from, onPick: setFrom }),
+          h(FeaturePicker, { placeholder: "To…", value: to, onPick: setTo }),
+          h("button", { className: "sb-button", disabled: !from || !to || from === to, onClick: () => go({ v: "route", from, to }) }, "Show route")));
+    }
+
+    /* ================================================================
+       APP
+       ================================================================ */
+
+    function readHash() {
+      const [v, rest = ""] = decodeURIComponent(location.hash.slice(1)).split("=");
+      if (v === "theme" && D.themeById.has(rest)) return { v, id: rest };
+      if (v === "key" && KEY_ORDER.includes(rest)) return { v, id: rest };
+      if (v === "feature" && D.features.has(rest)) return { v, id: rest };
+      if (v === "case" && D.caseById.has(rest)) return { v, id: rest };
+      if (v === "route") { const [from, to] = rest.split(","); if (D.features.has(from) && D.features.has(to)) return { v, from, to }; }
+      return { v: "overview" };
+    }
+    const hashOf = view => view.v === "overview" ? "overview" : view.v === "route" ? `route=${view.from},${view.to}` : `${view.v}=${view.id}`;
+
+    const TITLES = {
+      overview: () => ["How the NGD themes link together", "Themes either side, linking keys in the middle"],
+      theme: v => [D.themeById.get(v.id).full, "Feature types → keys → the themes they reach"],
+      key: v => [`${KEY_LABELS[v.id]}: what it joins`, "Stored by (left) · identifies (right)"],
+      feature: v => [F(v.id).title, "Stores its ID (left) · it stores their IDs (right)"],
+      case: v => [D.caseById.get(v.id).title, "Use case"],
+      route: v => [`${F(v.from).title} → ${F(v.to).title}`, "Shortest routes"]
+    };
+
+    function Legend() {
+      const line = (color, dash) => h("svg", { width: 34, height: 10 }, h("line", { x1: 1, y1: 5, x2: 33, y2: 5, stroke: color, strokeWidth: 3, strokeDasharray: dash }));
+      return h("div", { id: "legend" },
+        h("div", { className: "row" }, h("span", { className: "lt" }, "Key"),
+          KEY_ORDER.map(k => h("span", { key: k }, line(KEY_COLORS[k]), KEY_LABELS[k]))),
+        h("div", { className: "row" }, h("span", { className: "lt" }, "Stored"),
+          h("span", null, line("#131312"), "on the feature"),
+          h("span", null, line("#131312", STORAGE.crossReference.dash), "in a reference table"),
+          h("span", null, line("#131312", STORAGE.standaloneCrossReference.dash), "Related Entity table")),
+        h("div", { className: "row" }, h("span", { className: "lt" }, "Theme"),
+          D.themes.map(t => h("span", { key: t.id }, h("span", { className: "swatch", style: { background: t.color } }), t.label))));
+    }
+
+    function App() {
+      const [view, setView] = useState(readHash);
+      const [sel, setSel] = useState(null);
+
+      const go = useCallback(v => { setView(v); setSel(null); }, []);
+      useEffect(() => {
+        const hsh = hashOf(view);
+        if (decodeURIComponent(location.hash.slice(1)) !== hsh) history.pushState(null, "", `#${hsh}`);
+      }, [view]);
+      useEffect(() => {
+        const onPop = () => { setView(readHash()); setSel(null); };
+        addEventListener("popstate", onPop);
+        return () => removeEventListener("popstate", onPop);
+      }, []);
+
+      const shown = useMemo(() => {
+        if (view.v === "theme") return themeView(view.id);
+        if (view.v === "key") return keyView(view.id);
+        if (view.v === "feature") return featureView(view.id);
+        if (view.v === "case") return caseView(view.id);
+        if (view.v === "route") return routeView(view.from, view.to);
+        return overviewView();
+      }, [view]);
+
+      /* a selected line stands out; the rest fade */
+      const selEdgeId = sel?.edge;
+      const edges = useMemo(() => shown.edges.map(e => selEdgeId
+        ? { ...e, style: { ...e.style, opacity: e.id === selEdgeId ? 1 : 0.15, strokeWidth: e.id === selEdgeId ? (e.style.strokeWidth ?? 2) + 1.5 : e.style.strokeWidth } }
+        : e), [shown, selEdgeId]);
+
+      const onNodeClick = useCallback((_, n) => {
+        if (n.type === "feature") go({ v: "feature", id: n.id });
+        else if (n.type === "theme") go({ v: "theme", id: n.data.theme.id });
+        else if (n.type === "key") go({ v: "key", id: n.data.key });
+      }, [go]);
+      const onEdgeClick = useCallback((_, e) => {
+        const d = e.data;
+        if (d.kind === "link") setSel({ kind: "link", link: d.link, edge: e.id });
+        else if (d.kind === "themeKey") setSel({ kind: "themeKey", key: d.key, theme: d.theme, edge: e.id });
+        else if (d.kind === "keyTheme") setSel({ kind: "keyTheme", key: d.key, theme: d.theme, other: d.other, links: d.links, edge: e.id });
+        else if (d.kind === "featureKey") go({ v: "feature", id: d.feature });
+      }, [go]);
+
+      const [title, sub] = TITLES[view.v](view);
+      return h("div", { id: "app" },
+        h("header", { id: "header-bar" },
+          h("img", { src: "./OS logo mono-dark_rgb.svg", alt: "Ordnance Survey", onError: e => e.currentTarget.remove() }),
+          h("h1", null, "OS NGD Relationship Explorer"),
+          h("p", null, "How the OS NGD themes link together: which key, which attribute, and the route between any two.")),
+        h("aside", { id: "sidebar" }, h(Sidebar, { view, go })),
+        h("main", { id: "canvas" },
+          h("div", { id: "view-title" }, h("h2", null, title), h("p", null, sub)),
+          view.v === "route" && !shown.found ? h("div", { id: "view-title", style: { top: 64 } }, h("p", null, "No chain of links joins these two.")) : null,
+          h("div", { id: "flow" }, h(ReactFlow, {
+            key: hashOf(view), nodes: shown.nodes, edges, nodeTypes,
+            onNodeClick, onEdgeClick, onPaneClick: () => setSel(null),
+            nodesConnectable: false, fitView: true, fitViewOptions: { padding: 0.12, maxZoom: 1.1 }, minZoom: 0.1, maxZoom: 2,
+            proOptions: { hideAttribution: true }
+          }, h(Controls, { showInteractive: false }))),
+          h(Legend)),
+        h("aside", { id: "details" }, h(Details, { view, sel, go, show: s => setSel(s), clearSel: () => setSel(null) })));
+    }
+
+    /* ================================================================
+       START
+       ================================================================ */
+
+    const root = createRoot(document.getElementById("root"));
+    loadData()
+      .then(() => root.render(h(ReactFlowProvider, null, h(App))))
+      .catch(err => root.render(h("div", { className: "load-error" },
+        h("h1", null, "The relationship data didn't load"),
+        h("p", null, err.message),
+        location.protocol === "file:" ? h("p", null, "This page was opened straight from a folder, and browsers don't let it read ngdhierarchy.json that way. In VS Code, right-click the HTML file and choose Open with Live Server.") : null)));
+  </script>
+</body>
+</html>
