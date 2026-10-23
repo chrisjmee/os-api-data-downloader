@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OS NGD Relationship Explorer</title>
   <!--
-    OS NGD Relationship Explorer v4.3
+    OS NGD Relationship Explorer v4.4
     How OS NGD themes link together, through five linking keys (OSID, UPRN, USRN, GSS code, postcode).
 
     Files, all in one folder (open this page with Live Server, or any local web server):
@@ -70,6 +70,7 @@
     .keyline { display: inline-block; width: 22px; height: 4px; border-radius: 2px; flex: none; }
     .sb-input { width: 100%; padding: 9px 12px; margin-bottom: 6px; border: 1px solid #d0cfce; background: var(--bg); outline: none; }
     .sb-input:focus { border-color: var(--fg); }
+    .sb-select { cursor: pointer; appearance: auto; }
     .sb-results { display: flex; flex-direction: column; margin-bottom: 6px; }
     .sb-result { text-align: left; padding: 6px 12px; background: none; border: 0; cursor: pointer; }
     .sb-result:hover { background: var(--hover); }
@@ -700,6 +701,14 @@
           f.title, h("small", null, `${f.theme.label} · ${f.group}`)))) : null);
     }
 
+    /* A drop-down of every feature type, grouped by theme */
+    function FeatureSelect({ label, value, onChange }) {
+      return h("select", { className: "sb-input sb-select", "aria-label": label, value: value ?? "", onChange: e => onChange(e.target.value || null) },
+        h("option", { value: "" }, `${label}…`),
+        D.themes.map(t => h("optgroup", { key: t.id, label: t.label },
+          t.features.map(f => h("option", { key: f.id, value: f.id }, f.title)))));
+    }
+
     function Sidebar({ view, go }) {
       const [casesOpen, setCasesOpen] = useState(view.v === "case");
       const [from, setFrom] = useState(null), [to, setTo] = useState(null);
@@ -728,8 +737,8 @@
 
         h("div", { className: "sb-section" },
           h("div", { className: "sb-title" }, "How are two connected?"),
-          h(FeaturePicker, { placeholder: "From…", value: from, onPick: setFrom }),
-          h(FeaturePicker, { placeholder: "To…", value: to, onPick: setTo }),
+          h(FeatureSelect, { label: "From", value: from, onChange: setFrom }),
+          h(FeatureSelect, { label: "To", value: to, onChange: setTo }),
           h("button", { className: "sb-button", disabled: !from || !to || from === to, onClick: () => go({ v: "route", from, to }) }, "Show route")));
     }
 
