@@ -214,6 +214,14 @@ the written content is in `explorer/content.py`. `explorer/build_explorer.py` bu
 rebuilds and republishes it whenever either changes. The built page, `docs/ngd-links/index.html`, is one
 self-contained file that can also be emailed or opened offline.
 
+### OS NGD Links - React app (`react-explorer/`)
+
+A simpler, React version of the Explorer built from the same data: pick a feature type to see what it links
+to and by which key, click a link for the attributes to join on, or find the shortest route between two.
+Open `react-explorer` in VS Code and run `npm install` then `npm run dev`; see
+[react-explorer/README.md](react-explorer/README.md). Published at
+https://chrisjmee.github.io/os-api-data-downloader/ngd-links-app/
+
 ### Export for the OS NGD Relationship Explorer (React Flow app)
 
 `python explorer/export_ngd_hierarchy.py` writes the same relationships as `ngdhierarchy.json`, in the format of

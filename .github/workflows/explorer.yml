@@ -1,6 +1,7 @@
 # OS NGD Data Linkages Explorer - published to GitHub Pages.
 # Rebuilds the OS NGD Data Linkages Explorer web page from OS's relationship model (explorer/) and publishes it on
 # GitHub Pages: https://<owner>.github.io/<repo>/ngd-links/
+# Also builds the React app (react-explorer/) from the same data: https://<owner>.github.io/<repo>/ngd-links-app/
 # One-off set-up: Settings > Pages > Build and deployment > Source: GitHub Actions.
 name: Publish OS NGD Data Linkages Explorer
 
@@ -12,6 +13,7 @@ on:
       - "explorer/**"
       - "os_api_data_downloader/data/os_relationships.csv"
       - "os_api_data_downloader/core/ngd_model.py"
+      - "react-explorer/**"
       - ".github/workflows/explorer.yml"
   workflow_dispatch:
 
@@ -36,6 +38,18 @@ jobs:
         run: |
           python explorer/build_explorer.py
           python explorer/export_ngd_hierarchy.py
+          python explorer/export_react_data.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: react-explorer/package-lock.json
+      - name: Build the React app
+        working-directory: react-explorer
+        run: |
+          npm ci
+          npm run build
+          cp -r dist ../docs/ngd-links-app
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs

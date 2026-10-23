@@ -1,0 +1,8 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "Start the app (dev server)", "type": "npm", "script": "dev", "isBackground": true, "problemMatcher": [], "group": { "kind": "build", "isDefault": true } },
+    { "label": "Refresh the data from the relationship model", "type": "npm", "script": "data", "problemMatcher": [] },
+    { "label": "Build for sharing (dist/)", "type": "npm", "script": "build", "problemMatcher": [] }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "ngd-links-react",
+  "private": true,
+  "version": "1.0.0",
+  "description": "OS NGD Links - a simple React explorer of how OS NGD feature types join, built from the OS relationship model",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "data": "python ../explorer/export_react_data.py"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^1.1.4",
+    "@xyflow/react": "^12.8.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
