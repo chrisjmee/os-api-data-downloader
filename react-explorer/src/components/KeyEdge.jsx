@@ -1,14 +1,12 @@
-import { BaseEdge, getSmoothStepPath } from "@xyflow/react";
+import { BaseEdge, getBezierPath } from "@xyflow/react";
 import { keyStyle, STORAGE } from "../lib/data";
 
-/** A link between two feature types, drawn as a right-angled line coloured by its linking key: solid when the
+/** A link between two feature types, drawn as a smooth curve coloured by its linking key: solid when the
  *  ID is stored on the feature, dashed for a reference table, dotted for the Related Entity table.
  *  Clicking the line opens the link's details. */
 export default function KeyEdge(props) {
   const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, markerStart } = props;
-  const [path] = getSmoothStepPath({
-    sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, borderRadius: 10, offset: 18,
-  });
+  const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
   const link = data.link;
   return (
     <BaseEdge
